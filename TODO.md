@@ -42,6 +42,14 @@ Prioritized backlog. Ordered top to bottom within each section. Items marked `[x
 - [x] ~~Orphan font wiring~~ — Star4000 Extended into ws4000/wsjr; akkopro-light into IS1 small font.
 - [x] ~~Asset archive~~ — moved 14 GB of duplicates and source dumps out of repo (icons/avi/, icons/avi-webp/, icons/apng/, themes/intellistar1/, themes/intellistar2/, themes/ws4kp/) → `D:\AWC-asset-archive\`. Repo `assets/` now 5.1 GB.
 
+## v0.9.1 — NOAA Weather Radio + mnemonic fix — DONE
+
+- [x] ~~NWR live stream~~ — `NwrPlayer` service streaming `radio.weatherusa.net/NWR/{callSign}.mp3` on dedicated radio bus.
+- [x] ~~Three-bus AudioMixer~~ — music, voice, radio with independent volumes.
+- [x] ~~Settings: nwrEnabled, nwrCallSign, nwrVolume, musicVolume~~ + UI sliders + station autocomplete.
+- [x] ~~Fuzzy call-sign default~~ — falls back to favorite-location match if user hasn't picked one.
+- [x] ~~Mnemonic cutoff fix~~ — await `ctx.resume()` before play to ensure AudioContext is running.
+
 ## v0.9 — Era-authentic theme splits + broadcast research — DONE
 
 - [x] ~~Weatherscan split~~ — `weatherscan-local` / `weatherscan-v1` / `weatherscan-v2`.
@@ -51,6 +59,26 @@ Prioritized backlog. Ordered top to bottom within each section. Items marked `[x
 - [x] ~~Assets gitignored~~ — `assets/*` excluded, `assets/.gitkeep` committed.
 - [x] ~~Broadcast capture pipeline~~ — `scripts/scrape_page_images.py` + `scrape_batch.sh`.
 - [x] ~~Legacy era research docs~~ — `docs/legacy-eras.md`, `docs/reference/`, `docs/reference-capture-plan.md`.
+
+## v0.9.5 — accessibility-mode fix + startup resilience — DONE
+
+- [x] ~~Double-speech with NVDA~~ — added `announcerMode` setting (default `"live-region"`); `AnnouncementQueue` no longer hardcoded to `"both"`. Accessibility fieldset added to the Settings panel with four options.
+- [x] ~~Mnemonic startup could stall~~ — 6s `Promise.race` timeout + `console.warn` diagnostics around the clip play in `App.tsx` audio-unlock.
+- [x] ~~NWR silent failure~~ — status subscription + 5-attempt cap + 10s connect timeout + aria-live announcements on `streaming` / `failed` transitions.
+- [x] ~~NWS User-Agent version bump~~ — `0.4` → `0.9.5`.
+
+## NWR follow-ups (post v0.9.4)
+
+- [x] ~~NWR keyboard shortcut~~ — `0` toggles stream; `1`/`Shift+1` music volume; `2`/`Shift+2` NWR volume. NVDA-friendly (no Ctrl+Alt+arrow conflicts).
+- [x] ~~Tab lag/catch-up~~ — fixed via generation guard in `SceneScheduler`.
+- [x] ~~Settings-change scene-respawn~~ — settings subscriber now diffs home+theme before calling setContext.
+- [x] ~~Scene jumps on 1-5 removed~~ — digits reserved for audio/alerts. Tab walks all scenes.
+- [x] ~~`3` reads active alerts on demand~~ — assertive readback sorted by severity.
+- [ ] **Visual NWR indicator** — show "NWR: KEC49 — Buffalo NY" somewhere in the chrome (LDL? corner bug? settings status?) so the user can confirm what's playing.
+- [ ] **Cycle to next call sign** — single key (e.g. `Shift+0`) walks the station directory while NWR is enabled.
+- [ ] **RTL-SDR backend** (power user) — optional `rtl_fm` spawn in Electron main for users with an SDR dongle. Internet-independent; works during outages when you need NWR most.
+- [x] ~~Stream availability check~~ — `NwrPlayer` now has a 10s connect-timeout guard + 5-attempt failure cap + status subscription; `App.tsx` announces `streaming` / `failed` transitions. Shipped in v0.9.5.
+- [ ] **Expand station directory** — current 60 metros; full NWS list at weather.gov/nwr/station_search has ~1000 transmitters.
 
 ## v1.0 (next) — Per-theme scene renderers + era sub-splits
 

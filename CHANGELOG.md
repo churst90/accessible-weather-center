@@ -2,6 +2,113 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.5] — 2026-04-15
+
+Accessibility-mode fix (double-speech eliminated), mnemonic startup resilience, NWR stream status announcements.
+
+### Fixed
+
+#### Double speech — built-in TTS fired alongside NVDA / JAWS / VoiceOver
+- **Root cause:** `AnnouncementQueue` was hardcoded to mode `"both"` in `App.tsx:831`, so every announcement pushed to the aria-live region *and* invoked `WebSpeechTts.speak()`. A friend running the app with NVDA heard every announcement twice (NVDA reading the aria-live region, Windows SAPI via Web Speech reading the utterance).
+- **Fix:** added `announcerMode` to `SettingsStore` with default `"live-region"`. The `AnnouncementQueue` is constructed with that mode and a settings subscriber calls `announcer.setMode()` on change. Existing users without the key in localStorage inherit the default via the spread in `SettingsStore.load()` — so the double speech goes away without any action.
+- **Surfaced in UI:** new "Accessibility" fieldset at the top of the Settings panel with four options: Screen reader only (default), Built-in speech, Both (with warning), Silent.
+- **Docs:** README status blurb, accessibility paragraph, and Tech stack line all clarified that built-in TTS is opt-in.
+
+#### Mnemonic startup could stall the scene loop indefinitely
+- **Root cause:** if `clips.play("mnemonic")` rejected (bad path, media error, stream stall), the `finally` block in `App.tsx:~630` would still set `mnemonicDone`, but there was no ceiling — a hung audio element awaiting a never-arriving `onended` would leave the `await` pending forever, and the `finally` would never run. A silent rejection in the `ctx.resume().then(start).catch(...)` chain also suppressed diagnostics.
+- **Fix:** wrapped the clip play in `Promise.race([play, timeout])` with a 6-second ceiling, so `setMnemonicDone(true)` always fires within a bounded window. Added `console.warn` at three sites (clip rejection, outer sequence failure, initial `ctx.resume()` rejection) so remote diagnosis is possible if startup audio misbehaves again.
+
+#### NOAA Weather Radio stream failures were silent
+- **Root cause:** `NwrPlayer.scheduleReconnect()` retried forever on `onerror`/`onstalled`/`onended` without capping attempts or telling the user. A 404, a blocked feed, or a server that accepts the TCP connection but never sends audio produced no feedback — the stream just never started.
+- **Fix:** `NwrPlayer` now tracks a five-state status (`idle`/`connecting`/`streaming`/`reconnecting`/`failed`) and exposes `subscribeStatus()`. After `MAX_RECONNECT_ATTEMPTS = 5` consecutive failures without any successful playback, the player gives up and emits `"failed"` with the last error code. A `CONNECT_TIMEOUT_MS = 10000` guard catches servers that never send data (where neither `error` nor `stalled` fires reliably). Successful `onplaying` resets the attempt counter so brief later hiccups don't exhaust the budget. `App.tsx` subscribes and announces transitions to `"streaming"` (polite) and `"failed"` (assertive) — reconnect attempts are intentionally silent to avoid chatter.
+
+### Changed
+
+#### `ttsVoice` / `ttsRate` settings are now purposeful
+- They were persisted but never read before. Now they're the voice + rate used when `announcerMode` is `"tts"` or `"both"`. A future Settings control can wire them up via `tts.setVoice()` / `tts.setRate()`; for this release the infrastructure is in place but no UI surface is added.
+
+#### NWS User-Agent bumped from `0.4` to `0.9.5`
+- Cosmetic; NWS doesn't validate the version, but the stale value was misleading.
+
+## [0.9.4] — 2026-04-15
+
+Settings-update scene-respawn fix, scene jumps removed, on-demand alert readback.
+
+### Fixed
+
+#### Pressing `1` (or any settings change) re-prepared the current scene
+- **Root cause:** the settings subscriber at `App.tsx:137` called `scheduler.setContext()` on every settings change. `setContext()` re-enters the current scene, which re-prepares it (network fetch) and restarts narration. So bumping music volume → settings change → re-enter → user sees the scene "change" because the screen re-renders and the narrator starts over from the top.
+- **Fix:** the settings subscriber now diffs `home.id` and `theme` against last-applied values. `setContext()` only fires when one of those actually changed. Volume nudges, NWR toggle, music enable, etc. no longer disturb the current scene.
+
+### Changed
+
+#### Scene-jump shortcuts on `1`–`5` removed
+- All five digit-key scene jumps retired. Tab / Shift+Tab walks every scene; the digit row is now reserved for instant audio + alert controls.
+
+#### New `3` shortcut: read active weather alerts on demand
+- Pressing `3` triggers an assertive announcement of every active alert, sorted by severity (Extreme → Severe → Moderate → Minor → Unknown). Each entry: event name + affected area description. Empty state: "No active weather alerts." Reads from the live polled `alertsList` ref so it always reflects current state.
+
+## [0.9.3] — 2026-04-15
+
+Keyboard remap for NVDA compatibility, scene-tab lag fix, KeyboardRouter shift+digit normalization.
+
+### Fixed
+
+#### Tab "lag then catch up" through scenes
+- **Root cause:** `SceneScheduler.enter()` only emitted after the async `scene.prepare()` (NWS forecast fetch) resolved. Pressing Tab three times rapidly queued three preparations; as each resolved, the UI flashed through the transitional scenes one at a time.
+- **Fix:** added a monotonic `generation` counter in `SceneScheduler`. Each `enter()` bumps the counter; on resolution, stale results are dropped. Only the latest-requested scene commits to `this.current` and emits.
+
+#### Ctrl+R reloaded the renderer
+- **Root cause:** Electron's renderer responds to Ctrl+R as a built-in reload accelerator even with `Menu.setApplicationMenu(null)`. The KeyboardRouter handler ran but the page also reloaded.
+- **Fix:** moved NWR toggle off Ctrl+R. Now bound to `0` (adjacent to the volume digits 1 and 2).
+
+#### Shift+digit shortcuts didn't fire
+- **Root cause:** `KeyboardRouter.specFromEvent` used `e.key` directly; on US layouts, Shift+1 produces `e.key = "!"`, so `register("shift+1")` would never match the actual event spec `"shift+!"`.
+- **Fix:** added `eventKeyName()` helper that detects `Digit0–Digit9` / `Numpad0–Numpad9` via `e.code` when Shift is held and normalizes back to the base digit. Registrations like `"shift+1"` now match predictably across keyboard layouts.
+
+### Changed
+
+#### Keyboard remap (NVDA-friendly)
+- **Removed** `Ctrl+R` (NWR toggle, page-reload conflict), `Ctrl+Alt+←/→` (volume target cycle, NVDA table-nav conflict), `Ctrl+↑/↓` (volume nudge), `1` and `2` scene-jumps (current / local radar — repurposed for volume).
+- **Added** `0` toggle NWR, `1`/`Shift+1` music volume up/down, `2`/`Shift+2` Weather Radio volume up/down.
+- **Retained** `3`/`4`/`5` scene jumps for hourly/extended/alerts. Tab/Shift+Tab still cycles through every scene including current and radar.
+
+## [0.9.2] — 2026-04-15
+
+NOAA Weather Radio keyboard shortcuts.
+
+### Added
+
+- **`Ctrl+R`** toggles NOAA Weather Radio on/off. When turning on, announces the active call sign and station ("Weather Radio on. KEC49, Buffalo NY."). If no station is configured, prompts the user to open Settings.
+- **`Ctrl+Alt+←` / `Ctrl+Alt+→`** cycle the selected volume bus between Music and Weather Radio. Each press announces "{label} volume selected, currently NN percent."
+- **`Ctrl+↑` / `Ctrl+↓`** raise/lower the selected volume bus by 5%. Each press announces the new percentage. Clamps at 0% / 100%.
+- **README** keyboard table + new "How to use it" section under NOAA Weather Radio with full keyboard reference.
+
+## [0.9.1] — 2026-04-15
+
+NOAA Weather Radio live streaming + mnemonic startup fix.
+
+### Added
+
+#### NOAA Weather Radio (NWR) live stream
+- **`NwrPlayer` service** (`src/audio/NwrPlayer.ts`) — streams the weatherUSA Icecast feed (`https://radio.weatherusa.net/NWR/{callSign}.mp3`) for any NWR transmitter call sign. Plays in the background regardless of which scene is active. MP3 32 kbps mono, public-domain US government audio.
+- **Dedicated `radio` bus** in `AudioMixer` alongside music + voice. Independent volume control via `setRadioLevel()`. NWR is intentionally NOT ducked by voice narration — real-time weather information should remain audible alongside the narrator.
+- **Reconnection logic** — exponential backoff (2s → 4s → 8s → 16s, cap 30s) on stream error/stall/end. Generation counter prevents stale timer callbacks after switching call signs.
+- **Station directory** (`src/audio/nwrStations.ts`) — 60 major-metro NWR stations with city, state, frequency. Powers the autocomplete in Settings; user can type any call sign manually. `suggestCallSignForPlace()` fuzzy-matches the user's home favorite location.
+- **Settings additions:** `nwrEnabled`, `nwrCallSign`, `nwrVolume`, plus a new `musicVolume` slider so music level is finally user-adjustable. Defaults: NWR off, volume 0.5; music volume 0.6 (matches old hardcoded default).
+- **Settings UI:** new "NOAA Weather Radio" fieldset with enable toggle, call-sign input with `<datalist>` autocomplete, volume slider. Music volume slider added to the Audio fieldset.
+
+### Fixed
+
+#### Mnemonic startup cutoff
+- **Root cause:** `App.tsx` audio-unlock fired `clips.play("mnemonic")` while the AudioContext was still transitioning from `suspended` to `running`. `MediaElementAudioSourceNode` produced silence until the context became live, truncating the perceived clip. Fix: wrap the mnemonic play in an async block that awaits `ctx.resume()` first.
+
+### Notes
+
+- **Legal:** NWR audio is US government public domain; FCC permits rebroadcast within 1 hour of receipt (47 CFR 73.1207). EAS Attention Signals embedded in the stream are passed through as-is — this app is a pass-through, not an EAS originator. We do NOT synthesize EAS tones (existing `AlertTones.ts` uses non-EAS chimes). 47 CFR Part 11 prohibits EAS tone simulation outside genuine alerts.
+- **Stream provider terms:** weatherUSA streams are intended for direct end-user listening. Pass-through player connecting user to stream = fine. Recording/redistribution = not fine.
+- **CORS:** The weatherUSA Icecast server returns `Access-Control-Allow-Origin: *`. If a future provider blocks CORS, Electron's `webRequest.onHeadersReceived` can inject the header for `radio.weatherusa.net`.
+
 ## [0.9.0] — 2026-04-15
 
 Era-authentic theme splits, broadcast-referenced layouts, legacy era research.

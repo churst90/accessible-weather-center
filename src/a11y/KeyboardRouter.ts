@@ -90,6 +90,17 @@ function specFromEvent(e: KeyboardEvent): string {
   if (e.altKey) parts.push("alt");
   if (e.shiftKey) parts.push("shift");
   if (e.metaKey) parts.push("meta");
-  parts.push(e.key.length === 1 ? e.key.toLowerCase() : e.key.toLowerCase());
+  parts.push(eventKeyName(e));
   return normalizeKeySpec(parts.join("+"));
+}
+
+/** Resolve the key name for a KeyboardEvent. Shift+digit on US layouts
+ *  produces symbols (!@#$%^&*()) via `e.key`; we normalize those back to
+ *  the underlying digit by reading `e.code` so callers can register
+ *  predictable specs like "shift+1". */
+function eventKeyName(e: KeyboardEvent): string {
+  if (e.shiftKey && /^(Digit|Numpad)[0-9]$/.test(e.code)) {
+    return e.code.replace(/^(Digit|Numpad)/, "");
+  }
+  return e.key.toLowerCase();
 }

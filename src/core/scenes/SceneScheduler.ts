@@ -34,6 +34,11 @@ export class SceneScheduler {
   private narrationPromise: Promise<void> | null = null;
   /** Seconds to wait after narration finishes before the hold timer starts. */
   private postNarrationDelaySec = 3;
+  /** Monotonic generation counter — bumped on each enter() so stale
+   *  prepare() resolutions can be detected and dropped. Without this,
+   *  rapid Tab presses cause a "lag then catch-up" effect where the UI
+   *  flashes through every transitional scene as each prepare resolves. */
+  private generation = 0;
 
   private ctx: SceneContext;
 
@@ -229,16 +234,18 @@ export class SceneScheduler {
 
   private async enter(index: number): Promise<void> {
     this.index = index;
+    const myGen = ++this.generation;
     if (this.holdTimer) {
       clearTimeout(this.holdTimer);
       this.holdTimer = null;
     }
     this.narrationPromise = null;
     const scene = this.scenes[index];
+    let prepared: RenderedScene;
     try {
-      this.current = await scene.prepare(this.ctx);
+      prepared = await scene.prepare(this.ctx);
     } catch (err) {
-      this.current = {
+      prepared = {
         id: scene.id,
         title: scene.title,
         data: { error: String(err) },
@@ -248,6 +255,11 @@ export class SceneScheduler {
         jacksonCue: null
       };
     }
+    // Stale-result guard: if a newer enter() has started (user pressed
+    // Tab again before our prepare resolved), drop this result so the
+    // UI doesn't flash through every transitional scene.
+    if (myGen !== this.generation) return;
+    this.current = prepared;
     // Emit so the UI renders and the narration effect fires.
     this.emit();
     if (this.status === "running" && this.autoCycle) {

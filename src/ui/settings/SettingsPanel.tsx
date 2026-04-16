@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { SettingsStore, Settings } from "../../core/settings/SettingsStore";
 import { THEMES, getTheme, THEME_CORE_SCENES, VALUE_ADD_SCENES, type ThemeId } from "../../core/settings/themes";
 import { NARRATORS } from "../../audio/manifests/narratorSchema";
+import { NWR_STATIONS } from "../../audio/nwrStations";
 
 interface Props {
   store: SettingsStore;
@@ -69,6 +70,27 @@ export function SettingsPanel({ store, open, onClose, flavors }: Props) {
         <h2 id="awc-settings-title" style={{ marginTop: 0 }}>Settings</h2>
 
         <fieldset style={{ border: "1px solid var(--ws-accent)", padding: 12, marginBottom: 16 }}>
+          <legend>Accessibility</legend>
+          <label style={{ display: "block", marginBottom: 8 }}>
+            Announcement mode:{" "}
+            <select
+              value={settings.announcerMode}
+              onChange={(e) => store.update({ announcerMode: e.target.value as Settings["announcerMode"] })}
+            >
+              <option value="live-region">Screen reader only (NVDA / JAWS / VoiceOver) — recommended</option>
+              <option value="tts">Built-in speech (Web Speech API) — no screen reader</option>
+              <option value="both">Both (not recommended — causes double speech)</option>
+              <option value="off">Silent</option>
+            </select>
+          </label>
+          <p style={{ marginTop: 4, fontSize: 12, color: "var(--ws-text-dim)" }}>
+            Use "Screen reader only" if you run NVDA, JAWS, Narrator, or VoiceOver — the app will push
+            announcements to an aria-live region for your screen reader to read. Use "Built-in speech"
+            only when running the app without any screen reader.
+          </p>
+        </fieldset>
+
+        <fieldset style={{ border: "1px solid var(--ws-accent)", padding: 12, marginBottom: 16 }}>
           <legend>Theme</legend>
           <label style={{ display: "block" }}>
             Visual theme:{" "}
@@ -92,6 +114,18 @@ export function SettingsPanel({ store, open, onClose, flavors }: Props) {
               onChange={(e) => store.update({ musicEnabled: e.target.checked })}
             />{" "}
             Play background music
+          </label>
+          <label style={{ display: "block", marginBottom: 8 }}>
+            Music volume: {Math.round(settings.musicVolume * 100)}%{" "}
+            <input
+              type="range"
+              min={0}
+              max={100}
+              step={5}
+              value={Math.round(settings.musicVolume * 100)}
+              onChange={(e) => store.update({ musicVolume: Number(e.target.value) / 100 })}
+              style={{ verticalAlign: "middle" }}
+            />
           </label>
           <label style={{ display: "block", marginBottom: 8 }}>
             <input
@@ -141,6 +175,52 @@ export function SettingsPanel({ store, open, onClose, flavors }: Props) {
               step={1}
               value={settings.postNarrationDelay}
               onChange={(e) => store.update({ postNarrationDelay: Number(e.target.value) })}
+              style={{ verticalAlign: "middle" }}
+            />
+          </label>
+        </fieldset>
+
+        <fieldset style={{ border: "1px solid var(--ws-accent)", padding: 12, marginBottom: 16 }}>
+          <legend>NOAA Weather Radio</legend>
+          <p style={{ marginTop: 0, fontSize: 12, color: "var(--ws-text-dim)" }}>
+            Live NWR transmitter stream from weatherUSA. Plays in the background regardless of the active scene.
+            May contain EAS Attention Signals — pass-through only, this app is not an EAS originator.
+          </p>
+          <label style={{ display: "block", marginBottom: 8 }}>
+            <input
+              type="checkbox"
+              checked={settings.nwrEnabled}
+              onChange={(e) => store.update({ nwrEnabled: e.target.checked })}
+            />{" "}
+            Enable Weather Radio stream
+          </label>
+          <label style={{ display: "block", marginBottom: 8 }}>
+            Call sign:{" "}
+            <input
+              type="text"
+              list="awc-nwr-stations"
+              value={settings.nwrCallSign ?? ""}
+              placeholder="e.g. KEC49 (auto from favorite if blank)"
+              onChange={(e) => store.update({ nwrCallSign: e.target.value.toUpperCase() || null })}
+              style={{ width: 280 }}
+            />
+            <datalist id="awc-nwr-stations">
+              {NWR_STATIONS.map((s) => (
+                <option key={s.callSign} value={s.callSign}>
+                  {s.city}, {s.state} — {s.frequency} MHz
+                </option>
+              ))}
+            </datalist>
+          </label>
+          <label style={{ display: "block" }}>
+            Weather Radio volume: {Math.round(settings.nwrVolume * 100)}%{" "}
+            <input
+              type="range"
+              min={0}
+              max={100}
+              step={5}
+              value={Math.round(settings.nwrVolume * 100)}
+              onChange={(e) => store.update({ nwrVolume: Number(e.target.value) / 100 })}
               style={{ verticalAlign: "middle" }}
             />
           </label>

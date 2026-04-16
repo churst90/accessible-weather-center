@@ -1,3 +1,5 @@
+import type { AnnouncerMode } from "../../a11y/AnnouncementQueue";
+
 /**
  * User-facing settings. Persisted to localStorage in v0.2; disk persistence
  * via Electron's userData path is on the TODO list. The store is reactive —
@@ -14,9 +16,17 @@ export interface Settings {
   clipConfidence: "confirmed" | "likely" | "guess";
   /** Use the AJ phrase composer at all (vs always TTS). */
   useAjVoice: boolean;
-  /** Built-in TTS voice name (whatever Web Speech API exposes). */
+  /** How announcements are spoken. "live-region" (default): push text to
+   *  the aria-live DOM region only — the user's screen reader (NVDA, JAWS,
+   *  VoiceOver) handles speech. "tts": use the built-in Web Speech API.
+   *  "both": push to both, for users experimenting with layered speech.
+   *  "off": no announcements at all. Default is "live-region" because
+   *  running both alongside NVDA causes double-speech. */
+  announcerMode: AnnouncerMode;
+  /** Built-in TTS voice name (whatever Web Speech API exposes). Only used
+   *  when announcerMode is "tts" or "both". */
   ttsVoice: string | null;
-  /** TTS rate, 0.5 .. 2.0. */
+  /** TTS rate, 0.5 .. 2.0. Only used when announcerMode is "tts" or "both". */
   ttsRate: number;
   /** Use high-contrast theme. */
   highContrast: boolean;
@@ -41,6 +51,14 @@ export interface Settings {
   narrator: string | null;
   /** Seconds to wait after narration finishes before transitioning. */
   postNarrationDelay: number;
+  /** Music bus volume, 0..1. */
+  musicVolume: number;
+  /** NOAA Weather Radio stream master enable. */
+  nwrEnabled: boolean;
+  /** NWR transmitter call sign (e.g. "KEC49"). Null = use favorite location. */
+  nwrCallSign: string | null;
+  /** NWR bus volume, 0..1. */
+  nwrVolume: number;
 }
 
 const STORAGE_KEY = "awc.settings.v1";
@@ -70,6 +88,7 @@ export const DEFAULT_SETTINGS: Settings = {
   musicEnabled: true,
   clipConfidence: "likely",
   useAjVoice: true,
+  announcerMode: "live-region",
   ttsVoice: null,
   ttsRate: 1.0,
   highContrast: false,
@@ -78,6 +97,10 @@ export const DEFAULT_SETTINGS: Settings = {
   theme: "ws4000-v2" as const,
   narrator: null,
   postNarrationDelay: 3,
+  musicVolume: 0.6,
+  nwrEnabled: false,
+  nwrCallSign: null,
+  nwrVolume: 0.5,
 };
 
 export class SettingsStore {

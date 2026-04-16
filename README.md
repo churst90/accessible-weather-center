@@ -2,7 +2,7 @@
 
 A fully accessible, speech- and keyboard-driven weather application with a Weatherscan-style cycling display. Designed accessibility-first: every visual is mirrored by a semantic narration so blind and low-vision users get the same information at the same fidelity as sighted users — including weather radar, which is normally inaccessible.
 
-> Status: **v0.9 — era-authentic theme splits, broadcast-referenced layouts**. Ten visual themes across seven TWC hardware families (Weatherscan split into Local/V1/V2, WS4000 split into V1/V2 with broadcast-verified 3-day Extended). Columnar forecast layouts with weather icons (per-theme resolution: WSXL→42×42, IS2→68×68 HD WEBP). Per-scene background templates for WS4000-v1/WSJr. Tab-based scene switching plus 2-D arrow navigation inside each scene. Era-correct logos (TWC, NOAA, IntelliStar). Persistent Lower Display Line (LDL) crawl with per-condition section icon. Static-PNG icon fallback under `prefers-reduced-motion: reduce`. Assets are gitignored — see Fan-sourced assets section below.
+> Status: **v0.9.5 — accessibility-mode fix, mnemonic resilience, NWR stream status**. Announcement mode now defaults to "screen reader only" (aria-live region); built-in TTS is opt-in via Settings for users running the app without NVDA / JAWS / VoiceOver. Mnemonic startup is bounded by a 6-second timeout so a failed clip can't stall the scene loop. NWR stream reports connect / recovery / hard-failure status via announcements, gives up after five consecutive failures, and includes a connect-timeout guard. Ten visual themes across seven TWC hardware families. Live NWR transmitter audio streamable in the background on a dedicated audio bus. Three-bus AudioMixer: music, voice, radio — each with independent volume control. Columnar forecast layouts with weather icons (per-theme resolution: WSXL→42×42, IS2→68×68 HD WEBP). Per-scene background templates for WS4000-v1/WSJr. Tab-based scene switching plus 2-D arrow navigation inside each scene. Era-correct logos (TWC, NOAA, IntelliStar). Persistent Lower Display Line (LDL) crawl with per-condition section icon. Static-PNG icon fallback under `prefers-reduced-motion: reduce`. Assets are gitignored — see Fan-sourced assets section below.
 
 ## What this project is
 
@@ -11,7 +11,7 @@ Weather maps and radar displays are notoriously inaccessible to screen readers �
 This project is a deliberate attempt to build a weather experience that:
 
 1. **Looks and feels like the 24/7 Weatherscan loop** — cycling scenes, calm music, on-screen narration, the bug in the corner.
-2. **Speaks every screen** with structured, prioritized narration suitable for both built-in TTS and third-party screen readers (NVDA, JAWS, VoiceOver).
+2. **Speaks every screen** with structured, prioritized narration. Default mode pushes announcements to an aria-live region for your screen reader (NVDA, JAWS, VoiceOver) — running both the screen reader and the app's built-in speech at the same time causes double speech, so built-in TTS is opt-in via Settings → Accessibility for users who have no screen reader.
 3. **Makes the map navigable as data, not pixels** — multiple "lenses" onto the same spatial data, each matched to a question a real user actually asks.
 4. **Stays running in the background** so the user gets toast notifications when conditions worsen or alerts are issued.
 5. **Honors the TWC visual era** you pick — scene layout, typography, palette, crawl behavior, and narrator all match the hardware unit.
@@ -43,11 +43,14 @@ The NWS API requires a real `User-Agent` identifying you. Edit `src/App.tsx` (`b
 | `←` `→` `↑` `↓` | Navigate within the current scene (columns / rows / list) |
 | `Home` / `End` | Jump to the start / end of the current row or list |
 | `Space` | Pause or resume the scene loop |
-| `1`–`5` | Jump to Current / Radar / Hourly / Extended / Alerts |
 | `M` | Toggle Favorites mode (place picker) |
 | `N` | Toggle Map Navigation mode |
 | `Ctrl+M` | Mute / unmute background music |
 | `Ctrl+→` | Skip to the next music track |
+| `0` | Toggle NOAA Weather Radio stream on / off |
+| `1` / `Shift+1` | Music volume up / down (5%) |
+| `2` / `Shift+2` | Weather Radio volume up / down (5%) |
+| `3` | Speak active weather alerts (or "no active alerts") |
 | `,` | Open Settings |
 | `?` | Open Help dialog (full shortcut list) |
 | `Esc` | Silence current speech / close the current modal |
@@ -91,6 +94,33 @@ Core scenes shown in era-authentic order per theme:
 Value-add scenes (opt-in via Settings):
 
 Detailed Conditions, Feels Like (side-by-side actual vs perceived), Temperature Trend (readouts + hourly bar chart), Weekend Forecast (columnar Sat/Sun), Overnight Forecast (hero card), Precipitation Outlook, Storm Tracker, Airport Delays (live FAA NAS Status feed), Traffic (placeholder — no free public API fits the Local-Trip-Times niche).
+
+## NOAA Weather Radio (NWR)
+
+Optional live NWR transmitter stream that plays in the background regardless of the active scene. Powered by the weatherUSA Icecast feeds (`radio.weatherusa.net`). Independent volume control on its own audio bus — music ducks for narration but NWR does not, since it carries real-time weather information.
+
+### How to use it
+
+**Turn it on/off:** press `0` anywhere in the app, or open Settings (`,`) → "NOAA Weather Radio" → "Enable Weather Radio stream". The keyboard toggle announces what's playing ("Weather Radio on. KEC49, Buffalo NY.").
+
+**Pick a station:** open Settings → NOAA Weather Radio → Call sign. Type any NWS transmitter call sign (e.g. `KEC49`) or pick from the autocomplete (60 preloaded major-metro stations). If you leave it blank and Weather Radio is enabled, the app fuzzy-matches your favorite location to the nearest known transmitter.
+
+**Adjust the volume from the keyboard:**
+- `1` raises **Music** volume by 5%; `Shift+1` lowers it by 5%.
+- `2` raises **Weather Radio** volume by 5%; `Shift+2` lowers it by 5%.
+- Each press announces the new percentage. Clamps at 0% / 100%.
+
+**Adjust the volume in Settings:** sliders for both Music volume and Weather Radio volume live in the Audio fieldset.
+
+**Mute Weather Radio:** hold `Shift+2` until you reach 0%, or press `0` to fully disconnect the stream.
+
+### When a stream is unavailable
+
+If a transmitter is offline or your network blocks the Icecast feed, the player retries with exponential backoff (2s, 4s, 8s, 16s, 30s). A connect-timeout guard also catches servers that accept the connection but never send data. After five consecutive failures the player gives up and announces *"Weather Radio stream for {call sign} is unavailable. Press comma to open settings and choose another station, or disable Weather Radio."* — you'll hear this via your screen reader (or built-in TTS, if enabled). When a stream finally starts flowing, it announces *"Weather Radio streaming from {call sign}."* Switching to a different call sign resets the failure counter and starts fresh.
+
+### Legal
+
+NWR audio is US government public domain. The FCC permits rebroadcast within 1 hour of receipt (47 CFR 73.1207). EAS Attention Signals embedded in the stream are passed through as-is — this app is not an EAS originator and does not synthesize EAS tones (47 CFR Part 11 prohibits that outside genuine alerts).
 
 ## Architecture at a glance
 
@@ -144,7 +174,7 @@ These are *load-bearing*, not stylistic preferences:
 
 - **Electron** — desktop shell (tray, notifications, background).
 - **Vite + React + TypeScript** — renderer UI.
-- **Web Speech API** — default TTS engine (pluggable).
+- **Web Speech API** — optional built-in TTS engine (pluggable). Off by default — your screen reader handles speech via the aria-live region.
 - **Web Audio API** — music/voice mixer with ducking.
 - **NWS API** + **RainViewer** + **FAA NAS Status** — weather data. All free, no keys.
 

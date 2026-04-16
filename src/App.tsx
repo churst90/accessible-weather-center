@@ -39,6 +39,8 @@ import { MusicPlayer } from "./audio/MusicPlayer";
 import { ClipLibrary } from "./audio/ClipLibrary";
 import { AlertTones } from "./audio/AlertTones";
 import { PhraseSequencer } from "./audio/PhraseSequencer";
+import { NwrPlayer } from "./audio/NwrPlayer";
+import { suggestCallSignForPlace, findStation } from "./audio/nwrStations";
 import { composeCurrentConditions, composeExtendedForecast, composeHourlyForecast, composeAlerts, composeRadar, composeLocalForecast, composeOvernightForecast, composeWeekendForecast, composeSceneIntro } from "./audio/PhraseComposer";
 
 import { setIconBase, setIconResolution, chooseIcon } from "./ui/weatherscan/WeatherIcon";
@@ -98,6 +100,8 @@ export default function App() {
   const [audioStarted, setAudioStarted] = useState(false);
   const [alertCount, setAlertCount] = useState(0);
   const [alertsList, setAlertsList] = useState<import("./core/types").WeatherAlert[]>([]);
+  const alertsListRef = useRef<import("./core/types").WeatherAlert[]>([]);
+  useEffect(() => { alertsListRef.current = alertsList; }, [alertsList]);
   const [alertTickerText, setAlertTickerText] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
@@ -132,15 +136,27 @@ export default function App() {
   // themes — scenes that read it (ExtendedForecastScene) re-render with
   // the era-appropriate title and period count.
   useEffect(() => {
+    // Only re-enter the current scene when something the scheduler context
+    // actually depends on changes — namely the home place or the active
+    // theme. Without this guard, every settings update (volume nudges,
+    // music toggle, NWR toggle, etc.) would call setContext() which
+    // re-prepares the current scene and restarts narration. The user
+    // perceives that as "pressing 1 keeps changing scenes."
+    let lastPlaceKey: string | null = null;
+    let lastThemeId: string | null = null;
     return services.settings.subscribe((s) => {
       const home = services.places.list().find((p) => p.isHome) ?? services.places.list()[0];
-      if (home) {
-        services.scheduler.setContext({
-          place: home,
-          weather: services.weather,
-          themeId: s.theme as ThemeId,
-        });
-      }
+      if (!home) return;
+      const placeKey = home.id;
+      const themeId = s.theme as ThemeId;
+      if (placeKey === lastPlaceKey && themeId === lastThemeId) return;
+      lastPlaceKey = placeKey;
+      lastThemeId = themeId;
+      services.scheduler.setContext({
+        place: home,
+        weather: services.weather,
+        themeId,
+      });
     });
   }, [services]);
 
@@ -438,41 +454,10 @@ export default function App() {
           }
         }
       }),
-      r.register({
-        id: "scene-1", keys: "1", group: "Scenes", description: "Jump to current conditions",
-        handler: () => {
-          if (viewModeRef.current !== "scenes") return;
-          void services.scheduler.jumpToId("current");
-        }
-      }),
-      r.register({
-        id: "scene-2", keys: "2", group: "Scenes", description: "Jump to local radar",
-        handler: () => {
-          if (viewModeRef.current !== "scenes") return;
-          void services.scheduler.jumpToId("radar");
-        }
-      }),
-      r.register({
-        id: "scene-3", keys: "3", group: "Scenes", description: "Jump to hourly forecast",
-        handler: () => {
-          if (viewModeRef.current !== "scenes") return;
-          void services.scheduler.jumpToId("hourly");
-        }
-      }),
-      r.register({
-        id: "scene-4", keys: "4", group: "Scenes", description: "Jump to extended forecast",
-        handler: () => {
-          if (viewModeRef.current !== "scenes") return;
-          void services.scheduler.jumpToId("extended");
-        }
-      }),
-      r.register({
-        id: "scene-5", keys: "5", group: "Scenes", description: "Jump to alerts",
-        handler: () => {
-          if (viewModeRef.current !== "scenes") return;
-          void services.scheduler.jumpToId("alerts");
-        }
-      }),
+      // Scene-jump shortcuts on 1-5 retired in v0.9.4. Tab/Shift+Tab walks
+      // every scene in order. The digit keys are reserved for instant audio
+      // controls: 1 / Shift+1 = music vol, 2 / Shift+2 = NWR vol, 3 = read
+      // active alerts on demand, 0 = toggle NWR.
       r.register({
         id: "toggle-favorites", keys: "m", group: "Favorites",
         description: "Toggle favorites list",
@@ -537,6 +522,71 @@ export default function App() {
         }
       }),
       r.register({
+        id: "music-volume-up", keys: "1", group: "Audio",
+        description: "Raise music volume by 5%",
+        handler: () => { adjustVolume(services, "music", +0.05); }
+      }),
+      r.register({
+        id: "music-volume-down", keys: "shift+1", group: "Audio",
+        description: "Lower music volume by 5%",
+        handler: () => { adjustVolume(services, "music", -0.05); }
+      }),
+      r.register({
+        id: "nwr-volume-up", keys: "2", group: "Audio",
+        description: "Raise Weather Radio volume by 5%",
+        handler: () => { adjustVolume(services, "radio", +0.05); }
+      }),
+      r.register({
+        id: "nwr-volume-down", keys: "shift+2", group: "Audio",
+        description: "Lower Weather Radio volume by 5%",
+        handler: () => { adjustVolume(services, "radio", -0.05); }
+      }),
+      r.register({
+        id: "read-alerts", keys: "3", group: "Alerts",
+        description: "Speak active weather alerts",
+        handler: () => {
+          const alerts = alertsListRef.current;
+          if (alerts.length === 0) {
+            void services.announcer.announce("No active weather alerts.", "assertive");
+            return;
+          }
+          // Build a concise announcement: count + each headline + area.
+          // Severity goes first so the most urgent alert leads.
+          const ordered = [...alerts].sort((a, b) => severityRank(b.severity) - severityRank(a.severity));
+          const parts = [`${ordered.length} active weather alert${ordered.length === 1 ? "" : "s"}.`];
+          for (const a of ordered) {
+            const where = a.affectedAreaDescription ? ` for ${a.affectedAreaDescription}` : "";
+            parts.push(`${a.event}${where}.`);
+          }
+          void services.announcer.announce(parts.join(" "), "assertive");
+        }
+      }),
+      r.register({
+        id: "toggle-nwr", keys: "0", group: "Audio",
+        description: "Toggle NOAA Weather Radio stream",
+        handler: () => {
+          const cur = services.settings.get().nwrEnabled;
+          services.settings.update({ nwrEnabled: !cur });
+          if (cur) {
+            void services.announcer.announce("Weather Radio off.", "assertive");
+          } else {
+            const s = services.settings.get();
+            const home = services.places.home();
+            const cs = s.nwrCallSign ?? (home ? suggestCallSignForPlace(home.name) : null);
+            if (!cs) {
+              void services.announcer.announce(
+                "Weather Radio on, but no station configured. Open Settings with comma to choose a call sign.",
+                "assertive"
+              );
+            } else {
+              const stn = findStation(cs);
+              const where = stn ? `${cs}, ${stn.city} ${stn.state}` : cs;
+              void services.announcer.announce(`Weather Radio on. ${where}.`, "assertive");
+            }
+          }
+        }
+      }),
+      r.register({
         id: "open-settings", keys: ",", group: "Settings",
         description: "Open settings panel",
         handler: () => setSettingsOpen(true)
@@ -571,9 +621,29 @@ export default function App() {
       if (audioStartedRef.current) return;
       audioStartedRef.current = true;
       const ctx = services.mixer.ensureStarted();
-      if (ctx.state === "suspended") void ctx.resume();
       setAudioStarted(true);
-      void services.clips.play("mnemonic").finally(() => setMnemonicDone(true));
+      // Mnemonic cutoff fix: await ctx.resume() before playing the clip.
+      // If the AudioContext is still transitioning from suspended → running,
+      // MediaElementSource produces silence and the perceived clip is
+      // truncated. Awaiting ensures the graph is live before play() runs.
+      //
+      // Timeout guard: if the clip fails to load (404, network stall, audio
+      // element error), we still need to release the scheduler. Race the
+      // play against a 6-second timer so setMnemonicDone always fires.
+      void (async () => {
+        try {
+          if (ctx.state === "suspended") await ctx.resume();
+          const play = services.clips.play("mnemonic").catch((err) => {
+            console.warn("[mnemonic] clip playback failed:", err);
+          });
+          const timeout = new Promise<void>((resolve) => setTimeout(resolve, 6000));
+          await Promise.race([play, timeout]);
+        } catch (err) {
+          console.warn("[mnemonic] startup sequence failed:", err);
+        } finally {
+          setMnemonicDone(true);
+        }
+      })();
       void services.music.start();
     };
     // Attempt immediate start — works in Electron where autoplay is allowed.
@@ -582,8 +652,11 @@ export default function App() {
       start();
       return;
     }
-    void ctx.resume().then(start).catch(() => {
+    // The ref guard inside start() prevents double-firing if both the
+    // ctx.resume() chain and a user gesture resolve close together.
+    void ctx.resume().then(start).catch((err) => {
       // Autoplay blocked — wait for user gesture.
+      console.warn("[audio] initial resume rejected, waiting for gesture:", err);
     });
     window.addEventListener("keydown", start, { once: true });
     window.addEventListener("click", start, { once: true });
@@ -591,6 +664,73 @@ export default function App() {
       window.removeEventListener("keydown", start);
       window.removeEventListener("click", start);
     };
+  }, [services]);
+
+  // Announcer mode — kept in sync with the settings store so toggling the
+  // "live-region / built-in TTS / both / off" option takes effect without
+  // a restart. Default is "live-region" (NVDA and friends handle speech).
+  useEffect(() => {
+    const off = services.settings.subscribe((s) => {
+      services.announcer.setMode(s.announcerMode);
+    });
+    return off;
+  }, [services]);
+
+  // NWR Weather Radio + volume sliders — reactive to settings changes.
+  // Subscribes to the settings store; on every change syncs music + radio
+  // volumes, and connects/disconnects the NWR stream as needed. The call
+  // sign defaults to a fuzzy match against the home favorite location
+  // when the user has not picked one explicitly.
+  useEffect(() => {
+    if (!audioStarted) return;
+    const off = services.settings.subscribe((s) => {
+      services.mixer.setMusicLevel(s.musicVolume);
+      services.mixer.setRadioLevel(s.nwrVolume);
+      if (!s.nwrEnabled) {
+        services.nwr.disconnect();
+        return;
+      }
+      const home = services.places.home();
+      const desired = s.nwrCallSign ?? (home ? suggestCallSignForPlace(home.name) : null);
+      if (!desired) {
+        services.nwr.disconnect();
+        return;
+      }
+      if (services.nwr.getCallSign() !== desired) {
+        services.nwr.connect(desired);
+      }
+    });
+    return () => {
+      off();
+      services.nwr.disconnect();
+    };
+  }, [services, audioStarted]);
+
+  // NWR stream status announcements — tell the user when a stream starts,
+  // fails, or is retrying. The player emits status changes; we translate
+  // user-facing ones into aria-live announcements. Don't narrate every
+  // reconnect attempt (too noisy) — just the final failure and recovery.
+  useEffect(() => {
+    let lastAnnouncedStatus: string | null = null;
+    const off = services.nwr.subscribeStatus((status, info) => {
+      const cs = info.callSign ?? "Weather Radio";
+      if (status === lastAnnouncedStatus) return;
+      if (status === "streaming") {
+        services.announcer.announce(`Weather Radio streaming from ${cs}.`, "polite");
+        lastAnnouncedStatus = status;
+      } else if (status === "failed") {
+        const reason = info.error ? ` (${info.error})` : "";
+        services.announcer.announce(
+          `Weather Radio stream for ${cs} is unavailable${reason}. Press comma to open settings and choose another station, or disable Weather Radio.`,
+          "assertive"
+        );
+        lastAnnouncedStatus = status;
+      } else if (status === "idle") {
+        lastAnnouncedStatus = null;
+      }
+      // "connecting" and "reconnecting" are intentionally silent.
+    });
+    return off;
   }, [services]);
 
   return (
@@ -657,6 +797,33 @@ export default function App() {
   );
 }
 
+/** Severity rank for sorting alert announcements (highest first). */
+function severityRank(s: import("./core/types").AlertSeverity): number {
+  switch (s) {
+    case "Extreme": return 4;
+    case "Severe": return 3;
+    case "Moderate": return 2;
+    case "Minor": return 1;
+    default: return 0;
+  }
+}
+
+/** Apply a delta to the music or NWR volume and announce the new level.
+ *  Clamps to [0, 1]. Used by the `1`/`Shift+1` and `2`/`Shift+2` shortcuts. */
+function adjustVolume(
+  services: ReturnType<typeof buildServices>,
+  target: "music" | "radio",
+  delta: number
+): void {
+  const s = services.settings.get();
+  const cur = target === "music" ? s.musicVolume : s.nwrVolume;
+  const next = Math.max(0, Math.min(1, cur + delta));
+  if (target === "music") services.settings.update({ musicVolume: next });
+  else services.settings.update({ nwrVolume: next });
+  const label = target === "music" ? "Music" : "Weather Radio";
+  void services.announcer.announce(`${label} volume ${Math.round(next * 100)} percent.`, "assertive");
+}
+
 function SceneStage({
   event,
   rainviewer,
@@ -711,7 +878,7 @@ function SceneStage({
 function buildServices() {
   const settings = new SettingsStore();
   const tts = new WebSpeechTts();
-  const announcer = new AnnouncementQueue(tts, "both");
+  const announcer = new AnnouncementQueue(tts, settings.get().announcerMode);
   const router = new KeyboardRouter();
 
   const mixer = new AudioMixer();
@@ -720,8 +887,9 @@ function buildServices() {
   const sequencer = new PhraseSequencer(mixer);
   const clips = new ClipLibrary(sequencer);
   const alertTones = new AlertTones(mixer);
+  const nwr = new NwrPlayer(mixer);
 
-  const nws = new NwsClient("AccessibleWeatherCenter/0.4 (contact: configure-me@example.com)");
+  const nws = new NwsClient("AccessibleWeatherCenter/0.9.5 (contact: configure-me@example.com)");
   const faa = new FaaClient();
   const rainviewer = new RainViewerClient();
   const weather = new WeatherService(nws);
@@ -759,7 +927,7 @@ function buildServices() {
 
   return {
     settings, tts, announcer, router,
-    mixer, music, clips, alertTones, sequencer,
+    mixer, music, clips, alertTones, sequencer, nwr,
     nws, faa, rainviewer, weather, places, scheduler, stormScanner
   };
 }
