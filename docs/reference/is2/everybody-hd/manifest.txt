@@ -1,0 +1,7 @@
+https://en.everybodywiki.com/images/2/24/Mon_Logo.png	000_Mon_Logo.png	8451
+https://en.everybodywiki.com/images/2/24/Mon_Logo.png	001_Mon_Logo.png	8451
+https://en.everybodywiki.com/images/thumb/1/10/Intellistar_2.jpg/600px-Intellistar_2.jpg	002_600px-Intellistar_2.jpg	27737
+https://en.everybodywiki.com/images/thumb/4/4a/Commons-logo.svg/59px-Commons-logo.svg.png	003_59px-Commons-logo.svg.png	1771
+https://en.everybodywiki.com/resources/assets/licenses/cc-by-sa.png	004_cc-by-sa.png	1377
+https://en.everybodywiki.com/resources/assets/poweredby_mediawiki.svg	005_poweredby_mediawiki.svg	14576
+https://matomo.everybodywiki.com/resources/piwik/piwik.php?idsite=6&rec=1&bots=1	006_piwik.php	43

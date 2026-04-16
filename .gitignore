@@ -1,0 +1,47 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dist-electron/
+.vite/
+*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Claude Code (local-only settings, user-specific)
+.claude/settings.local.json
+
+# Python (scripts/)
+__pycache__/
+*.pyc
+*.pyo
+scripts/out/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Assets (bulk media, external-sourced) — keep the directory in the tree
+# but don't commit its contents. Restore the old "assets are core data"
+# policy by removing this block if the repo moves back to tracking them.
+assets/*
+!assets/.gitkeep
+
+# src/audio/data/ still tracked intentionally — manifests are code, not bulk.

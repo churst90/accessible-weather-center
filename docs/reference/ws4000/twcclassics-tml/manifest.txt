@@ -1,0 +1,11 @@
+https://twcclassics.com/global/images/2016/logo.png	000_logo.png	39109
+https://twcclassics.com/global/images/logo.png	001_logo.png	11161
+https://twcclassics.com/global/images/2016/nav/video.png	002_video.png	3749
+https://twcclassics.com/global/images/2016/nav/audio.png	003_audio.png	3601
+https://twcclassics.com/global/images/2016/nav/images.png	004_images.png	3878
+https://twcclassics.com/global/images/2016/nav/namethattune.png	005_namethattune.png	4322
+https://twcclassics.com/global/images/2016/nav/informationa.png	006_informationa.png	3999
+https://twcclassics.com/global/images/2016/facebook.png	007_facebook.png	1053
+https://twcclassics.com/global/images/2016/instagram.png	008_instagram.png	4147
+https://twcclassics.com/global/images/2016/spotify.png	009_spotify.png	4082
+https://twcclassics.com/global/images/2016/youtube.png	010_youtube.png	1642

@@ -1,0 +1,1828 @@
+/*
+ * Weatherscan visual skin. Decorative only — the semantic layer carries
+ * meaning for assistive tech.
+ *
+ * Fonts: authentic Star4000 fonts from the WeatherStar community (MIT),
+ * with Lato as the display fallback. Loaded locally from /assets/fonts/.
+ */
+
+@import url("https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap");
+
+/* Authentic Star4000 fonts — period-correct WeatherStar 4000 typefaces */
+@font-face {
+  font-family: "Star4000";
+  src: url("/assets/fonts/star4000.ttf") format("truetype");
+  font-weight: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Star4000 Large";
+  src: url("/assets/fonts/star4000_large.ttf") format("truetype");
+  font-weight: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Star4000 Small";
+  src: url("/assets/fonts/star4000_small.ttf") format("truetype");
+  font-weight: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Star4000 Extended";
+  src: url("/assets/fonts/star4000_extended.ttf") format("truetype");
+  font-weight: normal;
+  font-display: swap;
+}
+
+/* Weatherscan theme fonts — Frutiger + Interstate */
+@font-face {
+  font-family: "Frutiger";
+  src: url("/assets/themes/weatherscan/fonts/Frutiger.woff") format("woff");
+  font-weight: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Frutiger";
+  src: url("/assets/themes/weatherscan/fonts/FrutigerBold.woff") format("woff");
+  font-weight: bold;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Interstate";
+  src: url("/assets/themes/weatherscan/fonts/Interstate-Regular.woff") format("woff");
+  font-weight: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Interstate";
+  src: url("/assets/themes/weatherscan/fonts/Interstate-Bold.woff") format("woff");
+  font-weight: bold;
+  font-display: swap;
+}
+
+/* IntelliStar theme fonts — Akkurat Pro (legacy) */
+@font-face {
+  font-family: "akkopro-light";
+  src: url("/assets/themes/intellistar/fonts/akkopro-light.ttf") format("truetype");
+  font-weight: normal;
+  font-display: swap;
+}
+
+/* IntelliStar 1 & WeatherStar XL theme fonts — Akzidenz Grotesk family */
+@font-face {
+  font-family: "AkzidenzGroteskBE";
+  src: url("/assets/fonts/akzidenz-grotesk/AkzidenzGroteskBE-Regular.otf") format("opentype");
+  font-weight: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "AkzidenzGroteskBE";
+  src: url("/assets/fonts/akzidenz-grotesk/AkzidenzGroteskBE-Bold.otf") format("opentype");
+  font-weight: bold;
+  font-display: swap;
+}
+@font-face {
+  font-family: "AkzidenzGroteskBE";
+  src: url("/assets/fonts/akzidenz-grotesk/AkzidenzGroteskBE-Light.otf") format("opentype");
+  font-weight: 300;
+  font-display: swap;
+}
+@font-face {
+  font-family: "AkzidenzGroteskBE";
+  src: url("/assets/fonts/akzidenz-grotesk/AkzidenzGroteskBE-Md.otf") format("opentype");
+  font-weight: 500;
+  font-display: swap;
+}
+/* WeatherStar XL signature weights — Bold Extended & Medium Extended */
+@font-face {
+  font-family: "AkzidenzGroteskBE-BoldEx";
+  src: url("/assets/fonts/akzidenz-grotesk/AkzidenzGroteskBE-BoldEx.otf") format("opentype");
+  font-weight: bold;
+  font-display: swap;
+}
+@font-face {
+  font-family: "AkzidenzGroteskBE-MdEx";
+  src: url("/assets/fonts/akzidenz-grotesk/AkzidenzGroteskBE-MdEx.otf") format("opentype");
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: "AkzidenzGroteskBE-BoldCn";
+  src: url("/assets/fonts/akzidenz-grotesk/AkzidenzGroteskBE-BoldCn.otf") format("opentype");
+  font-weight: bold;
+  font-display: swap;
+}
+
+/* IntelliStar 2 theme fonts — Helvetica Neue */
+@font-face {
+  font-family: "Helvetica Neue";
+  src: url("/assets/fonts/helvetica/HelveticaNeue-Roman.otf") format("opentype");
+  font-weight: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Helvetica Neue";
+  src: url("/assets/fonts/helvetica/HelveticaNeue-Bold.otf") format("opentype");
+  font-weight: bold;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Helvetica Neue";
+  src: url("/assets/fonts/helvetica/HelveticaNeue-Heavy.otf") format("opentype");
+  font-weight: 900;
+  font-display: swap;
+}
+
+/* Helvetica (fallback for IntelliStar themes) */
+@font-face {
+  font-family: "Helvetica";
+  src: url("/assets/fonts/helvetica/HelveticaNeue-Roman.otf") format("opentype");
+  font-weight: normal;
+  font-display: swap;
+}
+
+/* WeatherStar Jr fonts — late-90s simplified WS for smaller cable systems */
+@font-face {
+  font-family: "StarJR";
+  src: url("/assets/fonts/starjr/StarJR.ttf") format("truetype");
+  font-display: swap;
+}
+@font-face {
+  font-family: "StarJR Large";
+  src: url("/assets/fonts/starjr/StarJR Large Compressed.ttf") format("truetype");
+  font-display: swap;
+}
+@font-face {
+  font-family: "StarJR Small";
+  src: url("/assets/fonts/starjr/StarJR Small.ttf") format("truetype");
+  font-display: swap;
+}
+
+/* WeatherStar 3000 fonts — late-80s pre-WS4000, blocky & text-heavy */
+@font-face {
+  font-family: "Star3000";
+  src: url("/assets/fonts/star3000/Star3000.ttf") format("truetype");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Star3000 Large";
+  src: url("/assets/fonts/star3000/Star3000 Large.ttf") format("truetype");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Star3000 Small";
+  src: url("/assets/fonts/star3000/Star3000 Small.ttf") format("truetype");
+  font-display: swap;
+}
+
+:root {
+  --ws-bg-deep: #050d28;
+  --ws-bg-mid: #0a1f4a;
+  --ws-bg-top: #1b3b87;
+  --ws-accent: #4ec9ff;
+  --ws-accent-warm: #ffd24d;
+  --ws-text: #ffffff;
+  --ws-text-dim: #b8c6e0;
+  --ws-led: #ffd24d;
+  --ws-alert: #ff5050;
+  --ws-shadow: 0 0 8px rgba(78, 201, 255, 0.45);
+  --ws-font-display: "Star4000", "Lato", "Helvetica Neue", "Arial", sans-serif;
+  --ws-font-led: "Star4000 Large", "Star4000", "Courier New", monospace;
+  --ws-font-small: "Star4000 Small", "Star4000", "Arial", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--ws-font-display);
+  background: var(--ws-bg-deep);
+  color: var(--ws-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* High contrast mode for low-vision users — toggled by data-contrast="high" on body. */
+body[data-contrast="high"] {
+  --ws-bg-deep: #000000;
+  --ws-bg-mid: #000000;
+  --ws-bg-top: #000033;
+  --ws-text: #ffff00;
+  --ws-text-dim: #ffffff;
+  --ws-accent: #00ffff;
+}
+
+.ws-frame {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: linear-gradient(180deg, var(--ws-bg-top) 0%, var(--ws-bg-mid) 50%, var(--ws-bg-deep) 100%);
+  background-image: var(--ws-bg-image, none);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: relative;
+  overflow: hidden;
+}
+
+.ws-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 24px;
+  background: rgba(0, 0, 0, 0.5);
+  border-bottom: 2px solid var(--ws-accent);
+}
+
+.ws-title {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-shadow: var(--ws-shadow);
+  margin: 0;
+}
+
+.ws-clock {
+  font-family: var(--ws-font-led);
+  font-size: 22px;
+  color: var(--ws-led);
+  text-shadow: 0 0 6px rgba(255, 210, 77, 0.5);
+}
+
+.ws-stage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 32px 48px;
+  gap: 24px;
+  position: relative;
+}
+
+.ws-scene-title {
+  font-size: 36px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-shadow: var(--ws-shadow);
+  margin: 0;
+}
+
+.ws-bug {
+  position: absolute;
+  bottom: 24px;
+  right: 24px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--ws-accent);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ws-text-dim);
+}
+
+.ws-readout-table {
+  width: 100%;
+  max-width: 720px;
+  border-collapse: collapse;
+  font-family: var(--ws-font-led);
+}
+
+.ws-readout-table thead th {
+  font-family: var(--ws-font-display);
+  font-size: 12px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  text-align: left;
+  color: var(--ws-text-dim);
+  padding: 6px 14px;
+  border-bottom: 2px solid var(--ws-accent);
+}
+
+.ws-readout-row th,
+.ws-readout-row td {
+  padding: 12px 14px;
+  background: rgba(0, 0, 0, 0.35);
+  border-left: 4px solid var(--ws-accent);
+  border-bottom: 1px solid rgba(78, 201, 255, 0.15);
+}
+
+.ws-readout-label {
+  font-family: var(--ws-font-display);
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ws-text);
+  width: 40%;
+}
+
+.ws-readout-value {
+  font-size: 28px;
+  color: var(--ws-led);
+}
+
+.ws-readout-row[data-focused="true"] th,
+.ws-readout-row[data-focused="true"] td {
+  background: rgba(78, 201, 255, 0.22);
+  border-left-color: var(--ws-accent-warm);
+  outline: 2px solid var(--ws-accent-warm);
+  outline-offset: -2px;
+}
+
+.ws-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ws-list-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.3);
+  border-left: 3px solid var(--ws-accent);
+}
+
+.ws-list-row[data-focused="true"] {
+  background: rgba(78, 201, 255, 0.25);
+  border-left-color: var(--ws-accent-warm);
+  outline: 2px solid var(--ws-accent-warm);
+  outline-offset: -2px;
+}
+
+.ws-list-row-name {
+  font-weight: 700;
+}
+
+.ws-list-row-detail {
+  color: var(--ws-text-dim);
+  font-size: 14px;
+}
+
+.ws-status-bar {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 10px 24px;
+  background: rgba(0, 0, 0, 0.45);
+  border-top: 1px solid var(--ws-accent);
+  font-size: 13px;
+  letter-spacing: 0.05em;
+}
+
+.ws-alert-banner {
+  background: var(--ws-alert);
+  color: #000;
+  padding: 8px 24px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+/* ─── Severe weather interrupt: orange visual takeover ─── */
+
+.ws-frame.ws-severe {
+  background: linear-gradient(180deg, #8b3000 0%, #cc4400 50%, #993300 100%);
+}
+
+.ws-frame.ws-severe .ws-header {
+  background: rgba(0, 0, 0, 0.5);
+  border-bottom-color: #ff6600;
+}
+
+.ws-frame.ws-severe .ws-alert-banner {
+  background: #ff3300;
+  color: #fff;
+  font-size: 18px;
+  letter-spacing: 0.15em;
+  animation: ws-severe-pulse 2s ease-in-out infinite;
+}
+
+@keyframes ws-severe-pulse {
+  0%, 100% { background: #ff3300; }
+  50% { background: #cc0000; }
+}
+
+.ws-frame.ws-severe .ws-stage {
+  border-left: 4px solid #ff6600;
+  border-right: 4px solid #ff6600;
+}
+
+.ws-frame.ws-severe .ws-readout-row th,
+.ws-frame.ws-severe .ws-readout-row td {
+  border-left-color: #ff6600;
+}
+
+.ws-frame.ws-severe .ws-list-row {
+  border-left-color: #ff6600;
+}
+
+.ws-frame.ws-severe .ws-bug {
+  border-color: #ff6600;
+  color: #ff9966;
+}
+
+/* ─── Severe-weather scrolling ticker (EAS crawl) ─── */
+/* Shown on every theme during a severe interrupt. Per-theme overrides below
+   tint it with era-appropriate color + typography. Default is the authentic
+   TWC alert-bar brick red (#ae1d0b) from IS1-era source material. */
+
+.ws-ticker {
+  overflow: hidden;
+  white-space: nowrap;
+  background: #ae1d0b;
+  color: #ffffff;
+  padding: 10px 0;
+  border-top: 2px solid #ff6600;
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-family: var(--ws-font-display);
+}
+
+.ws-ticker-content {
+  display: inline-block;
+  padding-left: 100%;
+  animation: ws-ticker-scroll 30s linear infinite;
+}
+
+@keyframes ws-ticker-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
+}
+
+/* Reduced-motion: freeze the EAS crawl. The sr-only <ul> still conveys
+   every headline to assistive tech, and the announcer reads new alerts
+   assertively when they arrive, so no information is lost. */
+@media (prefers-reduced-motion: reduce) {
+  .ws-ticker-content {
+    animation: none;
+    padding-left: 1em;
+    white-space: normal;
+  }
+}
+
+/* Per-theme EAS crawl styling. */
+body[data-theme="ws4000-v1"] .ws-ticker,
+body[data-theme="ws4000-v2"] .ws-ticker,
+body[data-theme="wsjr"] .ws-ticker,
+body[data-theme="ws3000"] .ws-ticker {
+  background: #b84000;
+  border-top-color: #ffc840;
+  color: #ffe098;
+  font-family: var(--ws-font-led);
+  letter-spacing: 0.12em;
+}
+
+body[data-theme="weatherstarxl"] .ws-ticker {
+  background: #8a1608;
+  border-top-color: var(--ws-accent-warm);
+  color: #ffffff;
+  font-family: var(--ws-font-display);
+  text-shadow: 2px 2px 0 #000;
+}
+
+body[data-theme="weatherscan-local"] .ws-ticker,
+body[data-theme="weatherscan-v1"] .ws-ticker,
+body[data-theme="weatherscan-v2"] .ws-ticker {
+  background: #ae1d0b;
+  border-top-color: #ffffff;
+  font-family: var(--ws-font-display);
+  letter-spacing: 0.06em;
+}
+
+body[data-theme="intellistar1"] .ws-ticker,
+body[data-theme="intellistar2"] .ws-ticker {
+  background: linear-gradient(180deg, #c21e0c, #8a1608);
+  border-top-color: var(--ws-accent-warm);
+  font-family: var(--ws-font-display);
+  letter-spacing: 0.05em;
+}
+
+
+/* Screen-reader-only utility. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ─── Radar map canvas ─── */
+
+.ws-radar-map {
+  margin-bottom: 16px;
+  border: 1px solid rgba(78, 201, 255, 0.25);
+  border-radius: 6px;
+  overflow: hidden;
+  background: #0a0a1a;
+}
+
+/* Broadcast radar filled the main panel edge-to-edge. The previous 380px
+ * ceiling left it letterboxed at the top of the stage with background art
+ * around it. Allowing the canvas to grow to ~58% of viewport height makes
+ * the radar feel like the primary content of the screen while still
+ * leaving room for the storm-summary readout and table below. */
+.ws-radar-map-scene {
+  max-height: 58vh;
+}
+
+.ws-radar-map-scene canvas {
+  max-height: 58vh;
+  width: 100%;
+  display: block;
+}
+
+.ws-radar-map-nav {
+  max-height: 420px;
+}
+
+.ws-radar-map-nav canvas {
+  max-height: 420px;
+}
+
+/* ─── Map navigation panel ─── */
+
+.ws-map-nav-panel {
+  margin-top: 12px;
+}
+
+.ws-map-nav-tabs {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 12px;
+}
+
+.ws-map-nav-tab {
+  padding: 6px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ws-text-dim);
+  background: rgba(0, 0, 0, 0.3);
+  border-bottom: 2px solid transparent;
+}
+
+.ws-map-nav-tab-active {
+  color: var(--ws-accent);
+  background: rgba(78, 201, 255, 0.1);
+  border-bottom-color: var(--ws-accent);
+}
+
+.ws-map-nav-empty {
+  color: var(--ws-text-dim);
+  font-size: 16px;
+  padding: 16px 0;
+}
+
+.ws-map-nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ws-map-nav-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border-left: 3px solid var(--ws-accent);
+  transition: background 0.15s;
+}
+
+.ws-map-nav-item[data-focused="true"] {
+  background: rgba(78, 201, 255, 0.2);
+  border-left-color: var(--ws-accent-warm);
+  outline: 2px solid var(--ws-accent-warm);
+  outline-offset: -2px;
+}
+
+.ws-map-nav-item-primary {
+  font-weight: 700;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ws-map-nav-item-secondary {
+  font-size: 13px;
+  color: var(--ws-text-dim);
+  padding-left: 18px;
+}
+
+.ws-map-nav-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Grid explorer panel */
+
+.ws-map-nav-grid {
+  padding: 8px 0;
+}
+
+.ws-map-nav-grid-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ws-map-nav-grid-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(78, 201, 255, 0.1);
+}
+
+.ws-map-nav-grid-label {
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ws-text-dim);
+  min-width: 110px;
+  flex-shrink: 0;
+}
+
+.ws-map-nav-grid-value {
+  font-family: var(--ws-font-led);
+  font-size: 20px;
+  color: var(--ws-led);
+}
+
+.ws-map-nav-grid-value-sm {
+  font-size: 15px;
+}
+
+/* Visible focus indicator everywhere by default — accessibility-first. */
+:focus-visible {
+  outline: 3px solid var(--ws-accent-warm);
+  outline-offset: 2px;
+}
+
+/* ─── WeatherStar XL theme overrides (1998-2014) ─── */
+/* The XL used Akzidenz Grotesk Bold Extended, gold (#debd69) city name
+   accents, cloud wallpaper backgrounds, and 2px black text shadows.
+   Visual reference: MistWeatherMedia/weatherstar-xl simulator. */
+
+/* Lighter overlay on top of the authentic cloud wallpaper — lets the
+   sky show through instead of crushing it to black. */
+body[data-theme="weatherstarxl"] .ws-frame {
+  background:
+    linear-gradient(180deg,
+      rgba(20, 45, 95, 0.55) 0%,
+      rgba(10, 25, 60, 0.55) 60%,
+      rgba(0, 8, 24, 0.85) 100%),
+    var(--ws-bg-image, none);
+  background-size: cover;
+  background-position: center;
+}
+
+body[data-theme="weatherstarxl"] .ws-header {
+  background: rgba(0, 0, 0, 0.7);
+  border-bottom: 2px solid var(--ws-accent);
+}
+
+body[data-theme="weatherstarxl"] .ws-scene-title {
+  color: var(--ws-accent-warm);
+  text-shadow: 2px 2px 0 #000;
+  letter-spacing: -0.02em;
+}
+
+body[data-theme="weatherstarxl"] .ws-readout-table {
+  font-family: var(--ws-font-display);
+}
+
+body[data-theme="weatherstarxl"] .ws-readout-label {
+  font-family: var(--ws-font-small);
+  color: var(--ws-text-dim);
+  text-shadow: 2px 2px 0 #000;
+}
+
+body[data-theme="weatherstarxl"] .ws-readout-value {
+  font-family: var(--ws-font-display);
+  text-shadow: 2px 2px 0 #000;
+}
+
+body[data-theme="weatherstarxl"] .ws-readout-row th,
+body[data-theme="weatherstarxl"] .ws-readout-row td {
+  background: rgba(0, 0, 0, 0.45);
+  border-left-color: var(--ws-accent-warm);
+  border-bottom-color: rgba(222, 189, 105, 0.12);
+}
+
+body[data-theme="weatherstarxl"] .ws-readout-row[data-focused="true"] th,
+body[data-theme="weatherstarxl"] .ws-readout-row[data-focused="true"] td {
+  background: rgba(222, 189, 105, 0.15);
+  border-left-color: var(--ws-accent);
+  outline-color: var(--ws-accent);
+}
+
+body[data-theme="weatherstarxl"] .ws-list-row {
+  background: rgba(0, 0, 0, 0.45);
+  border-left-color: var(--ws-accent-warm);
+  text-shadow: 2px 2px 0 #000;
+}
+
+body[data-theme="weatherstarxl"] .ws-list-row[data-focused="true"] {
+  background: rgba(222, 189, 105, 0.15);
+  border-left-color: var(--ws-accent);
+  outline-color: var(--ws-accent);
+}
+
+body[data-theme="weatherstarxl"] .ws-clock {
+  font-family: var(--ws-font-small);
+  text-shadow: 2px 2px 0 #000;
+}
+
+body[data-theme="weatherstarxl"] .ws-bug {
+  border-color: var(--ws-accent-warm);
+  color: var(--ws-accent-warm);
+  text-shadow: 2px 2px 0 #000;
+}
+
+body[data-theme="weatherstarxl"] .ws-status-bar {
+  background: rgba(0, 0, 0, 0.7);
+  border-top-color: var(--ws-accent-warm);
+  text-shadow: 1px 1px 0 #000;
+}
+
+body[data-theme="weatherstarxl"] .ws-radar-map {
+  border-color: rgba(222, 189, 105, 0.3);
+}
+
+/* Unavailable-scene placeholder — used by Traffic, and by Airport
+   Delays / other data-less scenes as a consistent fallback. */
+.ws-unavailable {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 240px;
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.ws-unavailable-title {
+  margin: 0 0 16px;
+  font-size: 28px;
+  color: var(--ws-accent);
+  font-family: var(--ws-font-display);
+}
+
+.ws-unavailable-reason {
+  margin: 0;
+  color: var(--ws-text-dim);
+  font-size: 18px;
+  max-width: 480px;
+  line-height: 1.4;
+}
+
+/* ─── Extended / Hourly columnar forecast grid ─── */
+/* Authentic TWC Local on the 8s layout: day-header / icon / short
+   conditions / hi-lo temps stacked vertically in each column, N columns
+   across. Base styling here is neutral; per-theme overrides below give
+   each era its period-correct look. */
+
+.ws-extended {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.ws-extended-hint {
+  color: var(--ws-text-dim);
+  font-size: 13px;
+  margin: 0 0 12px;
+}
+
+.ws-extended-grid {
+  flex: 1;
+  display: grid;
+  gap: 8px;
+  align-items: stretch;
+  min-height: 280px;
+}
+
+.ws-extended-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: center;
+  padding: 10px 6px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 2px solid transparent;
+  border-radius: 4px;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.ws-extended-cell[data-focused="true"] {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: var(--ws-accent);
+  outline: 2px solid var(--ws-accent);
+  outline-offset: -2px;
+}
+
+.ws-extended-day {
+  font-family: var(--ws-font-display);
+  color: var(--ws-accent-warm);
+  font-size: 20px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.ws-extended-icon {
+  flex: 0 0 auto;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ws-extended-cond {
+  font-family: var(--ws-font-small);
+  color: var(--ws-text);
+  font-size: 13px;
+  line-height: 1.2;
+  margin-bottom: 10px;
+  min-height: 2.4em;
+}
+
+.ws-extended-temps {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-family: var(--ws-font-led);
+  margin-top: auto;
+}
+
+.ws-extended-hi {
+  color: var(--ws-accent-warm);
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.ws-extended-lo {
+  color: var(--ws-accent);
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.ws-extended-precip {
+  font-size: 13px;
+  color: var(--ws-accent);
+  font-family: var(--ws-font-small);
+}
+
+/* ─── WeatherStar 3000 (1988-1990): text-only, no icons ─── */
+body[data-theme="ws3000"] .ws-extended-icon { display: none; }
+body[data-theme="ws3000"] .ws-extended-cell {
+  background: transparent;
+  border-color: rgba(232, 236, 255, 0.2);
+}
+body[data-theme="ws3000"] .ws-extended-day {
+  color: var(--ws-text);
+}
+body[data-theme="ws3000"] .ws-extended-cond {
+  font-size: 14px;
+  color: var(--ws-text);
+  min-height: 3em;
+}
+
+/* ─── WeatherStar 4000 v1 / v2 (+ WSJr sharing cell chrome): the
+       louvered blue cell with yellow Star4000 day labels is common to
+       both WS4000 eras; v2 just floats the whole pane over a gradient
+       frame, handled separately below. ─── */
+body[data-theme="ws4000-v1"] .ws-extended-cell,
+body[data-theme="ws4000-v2"] .ws-extended-cell,
+body[data-theme="wsjr"] .ws-extended-cell {
+  background: linear-gradient(180deg, rgba(27, 59, 135, 0.7), rgba(10, 31, 74, 0.7));
+  border: 2px solid var(--ws-accent-warm);
+  border-radius: 0;
+}
+body[data-theme="ws4000-v1"] .ws-extended-day,
+body[data-theme="ws4000-v2"] .ws-extended-day,
+body[data-theme="wsjr"] .ws-extended-day {
+  color: var(--ws-accent-warm);
+  font-family: var(--ws-font-led);
+  font-size: 22px;
+}
+body[data-theme="ws4000-v1"] .ws-extended-cond,
+body[data-theme="ws4000-v2"] .ws-extended-cond,
+body[data-theme="wsjr"] .ws-extended-cond {
+  color: var(--ws-text);
+  font-family: var(--ws-font-display);
+  font-size: 13px;
+}
+body[data-theme="ws4000-v1"] .ws-extended-hi,
+body[data-theme="ws4000-v2"] .ws-extended-hi,
+body[data-theme="wsjr"] .ws-extended-hi {
+  color: var(--ws-accent-warm);
+  font-family: var(--ws-font-led);
+}
+body[data-theme="ws4000-v1"] .ws-extended-lo,
+body[data-theme="ws4000-v2"] .ws-extended-lo,
+body[data-theme="wsjr"] .ws-extended-lo {
+  color: var(--ws-accent);
+  font-family: var(--ws-font-led);
+}
+
+/* ─── WeatherStar 4000 v2 (2005-2009) frame overrides: orange-to-purple
+       gradient background, floating content pane with cyan glow and drop
+       shadow. Per broadcast reference at docs/reference/ws4000/
+       WS4000_Simulator_v2_*.jpg. ─── */
+body[data-theme="ws4000-v2"] .ws-frame {
+  background: linear-gradient(180deg, #c85a1c 0%, #8a3a2c 35%, #5c2a3c 65%, #2a0a3c 100%);
+  background-image: none;
+}
+body[data-theme="ws4000-v2"] .ws-stage {
+  margin: 1vh 2vw;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(10, 31, 74, 0.92), rgba(5, 13, 40, 0.92));
+  box-shadow:
+    0 0 0 2px rgba(122, 224, 255, 0.6),
+    0 0 24px 4px rgba(122, 224, 255, 0.35),
+    0 8px 24px 0 rgba(0, 0, 0, 0.5);
+}
+
+/* ─── WeatherStar XL (1998-2014): gold header, cloud wallpaper showing ─── */
+body[data-theme="weatherstarxl"] .ws-extended-cell {
+  background: rgba(5, 12, 30, 0.55);
+  border: 1px solid rgba(222, 189, 105, 0.35);
+  backdrop-filter: blur(2px);
+}
+body[data-theme="weatherstarxl"] .ws-extended-day {
+  color: var(--ws-accent-warm);
+  font-family: var(--ws-font-display);
+  letter-spacing: 0.04em;
+  text-shadow: 2px 2px 0 #000;
+  font-size: 22px;
+}
+body[data-theme="weatherstarxl"] .ws-extended-cond {
+  text-shadow: 2px 2px 0 #000;
+}
+body[data-theme="weatherstarxl"] .ws-extended-hi,
+body[data-theme="weatherstarxl"] .ws-extended-lo {
+  text-shadow: 2px 2px 0 #000;
+}
+
+/* ─── Weatherscan trio (Local 1999-2003, V1 2003-2005, V2 2005-2022):
+       navy panels / cyan accent. Shared across all three eras; era-specific
+       typography comes from the theme vars. ─── */
+body[data-theme="weatherscan-local"] .ws-extended-cell,
+body[data-theme="weatherscan-v1"] .ws-extended-cell,
+body[data-theme="weatherscan-v2"] .ws-extended-cell {
+  background: linear-gradient(180deg, rgba(12, 31, 90, 0.82), rgba(6, 18, 51, 0.82));
+  border: 1px solid rgba(0, 200, 255, 0.25);
+  border-radius: 6px;
+}
+body[data-theme="weatherscan-local"] .ws-extended-day,
+body[data-theme="weatherscan-v1"] .ws-extended-day,
+body[data-theme="weatherscan-v2"] .ws-extended-day {
+  color: var(--ws-accent);
+  font-family: var(--ws-font-display);
+  font-weight: 700;
+  font-size: 20px;
+}
+body[data-theme="weatherscan-local"] .ws-extended-cond,
+body[data-theme="weatherscan-local"] .ws-extended-hi,
+body[data-theme="weatherscan-local"] .ws-extended-lo,
+body[data-theme="weatherscan-local"] .ws-extended-precip,
+body[data-theme="weatherscan-v1"] .ws-extended-cond,
+body[data-theme="weatherscan-v1"] .ws-extended-hi,
+body[data-theme="weatherscan-v1"] .ws-extended-lo,
+body[data-theme="weatherscan-v1"] .ws-extended-precip,
+body[data-theme="weatherscan-v2"] .ws-extended-cond,
+body[data-theme="weatherscan-v2"] .ws-extended-hi,
+body[data-theme="weatherscan-v2"] .ws-extended-lo,
+body[data-theme="weatherscan-v2"] .ws-extended-precip {
+  font-family: var(--ws-font-display);
+}
+
+/* ─── IntelliStar 1 (2003-2013): Akzidenz, glass panels over city gradient ─── */
+body[data-theme="intellistar1"] .ws-extended-cell {
+  background: linear-gradient(180deg, rgba(0, 32, 96, 0.55), rgba(0, 16, 48, 0.7));
+  border: 1px solid rgba(51, 170, 255, 0.3);
+  border-radius: 6px;
+  backdrop-filter: blur(3px);
+}
+body[data-theme="intellistar1"] .ws-extended-day {
+  color: var(--ws-text);
+  font-family: var(--ws-font-display);
+  font-weight: 700;
+  font-size: 22px;
+}
+body[data-theme="intellistar1"] .ws-extended-hi {
+  color: var(--ws-accent-warm);
+}
+body[data-theme="intellistar1"] .ws-extended-lo {
+  color: #a6ccff;
+}
+
+/* ─── IntelliStar 2 HD (2013+): Frutiger, glass panels, cinematic ─── */
+body[data-theme="intellistar2"] .ws-extended-cell {
+  background: rgba(0, 18, 44, 0.65);
+  border: 1px solid rgba(63, 169, 255, 0.25);
+  border-radius: 8px;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+body[data-theme="intellistar2"] .ws-extended-cell[data-focused="true"] {
+  background: rgba(63, 169, 255, 0.22);
+  border-color: var(--ws-accent-warm);
+}
+body[data-theme="intellistar2"] .ws-extended-day {
+  color: #ffffff;
+  font-family: var(--ws-font-display);
+  font-weight: 300;
+  font-size: 22px;
+  letter-spacing: 0.04em;
+}
+body[data-theme="intellistar2"] .ws-extended-cond {
+  font-family: var(--ws-font-display);
+  font-weight: 300;
+}
+body[data-theme="intellistar2"] .ws-extended-hi {
+  color: #ffffff;
+  font-family: var(--ws-font-display);
+  font-weight: 300;
+  font-size: 32px;
+}
+body[data-theme="intellistar2"] .ws-extended-lo {
+  color: #a6ccff;
+  font-family: var(--ws-font-display);
+  font-weight: 300;
+  font-size: 28px;
+}
+
+/* ─── Current Conditions hero (all eras) ─── */
+.ws-cc {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 16px;
+}
+.ws-cc-hero {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  padding: 16px 0;
+}
+.ws-cc-icon {
+  flex: 0 0 auto;
+}
+.ws-cc-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ws-cc-temp {
+  font-family: var(--ws-font-led);
+  color: var(--ws-accent-warm);
+  font-size: 120px;
+  line-height: 1;
+  font-weight: 700;
+}
+.ws-cc-deg {
+  font-size: 80px;
+  vertical-align: top;
+  margin-left: 4px;
+}
+.ws-cc-cond {
+  font-family: var(--ws-font-display);
+  color: var(--ws-text);
+  font-size: 32px;
+}
+.ws-cc-place {
+  color: var(--ws-text-dim);
+  font-size: 16px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.ws-cc-hint {
+  color: var(--ws-text-dim);
+  font-size: 13px;
+  margin: 0;
+}
+.ws-cc-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.ws-cc-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.3);
+  border-left: 3px solid var(--ws-accent);
+  border-radius: 4px;
+}
+.ws-cc-cell[data-focused="true"] {
+  background: rgba(255, 255, 255, 0.15);
+  outline: 2px solid var(--ws-accent);
+}
+.ws-cc-cell-label {
+  color: var(--ws-text-dim);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.ws-cc-cell-value {
+  font-family: var(--ws-font-led);
+  color: var(--ws-text);
+  font-size: 22px;
+}
+
+/* WS3000 text-only: keep a tighter/cooler palette */
+body[data-theme="ws3000"] .ws-cc-temp { color: var(--ws-accent-warm); }
+
+/* WS4000 v1/v2 + WSJr hero — period-correct yellow-on-blue chunky display */
+body[data-theme="ws4000-v1"] .ws-cc-temp,
+body[data-theme="ws4000-v2"] .ws-cc-temp,
+body[data-theme="wsjr"] .ws-cc-temp {
+  color: var(--ws-accent-warm);
+  text-shadow: 4px 4px 0 #000;
+}
+body[data-theme="ws4000-v1"] .ws-cc-cell,
+body[data-theme="ws4000-v2"] .ws-cc-cell,
+body[data-theme="wsjr"] .ws-cc-cell {
+  background: linear-gradient(180deg, rgba(27, 59, 135, 0.7), rgba(10, 31, 74, 0.7));
+  border-left: 3px solid var(--ws-accent-warm);
+  border-radius: 0;
+}
+
+/* WSXL — Akzidenz + drop shadows, softer panels */
+body[data-theme="weatherstarxl"] .ws-cc-temp {
+  text-shadow: 3px 3px 0 #000;
+  font-family: var(--ws-font-display);
+}
+body[data-theme="weatherstarxl"] .ws-cc-cell {
+  background: rgba(5, 12, 30, 0.55);
+  border-left-color: var(--ws-accent-warm);
+  backdrop-filter: blur(2px);
+}
+
+/* Weatherscan trio — cool cyan accents, era-appropriate display font */
+body[data-theme="weatherscan-local"] .ws-cc-temp,
+body[data-theme="weatherscan-v1"] .ws-cc-temp,
+body[data-theme="weatherscan-v2"] .ws-cc-temp {
+  color: var(--ws-text);
+  font-family: var(--ws-font-display);
+  font-weight: 300;
+}
+body[data-theme="weatherscan-local"] .ws-cc-cell,
+body[data-theme="weatherscan-v1"] .ws-cc-cell,
+body[data-theme="weatherscan-v2"] .ws-cc-cell {
+  background: linear-gradient(180deg, rgba(12, 31, 90, 0.82), rgba(6, 18, 51, 0.82));
+  border-radius: 6px;
+}
+
+/* IS1 / IS2 — glass panels, thin HD type */
+body[data-theme="intellistar1"] .ws-cc-cell,
+body[data-theme="intellistar2"] .ws-cc-cell {
+  background: rgba(0, 18, 44, 0.55);
+  border-radius: 8px;
+  backdrop-filter: blur(3px);
+}
+body[data-theme="intellistar2"] .ws-cc-temp {
+  color: var(--ws-text);
+  font-family: var(--ws-font-display);
+  font-weight: 200;
+}
+
+/* ─── Overnight Forecast hero card ─── */
+.ws-hero {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 12px;
+}
+.ws-hero-head {
+  text-align: center;
+}
+.ws-hero-period {
+  font-family: var(--ws-font-display);
+  color: var(--ws-accent-warm);
+  font-size: 22px;
+  letter-spacing: 0.12em;
+}
+.ws-hero-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  padding: 16px 0;
+}
+.ws-hero-icon { flex: 0 0 auto; }
+.ws-hero-main { text-align: center; }
+.ws-hero-temp {
+  font-family: var(--ws-font-led);
+  color: var(--ws-accent);
+  font-size: 100px;
+  line-height: 1;
+}
+.ws-hero-cond {
+  color: var(--ws-text);
+  font-size: 22px;
+  margin-top: 4px;
+}
+.ws-hero-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+.ws-hero-stat {
+  display: flex;
+  flex-direction: column;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 8px 12px;
+  border-left: 3px solid var(--ws-accent);
+  border-radius: 4px;
+}
+.ws-hero-stat[data-focused="true"] {
+  background: rgba(255, 255, 255, 0.15);
+  outline: 2px solid var(--ws-accent);
+}
+.ws-hero-stat dt {
+  color: var(--ws-text-dim);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.ws-hero-stat dd {
+  margin: 2px 0 0;
+  font-family: var(--ws-font-led);
+  color: var(--ws-text);
+  font-size: 20px;
+}
+.ws-hero-narrative {
+  margin: 4px 0 0;
+  color: var(--ws-text);
+  font-size: 15px;
+  line-height: 1.5;
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.25);
+  border-left: 3px solid var(--ws-accent-warm);
+  border-radius: 4px;
+}
+
+/* ─── Feels Like split panels ─── */
+.ws-feels { display: flex; flex-direction: column; gap: 16px; }
+.ws-feels-hint { color: var(--ws-text-dim); font-size: 13px; margin: 0; }
+.ws-feels-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  padding: 24px 0;
+}
+.ws-feels-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 2px solid transparent;
+  border-radius: 6px;
+}
+.ws-feels-panel[data-focused="true"] {
+  border-color: var(--ws-accent);
+  outline: 2px solid var(--ws-accent);
+  outline-offset: -2px;
+}
+.ws-feels-label {
+  color: var(--ws-text-dim);
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.ws-feels-value {
+  font-family: var(--ws-font-led);
+  font-size: 96px;
+  line-height: 1;
+  color: var(--ws-accent-warm);
+}
+.ws-feels-pair[data-driver="wind-chill"] .ws-feels-panel[data-panel="feels"] .ws-feels-value {
+  color: #6ec6ff;
+}
+.ws-feels-pair[data-driver="heat-index"] .ws-feels-panel[data-panel="feels"] .ws-feels-value {
+  color: #ff6e6e;
+}
+.ws-feels-advisory {
+  margin: 0;
+  color: var(--ws-accent-warm);
+  text-align: center;
+  font-size: 14px;
+}
+
+/* ─── Temperature Trend ─── */
+.ws-trend { display: flex; flex-direction: column; gap: 14px; height: 100%; }
+.ws-trend-summary {
+  color: var(--ws-text);
+  font-size: 16px;
+  margin: 0;
+}
+.ws-trend-readouts {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.ws-trend-readout {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 8px 12px;
+  border-left: 3px solid var(--ws-accent);
+  border-radius: 4px;
+  text-align: center;
+}
+.ws-trend-label {
+  color: var(--ws-text-dim);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.ws-trend-value {
+  font-family: var(--ws-font-led);
+  font-size: 32px;
+}
+.ws-trend-readout[data-tone="led"] .ws-trend-value { color: var(--ws-led); }
+.ws-trend-readout[data-tone="warm"] .ws-trend-value { color: var(--ws-accent-warm); }
+.ws-trend-readout[data-tone="cool"] .ws-trend-value { color: var(--ws-accent); }
+.ws-trend-readout[data-tone="neutral"] .ws-trend-value { color: var(--ws-text); }
+
+.ws-trend-bars {
+  flex: 1;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 6px;
+  min-height: 160px;
+}
+.ws-trend-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 0;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  border: 2px solid transparent;
+}
+.ws-trend-bar[data-focused="true"] {
+  border-color: var(--ws-accent);
+  background: rgba(255, 255, 255, 0.12);
+}
+.ws-trend-bar-hour {
+  color: var(--ws-text-dim);
+  font-size: 11px;
+}
+.ws-trend-bar-track {
+  flex: 1;
+  width: 60%;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 2px;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+}
+.ws-trend-bar-fill {
+  width: 100%;
+  background: linear-gradient(180deg, var(--ws-accent-warm), var(--ws-accent));
+  border-radius: 2px;
+  transition: height 0.3s ease;
+}
+.ws-trend-bar-temp {
+  font-family: var(--ws-font-led);
+  font-size: 14px;
+  color: var(--ws-text);
+}
+
+/* ─── Almanac sun/moon grid ─── */
+.ws-almanac { display: flex; flex-direction: column; gap: 12px; height: 100%; }
+.ws-almanac-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  flex: 1;
+}
+.ws-almanac-cell {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 14px 18px;
+  border-radius: 4px;
+  border-left: 3px solid var(--ws-accent);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ws-almanac-cell[data-focused="true"] {
+  background: rgba(255, 255, 255, 0.15);
+  outline: 2px solid var(--ws-accent);
+}
+.ws-almanac-spacer { visibility: hidden; }
+.ws-almanac-sun { border-left-color: var(--ws-accent-warm); }
+.ws-almanac-moon { border-left-color: var(--ws-accent); }
+.ws-almanac-label {
+  color: var(--ws-text-dim);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.ws-almanac-value {
+  font-family: var(--ws-font-led);
+  color: var(--ws-text);
+  font-size: 22px;
+}
+
+/* ─── Travel Cities table ─── */
+.ws-travel { display: flex; flex-direction: column; gap: 10px; height: 100%; }
+.ws-travel-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 2fr;
+  gap: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.ws-travel-header {
+  display: contents;
+}
+.ws-travel-header > div {
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.5);
+  color: var(--ws-accent-warm);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-family: var(--ws-font-display);
+}
+.ws-travel-row {
+  display: contents;
+}
+.ws-travel-cell {
+  padding: 10px 12px;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+.ws-travel-cell[data-focused="true"] {
+  background: rgba(255, 255, 255, 0.18);
+  outline: 2px solid var(--ws-accent);
+  outline-offset: -2px;
+}
+.ws-travel-name { flex-direction: column; align-items: flex-start; gap: 2px; }
+.ws-travel-city { color: var(--ws-text); font-size: 16px; }
+.ws-travel-state { color: var(--ws-text-dim); font-size: 12px; }
+.ws-travel-deg { font-family: var(--ws-font-led); color: var(--ws-accent-warm); font-size: 20px; }
+.ws-travel-cond { color: var(--ws-text); font-size: 14px; }
+
+/* ─── Local Forecast large-text narrative ─── */
+.ws-narrative {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 24px;
+  height: 100%;
+}
+.ws-narrative-period {
+  font-family: var(--ws-font-display);
+  color: var(--ws-accent-warm);
+  font-size: 28px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: center;
+}
+.ws-narrative-temp {
+  font-family: var(--ws-font-led);
+  color: var(--ws-accent);
+  font-size: 42px;
+  text-align: center;
+  margin: 0;
+}
+.ws-narrative-text {
+  font-family: var(--ws-font-display);
+  color: var(--ws-text);
+  font-size: 22px;
+  line-height: 1.45;
+  margin: 0;
+  padding: 16px 20px;
+  background: rgba(0, 0, 0, 0.3);
+  border-left: 4px solid var(--ws-accent);
+  border-radius: 4px;
+  flex: 1;
+}
+.ws-narrative-pager {
+  color: var(--ws-text-dim);
+  font-size: 12px;
+  text-align: center;
+  margin: 0;
+}
+
+/* ─── Era logos (TWC, IntelliStar, NOAA) ─── */
+/* Rendered in WeatherscanFrame; theme CSS here controls sizing + placement.
+   Default: hidden. Per-era rules below reveal + position each logo
+   authentically. NOAA logo sits inside AlertsView as data-source attribution
+   (never appeared on-air, but authentic to the data source). */
+
+.ws-twc-logo {
+  display: none;
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  margin-right: 14px;
+  flex-shrink: 0;
+}
+
+.ws-bug-is {
+  width: 96px;
+  height: auto;
+  background: rgba(255, 255, 255, 0.88);
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid rgba(63, 169, 255, 0.4);
+}
+
+/* Weatherscan trio: TWC logo top-left of the header (1999-2022 authentic). */
+body[data-theme="weatherscan-local"] .ws-twc-logo,
+body[data-theme="weatherscan-v1"] .ws-twc-logo,
+body[data-theme="weatherscan-v2"] .ws-twc-logo {
+  display: inline-block;
+  width: 48px;
+  height: 48px;
+}
+
+/* WSXL: smaller TWC logo, tucked against the left edge. */
+body[data-theme="weatherstarxl"] .ws-twc-logo {
+  display: inline-block;
+  width: 44px;
+  height: 44px;
+}
+
+/* IntelliStar 1 + 2 HD: TWC logo top-left of the infobar, larger. */
+body[data-theme="intellistar1"] .ws-twc-logo,
+body[data-theme="intellistar2"] .ws-twc-logo {
+  display: inline-block;
+  width: 60px;
+  height: 60px;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+/* NOAA attribution strip on the Alerts scene. */
+.ws-noaa-attribution {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  margin: 0 0 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border-left: 3px solid var(--ws-accent);
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--ws-text-dim);
+}
+.ws-noaa-logo {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+/* ─── IntelliStar 2 / 2 Jr HD theme (2013+) ─── */
+/* HD-era TWC cable headend. Deep navy → royal blue cinematic gradient
+   over a muted city photo, Frutiger display type, glass panels, and a
+   persistent Lower Display Line (LDL) crawl across the bottom. Covers
+   both the full IS2 HD and the scaled-down IS2 Jr HD — they shared the
+   same visual language, differing only in hardware scale. */
+
+body[data-theme="intellistar2"] .ws-frame {
+  background:
+    linear-gradient(180deg,
+      rgba(0, 12, 34, 0.78) 0%,
+      rgba(0, 30, 70, 0.72) 45%,
+      rgba(0, 8, 24, 0.92) 100%),
+    var(--ws-bg-image, none);
+  background-size: cover;
+  background-position: center;
+}
+
+body[data-theme="intellistar2"] .ws-header {
+  background: linear-gradient(180deg, rgba(0, 20, 56, 0.92), rgba(0, 10, 30, 0.85));
+  border-bottom: 1px solid rgba(63, 169, 255, 0.35);
+  backdrop-filter: blur(4px);
+}
+
+body[data-theme="intellistar2"] .ws-title {
+  font-family: var(--ws-font-display);
+  letter-spacing: 0.02em;
+}
+
+body[data-theme="intellistar2"] .ws-scene-title {
+  font-family: var(--ws-font-display);
+  font-weight: 300;
+  color: var(--ws-text);
+  letter-spacing: 0.01em;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.7);
+}
+
+body[data-theme="intellistar2"] .ws-stage {
+  background: linear-gradient(180deg,
+    rgba(0, 15, 40, 0.55),
+    rgba(0, 25, 58, 0.35));
+  border-left: 1px solid rgba(63, 169, 255, 0.2);
+  border-right: 1px solid rgba(63, 169, 255, 0.2);
+  box-shadow: inset 0 2px 20px rgba(0, 0, 0, 0.4);
+}
+
+body[data-theme="intellistar2"] .ws-readout-row th,
+body[data-theme="intellistar2"] .ws-readout-row td {
+  background: rgba(0, 18, 44, 0.6);
+  border-left-color: var(--ws-accent);
+  border-bottom-color: rgba(63, 169, 255, 0.15);
+  backdrop-filter: blur(2px);
+}
+
+body[data-theme="intellistar2"] .ws-readout-row[data-focused="true"] th,
+body[data-theme="intellistar2"] .ws-readout-row[data-focused="true"] td {
+  background: rgba(63, 169, 255, 0.22);
+  border-left-color: var(--ws-accent-warm);
+  outline-color: var(--ws-accent);
+}
+
+body[data-theme="intellistar2"] .ws-list-row {
+  background: rgba(0, 18, 44, 0.6);
+  border-left-color: var(--ws-accent);
+  backdrop-filter: blur(2px);
+}
+
+body[data-theme="intellistar2"] .ws-list-row[data-focused="true"] {
+  background: rgba(63, 169, 255, 0.22);
+  border-left-color: var(--ws-accent-warm);
+  outline-color: var(--ws-accent);
+}
+
+body[data-theme="intellistar2"] .ws-clock {
+  font-family: var(--ws-font-led);
+  font-weight: 300;
+  letter-spacing: 0.05em;
+}
+
+body[data-theme="intellistar2"] .ws-bug {
+  border-color: var(--ws-accent);
+  color: var(--ws-accent);
+  font-family: var(--ws-font-small);
+  background: rgba(0, 10, 30, 0.6);
+}
+
+/* ─── Lower Display Line (IntelliStar 2 HD crawl) ─── */
+/* Persistent bottom crawl bar shown in place of the status-bar on IS2
+   themes. The animated strip is decorative; the same content is exposed
+   to assistive tech via a visually-hidden <ul> inside LdlCrawl. */
+
+/* Base: authentic LDL strip template (MIT-licensed, from mewtek/OpenStar) —
+   black gradient bar with a rounded nub cutout at the right end where the
+   era's logo or info would sit. Stretched to fit the viewport width; the
+   nub remains anchored to the right edge proportionally. */
+.ws-ldl {
+  display: flex;
+  align-items: stretch;
+  height: 40px;
+  background-image: url("/assets/logos/ldl/LDL.png");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-color: #000;
+  border-top: 1px solid rgba(63, 169, 255, 0.4);
+  color: var(--ws-text);
+  font-family: var(--ws-font-small);
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  overflow: hidden;
+  position: relative;
+}
+
+.ws-ldl-label {
+  flex: 0 0 auto;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--ws-accent);
+  color: #00152f;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 12px;
+}
+
+.ws-ldl-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  flex: 0 0 auto;
+  image-rendering: -webkit-optimize-contrast;
+}
+
+.ws-ldl-track {
+  flex: 1 1 auto;
+  overflow: hidden;
+  white-space: nowrap;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.ws-ldl-content {
+  display: inline-block;
+  padding-left: 2em;
+  white-space: nowrap;
+  animation: ws-ldl-scroll 60s linear infinite;
+  font-weight: 500;
+  color: #e8f3ff;
+}
+
+@keyframes ws-ldl-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ws-ldl-content {
+    animation: none;
+    transform: none;
+    white-space: normal;
+  }
+}
+
+/* Per-theme LDL overrides: tint the label + text only, keep the authentic
+   black strip image as the universal base. Each era had roughly the same
+   strip silhouette — broadcasters differentiated with the label color and
+   typeface, which is what we vary here. */
+
+body[data-theme="intellistar1"] .ws-ldl {
+  border-top-color: rgba(51, 170, 255, 0.4);
+  font-family: var(--ws-font-small);
+}
+body[data-theme="intellistar1"] .ws-ldl-label {
+  background: var(--ws-accent);
+  color: #000820;
+}
+
+body[data-theme="weatherstarxl"] .ws-ldl {
+  border-top-color: var(--ws-accent-warm);
+  font-family: var(--ws-font-small);
+}
+body[data-theme="weatherstarxl"] .ws-ldl-label {
+  background: var(--ws-accent-warm);
+  color: #1a1205;
+}
+body[data-theme="weatherstarxl"] .ws-ldl-content {
+  color: #d4d4d4;
+  text-shadow: 2px 2px 0 #000;
+}
+
+body[data-theme="weatherscan-local"] .ws-ldl,
+body[data-theme="weatherscan-v1"] .ws-ldl,
+body[data-theme="weatherscan-v2"] .ws-ldl {
+  border-top-color: var(--ws-accent);
+  font-family: var(--ws-font-display);
+}
+body[data-theme="weatherscan-local"] .ws-ldl-label,
+body[data-theme="weatherscan-v1"] .ws-ldl-label,
+body[data-theme="weatherscan-v2"] .ws-ldl-label {
+  background: var(--ws-accent-warm);
+  color: #061233;
+  letter-spacing: 0.15em;
+}
+body[data-theme="weatherscan-local"] .ws-ldl-content,
+body[data-theme="weatherscan-v1"] .ws-ldl-content,
+body[data-theme="weatherscan-v2"] .ws-ldl-content {
+  color: #ffffff;
+  font-weight: 400;
+}
+
+

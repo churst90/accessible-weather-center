@@ -1,0 +1,11 @@
+https://en.wikipedia.org/static/images/icons/enwiki-25.svg	000_enwiki-25.svg	115918
+https://en.wikipedia.org/static/images/mobile/copyright/wikipedia-wordmark-en-25.svg	001_wikipedia-wordmark-en-25.svg	9865
+https://en.wikipedia.org/static/images/mobile/copyright/wikipedia-tagline-en-25.svg	002_wikipedia-tagline-en-25.svg	15219
+https://upload.wikimedia.org/wikipedia/en/thumb/9/99/Question_book-new.svg/120px-Question_book-new.svg.png	003_120px-Question_book-new.svg.png	11521
+https://upload.wikimedia.org/wikipedia/commons/thumb/e/ed/WeatherStarIII-example.png/500px-WeatherStarIII-example.png	004_500px-WeatherStarIII-example.png	183995
+https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/IntelliStar_computers_%28cropped%29.jpg/500px-IntelliStar_computers_%28cropped%29.jpg	005_500px-IntelliStar_computers__cropped_.jpg	57165
+https://upload.wikimedia.org/wikipedia/en/thumb/4/4a/Commons-logo.svg/40px-Commons-logo.svg.png	006_40px-Commons-logo.svg.png	2148
+https://upload.wikimedia.org/wikipedia/en/thumb/9/96/Symbol_category_class.svg/40px-Symbol_category_class.svg.png	FAILED	HTTP Error 429: Too many requests (76af2b0)
+https://en.wikipedia.org/wiki/Special:CentralAutoLogin/start?useformat=desktop&type=1x1&usesul3=1	008_start.bin	68
+https://en.wikipedia.org/static/images/footer/wikimedia.svg	009_wikimedia.svg	742
+https://en.wikipedia.org/w/resources/assets/mediawiki_compact.svg	010_mediawiki_compact.svg	3517

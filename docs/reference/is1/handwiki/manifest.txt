@@ -1,0 +1,9 @@
+https://handwiki.org/wiki/images/thumb/b/b9/WATT_Local_on_the_8s_Intellistar.png/240px-WATT_Local_on_the_8s_Intellistar.png	000_240px-WATT_Local_on_the_8s_Intellistar.png	49008
+https://handwiki.org/wiki/extensions/VoteNY/resources/images/star_off.gif	001_star_off.gif	631
+https://handwiki.org/wiki/extensions/VoteNY/resources/images/star_off.gif	002_star_off.gif	631
+https://handwiki.org/wiki/extensions/VoteNY/resources/images/star_off.gif	003_star_off.gif	631
+https://handwiki.org/wiki/extensions/VoteNY/resources/images/star_off.gif	004_star_off.gif	631
+https://handwiki.org/wiki/extensions/VoteNY/resources/images/star_off.gif	005_star_off.gif	631
+https://handwiki.org/wiki/resources/assets/LogoHandwiki.svg	006_LogoHandwiki.svg	27193
+https://handwiki.org/wiki/resources/assets/licenses/cc-by-sa.png	007_cc-by-sa.png	1377
+https://handwiki.org/wiki/resources/assets/mediawiki_compact.svg	008_mediawiki_compact.svg	3517

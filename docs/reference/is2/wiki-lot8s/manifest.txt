@@ -1,0 +1,9 @@
+https://en.wikipedia.org/static/images/icons/enwiki-25.svg	000_enwiki-25.svg	115918
+https://en.wikipedia.org/static/images/mobile/copyright/wikipedia-wordmark-en-25.svg	001_wikipedia-wordmark-en-25.svg	9865
+https://en.wikipedia.org/static/images/mobile/copyright/wikipedia-tagline-en-25.svg	002_wikipedia-tagline-en-25.svg	15219
+https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Local_on_the_8s_logo.png/500px-Local_on_the_8s_logo.png	003_500px-Local_on_the_8s_logo.png	43484
+https://upload.wikimedia.org/wikipedia/en/thumb/9/96/Symbol_category_class.svg/40px-Symbol_category_class.svg.png	004_40px-Symbol_category_class.svg.png	2213
+https://upload.wikimedia.org/wikipedia/en/thumb/4/4a/Commons-logo.svg/60px-Commons-logo.svg.png	005_60px-Commons-logo.svg.png	3338
+https://en.wikipedia.org/wiki/Special:CentralAutoLogin/start?useformat=desktop&type=1x1&usesul3=1	006_start.bin	68
+https://en.wikipedia.org/static/images/footer/wikimedia.svg	007_wikimedia.svg	742
+https://en.wikipedia.org/w/resources/assets/mediawiki_compact.svg	008_mediawiki_compact.svg	3517
