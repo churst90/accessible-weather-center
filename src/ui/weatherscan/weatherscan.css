@@ -8,28 +8,30 @@
 
 @import url("https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap");
 
-/* Authentic Star4000 fonts — period-correct WeatherStar 4000 typefaces */
+/* Authentic Star4000 fonts — period-correct WeatherStar 4000 typefaces.
+   NOTE the star4000/ subdirectory: these paths were flat for months and
+   silently 404ed, so every WS4000-family theme rendered in Lato. */
 @font-face {
   font-family: "Star4000";
-  src: url("/assets/fonts/star4000.ttf") format("truetype");
+  src: url("/assets/fonts/star4000/star4000.ttf") format("truetype");
   font-weight: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "Star4000 Large";
-  src: url("/assets/fonts/star4000_large.ttf") format("truetype");
+  src: url("/assets/fonts/star4000/star4000_large.ttf") format("truetype");
   font-weight: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "Star4000 Small";
-  src: url("/assets/fonts/star4000_small.ttf") format("truetype");
+  src: url("/assets/fonts/star4000/star4000_small.ttf") format("truetype");
   font-weight: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "Star4000 Extended";
-  src: url("/assets/fonts/star4000_extended.ttf") format("truetype");
+  src: url("/assets/fonts/star4000/star4000_extended.ttf") format("truetype");
   font-weight: normal;
   font-display: swap;
 }
@@ -59,11 +61,13 @@
   font-weight: bold;
   font-display: swap;
 }
-
-/* IntelliStar theme fonts — Akkurat Pro (legacy) */
+/* LED/clock readouts on Weatherscan V1+ and IS1 themes reference
+   "InterstateMono" in their --ws-font-led stacks; this face was missing so
+   they silently fell through to Courier New. */
 @font-face {
-  font-family: "akkopro-light";
-  src: url("/assets/themes/intellistar/fonts/akkopro-light.ttf") format("truetype");
+  font-family: "InterstateMono";
+  src: url("/assets/themes/weatherscan/fonts/InterstateMono.woff2") format("woff2"),
+       url("/assets/themes/weatherscan/fonts/InterstateMono.woff") format("woff");
   font-weight: normal;
   font-display: swap;
 }
@@ -211,6 +215,14 @@ body[data-contrast="high"] {
   --ws-text: #ffff00;
   --ws-text-dim: #ffffff;
   --ws-accent: #00ffff;
+}
+/* Variables alone aren't enough: photo wallpapers (--ws-bg-image) and the
+   hardcoded per-theme frame gradients would otherwise remain under the
+   yellow-on-black text. !important intentionally outranks every theme
+   frame rule — high contrast is an accessibility mode, not a skin. */
+body[data-contrast="high"] .ws-frame {
+  background-image: none !important;
+  background-color: #000000 !important;
 }
 
 .ws-frame {
@@ -388,7 +400,19 @@ body[data-contrast="high"] {
 /* ─── Severe weather interrupt: orange visual takeover ─── */
 
 .ws-frame.ws-severe {
-  background: linear-gradient(180deg, #8b3000 0%, #cc4400 50%, #993300 100%);
+  /* !important on the longhands: the per-theme frame rules
+     (body[data-theme="…"] .ws-frame) have higher specificity and were
+     silently winning on XL / WS4000-v2 / IS2, so the emergency takeover
+     never showed on those themes. The takeover must beat every skin. */
+  background-image: linear-gradient(180deg, #8b3000 0%, #cc4400 50%, #993300 100%) !important;
+  background-color: #8b3000 !important;
+}
+/* IS2 exception: the real LOT8s used dedicated severe background art, not
+   a flat orange field. App.tsx swaps --ws-bg-image to the severe pool
+   while interrupted; let it show through on this theme. */
+body[data-theme="intellistar2"] .ws-frame.ws-severe {
+  background-image: var(--ws-bg-image, linear-gradient(180deg, #8b3000 0%, #cc4400 50%, #993300 100%)) !important;
+  background-color: #8b3000 !important;
 }
 
 .ws-frame.ws-severe .ws-header {
@@ -1826,3 +1850,14 @@ body[data-theme="weatherscan-v2"] .ws-ldl-content {
 }
 
 
+
+/* ─── Era-authenticity: legacy text-only units ───
+   The real WS3000 and WSJr never displayed weather icons anywhere — they
+   were text-page systems. Hide the hero icons the shared scene views
+   render. (Extended-cell icons are already hidden in the ws3000 block.) */
+body[data-theme="ws3000"] .ws-cc-icon,
+body[data-theme="ws3000"] .ws-hero-icon,
+body[data-theme="wsjr"] .ws-cc-icon,
+body[data-theme="wsjr"] .ws-hero-icon {
+  display: none;
+}

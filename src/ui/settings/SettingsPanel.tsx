@@ -63,22 +63,10 @@ export function SettingsPanel({ store, open, onClose, flavors }: Props) {
 
         <fieldset style={{ border: "1px solid var(--ws-accent)", padding: 12, marginBottom: 16 }}>
           <legend>Accessibility</legend>
-          <label style={{ display: "block", marginBottom: 8 }}>
-            Announcement mode:{" "}
-            <select
-              value={settings.announcerMode}
-              onChange={(e) => store.update({ announcerMode: e.target.value as Settings["announcerMode"] })}
-            >
-              <option value="live-region">Screen reader only (NVDA / JAWS / VoiceOver) — recommended</option>
-              <option value="tts">Built-in speech (Web Speech API) — no screen reader</option>
-              <option value="both">Both (not recommended — causes double speech)</option>
-              <option value="off">Silent</option>
-            </select>
-          </label>
-          <p style={{ marginTop: 4, fontSize: 12, color: "var(--ws-text-dim)" }}>
-            Use "Screen reader only" if you run NVDA, JAWS, Narrator, or VoiceOver — the app will push
-            announcements to an aria-live region for your screen reader to read. Use "Built-in speech"
-            only when running the app without any screen reader.
+          <p style={{ marginTop: 0, fontSize: 12, color: "var(--ws-text-dim)" }}>
+            All announcements go to your screen reader (NVDA, JAWS, Narrator, Orca, VoiceOver) via
+            aria-live regions. The only speech the app itself produces is the recorded narrator clips —
+            there is no built-in text-to-speech.
           </p>
           <label style={{ display: "block", marginTop: 8 }}>
             Map grid step:{" "}

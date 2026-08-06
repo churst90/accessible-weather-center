@@ -74,7 +74,10 @@ export function LdlCrawl({ faa, leadItems = [], leadIconName }: Props) {
   // Duplicate the list so the marquee can loop seamlessly.
   const strip = items.join("   •   ");
 
-  const iconStem = leadIconName ? TINY_MAP[leadIconName] ?? leadIconName : null;
+  // Only render the tiny icon when the condition is actually in TINY_MAP —
+  // guessing the raw condition key as a filename stem produced broken
+  // images for anything unmapped (e.g. "scattered-showers_Xsm.png").
+  const iconStem = leadIconName ? TINY_MAP[leadIconName] ?? null : null;
 
   return (
     <div className="ws-ldl">

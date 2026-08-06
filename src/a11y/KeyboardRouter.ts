@@ -1,3 +1,5 @@
+import { isModalOpen } from "./modality";
+
 /**
  * Centralized keyboard shortcut registry. Components register intent (e.g.
  * "next scene") with a key spec; the router resolves what fires on a given
@@ -41,6 +43,10 @@ export class KeyboardRouter {
   attach(target: Window | HTMLElement = window): () => void {
     const onKey = (raw: Event) => {
       if (!this.enabled) return;
+      // A modal owns the keyboard: shortcuts must not fire while focus sits
+      // on modal buttons/checkboxes. (The modal consumes Escape itself in
+      // capture phase before this listener ever sees it.)
+      if (isModalOpen()) return;
       const e = raw as KeyboardEvent;
       // When the user is typing in an editable field (ZIP input, settings
       // inputs, etc.), do not consume keystrokes. Only Escape bubbles

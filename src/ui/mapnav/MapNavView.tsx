@@ -7,6 +7,8 @@ import type { WeatherService } from "../../core/weather/WeatherService";
 import type { AnnouncementQueue } from "../../a11y/AnnouncementQueue";
 import { GRID_STEP_PRESETS_MI, type SettingsStore } from "../../core/settings/SettingsStore";
 import { pointInPolygon } from "../../core/radar/TileMath";
+import { bandInfo } from "../../core/radar/IntensityLegend";
+import { isModalOpen } from "../../a11y/modality";
 import { RadarMapCanvas } from "../scenes/RadarMapCanvas";
 
 /**
@@ -95,8 +97,22 @@ export function MapNavView({
   gridCtxRef.current = gridCtx;
   const geoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const snap = stormScanner.getSnapshot();
-  const storms = snap.storms;
+  // Live storm list: subscribe to the scanner instead of reading a one-shot
+  // snapshot at render — otherwise the list, canvas markers, and announced
+  // data freeze at whatever the radar looked like when the mode opened.
+  const [storms, setStorms] = useState<TrackedStorm[]>(() => stormScanner.getSnapshot().storms);
+  useEffect(() => {
+    if (!active) return;
+    setStorms(stormScanner.getSnapshot().storms);
+    return stormScanner.subscribe((e) => {
+      if (e.kind === "updated" && e.all) setStorms(e.all);
+    });
+  }, [active, stormScanner]);
+
+  // Keep the selection valid when the list shrinks between scans.
+  useEffect(() => {
+    setStormIdx((i) => (storms.length === 0 ? 0 : Math.min(i, storms.length - 1)));
+  }, [storms.length]);
 
   // Fetch alerts for the alert nav mode.
   useEffect(() => {
@@ -199,6 +215,7 @@ export function MapNavView({
   useEffect(() => {
     if (!active) return;
     const onKey = (e: KeyboardEvent) => {
+      if (isModalOpen()) return;
       const target = e.target as HTMLElement | null;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
 
@@ -748,16 +765,11 @@ function polygonCentroid(poly: number[][]): LatLon {
 
 // ─── Formatting ───
 
+// Band labels/colors come from IntensityLegend — the one source of truth —
+// so the spoken words, panel text, dots, and canvas legend can never drift
+// apart again.
 function intensityLabel(band: string): string {
-  switch (band) {
-    case "trace":      return "Drizzle";
-    case "light":      return "Light rain";
-    case "moderate":   return "Moderate rain";
-    case "heavy":      return "Heavy rain";
-    case "very-heavy": return "Very heavy rain";
-    case "extreme":    return "Extreme rain";
-    default:           return "Precipitation";
-  }
+  return bandInfo(band).label;
 }
 
 function bearingShort(deg: number): string {
@@ -772,27 +784,11 @@ function bearingLong(deg: number): string {
 }
 
 function stormDotColor(band: string): string {
-  switch (band) {
-    case "trace":      return "#90ee90";
-    case "light":      return "#00cc00";
-    case "moderate":   return "#ffcc00";
-    case "heavy":      return "#ff6600";
-    case "very-heavy": return "#ff0000";
-    case "extreme":    return "#cc00cc";
-    default:           return "#aaaaaa";
-  }
+  return bandInfo(band).color;
 }
 
 function precipColor(band: string): string {
-  switch (band) {
-    case "trace":      return "#90ee90";
-    case "light":      return "#66dd66";
-    case "moderate":   return "#ffcc00";
-    case "heavy":      return "#ff6600";
-    case "very-heavy": return "#ff3333";
-    case "extreme":    return "#cc00cc";
-    default:           return "var(--ws-text-dim)";
-  }
+  return band === "none" ? "var(--ws-text-dim)" : bandInfo(band).color;
 }
 
 function severityColor(severity: string): string {

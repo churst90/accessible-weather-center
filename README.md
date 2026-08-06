@@ -2,7 +2,7 @@
 
 A fully accessible, speech- and keyboard-driven weather application with a Weatherscan-style cycling display. Designed accessibility-first: every visual is mirrored by a semantic narration so blind and low-vision users get the same information at the same fidelity as sighted users — including weather radar, which is normally inaccessible.
 
-> Status: **v0.10.0 — reliability release.** Ten confirmed bugs fixed from a full-codebase audit, headlined by: severe-alert polling now follows your home location when you change it (it used to keep watching the boot-time city); storm movement is no longer falsely reported as "Stationary" between radar frame updates; new-storm announcements are no longer silently suppressed by shifting storm ids; one failed network launch no longer bricks all scenes until restart; a render crash now speaks a recovery hint instead of white-screening silently; the `?` Help shortcut actually opens Help; Weather Radio recovers after repeated stream failures and picks stations state-aware; narration no longer overlaps itself on rapid scene changes; music no longer surges over narration when you touch the volume keys; wintry forecasts narrate with the correct wintry clips. New: the Map Navigation grid explorer's step size is adjustable (1 / 3 / 5 / 10 / 25 miles) live with the bracket keys and persisted in Settings. New: a unit-test suite (`npm test`, zero added dependencies) covering the storm tracker, weather cache, keyboard router, narration condition-mapping, and station matching. See [CHANGELOG.md](CHANGELOG.md) for the full details and [docs/user-manual.md](docs/user-manual.md) for the user manual.
+> Status: **v0.11.0 — accessibility core + visual quick wins.** Speech policy clarified: the app has exactly two speech paths — your screen reader reading the aria-live regions, and the recorded narrator clips. The Web Speech built-in TTS is removed entirely. The announcement system was rebuilt (independent polite/assertive channels that no longer erase each other, identical repeats now speak, Escape's cancel works for screen-reader users), a shared modality gate stops scene shortcuts and arrow keys from firing underneath open dialogs, and Map Navigation now tracks the live radar instead of freezing at entry. Visual batch: the Star4000 fonts load for the first time (a path typo had every WS4000 theme in fallback fonts), IntelliStar 1 icons render (were 100% broken images), the severe-weather takeover now wins on every theme (IS2 authentically swaps to its LOT8 severe background art), high-contrast mode strips photo wallpapers, per-scene backgrounds reset properly, and all radar intensity labels/colors flow from one canonical table. Prior release 0.10.0 fixed ten audit-confirmed reliability bugs and added the test suite and the adjustable map-nav grid step. See [CHANGELOG.md](CHANGELOG.md) and [docs/user-manual.md](docs/user-manual.md).
 
 ## What this project is
 
@@ -11,7 +11,7 @@ Weather maps and radar displays are notoriously inaccessible to screen readers �
 This project is a deliberate attempt to build a weather experience that:
 
 1. **Looks and feels like the 24/7 Weatherscan loop** — cycling scenes, calm music, on-screen narration, the bug in the corner.
-2. **Speaks every screen** with structured, prioritized narration. Default mode pushes announcements to an aria-live region for your screen reader (NVDA, JAWS, VoiceOver) — running both the screen reader and the app's built-in speech at the same time causes double speech, so built-in TTS is opt-in via Settings → Accessibility for users who have no screen reader.
+2. **Speaks every screen** with structured, prioritized narration, delivered through your screen reader (NVDA, JAWS, Narrator, Orca, VoiceOver) via aria-live regions. The app deliberately has no built-in TTS — the only speech it produces itself is the recorded narrator clips.
 3. **Makes the map navigable as data, not pixels** — multiple "lenses" onto the same spatial data, each matched to a question a real user actually asks.
 4. **Stays running in the background** so the user gets toast notifications when conditions worsen or alerts are issued.
 5. **Honors the TWC visual era** you pick — scene layout, typography, palette, crawl behavior, and narrator all match the hardware unit.
@@ -125,7 +125,7 @@ Optional live NWR transmitter stream that plays in the background regardless of 
 
 ### When a stream is unavailable
 
-If a transmitter is offline or your network blocks the Icecast feed, the player retries with exponential backoff (2s, 4s, 8s, 16s, 30s). A connect-timeout guard also catches servers that accept the connection but never send data. After five consecutive failures the player gives up and announces *"Weather Radio stream for {call sign} is unavailable. Press comma to open settings and choose another station, or disable Weather Radio."* — you'll hear this via your screen reader (or built-in TTS, if enabled). When a stream finally starts flowing, it announces *"Weather Radio streaming from {call sign}."* Re-selecting a station (even the same one) or changing any audio setting retries a failed stream; switching call signs resets the failure counter and starts fresh.
+If a transmitter is offline or your network blocks the Icecast feed, the player retries with exponential backoff (2s, 4s, 8s, 16s, 30s). A connect-timeout guard also catches servers that accept the connection but never send data. After five consecutive failures the player gives up and announces *"Weather Radio stream for {call sign} is unavailable. Press comma to open settings and choose another station, or disable Weather Radio."* — your screen reader reads this from the live region. When a stream finally starts flowing, it announces *"Weather Radio streaming from {call sign}."* Re-selecting a station (even the same one) or changing any audio setting retries a failed stream; switching call signs resets the failure counter and starts fresh.
 
 ### Legal
 
@@ -143,10 +143,10 @@ src/
 │   ├── scenes/    # Scene interface, SceneScheduler, scene implementations
 │   └── settings/  # SettingsStore, themes, backgroundCatalog
 ├── a11y/        # Accessibility plumbing.
-│   ├── TtsService.ts          # Pluggable TTS (Web Speech default)
-│   ├── AnnouncementQueue.ts   # Bridge to TTS + aria-live region
+│   ├── AnnouncementQueue.ts   # Polite + assertive aria-live channels
 │   ├── AnnouncerContext.ts
 │   ├── KeyboardRouter.ts      # Centralized shortcut registry
+│   ├── modality.ts            # "Is a modal open?" gate for key handlers
 │   ├── useArrowList.ts        # 1-D list navigation
 │   └── useArrowGrid.ts        # 2-D grid navigation (columns × rows)
 ├── audio/       # AudioMixer with ducking, MusicPlayer, ClipLibrary, PhraseSequencer
@@ -184,8 +184,8 @@ These are *load-bearing*, not stylistic preferences:
 
 - **Electron** — desktop shell (tray, notifications, background).
 - **Vite + React + TypeScript** — renderer UI.
-- **Web Speech API** — optional built-in TTS engine (pluggable). Off by default — your screen reader handles speech via the aria-live region.
-- **Web Audio API** — music/voice mixer with ducking.
+- **aria-live regions** — all announcements go to your screen reader; the app has no built-in TTS by design.
+- **Web Audio API** — music/voice/radio mixer with ducking.
 - **NWS API** + **RainViewer** + **FAA NAS Status** — weather data. All free, no keys.
 
 ## Fan-sourced assets and attribution

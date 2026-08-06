@@ -3,6 +3,7 @@ import type { RainViewerClient } from "../weather/RainViewerClient";
 import { sampleFrame, type SampleOptions } from "./RainViewerSampler";
 import { clusterStorms } from "./StormClusterer";
 import { StormTracker, type TrackedStorm, type TrackResult } from "./StormTracker";
+import { bandInfo } from "./IntensityLegend";
 import { haversineMiles } from "./TileMath";
 
 /**
@@ -335,15 +336,7 @@ export function describeStorm(storm: TrackedStorm, home: LatLon): string {
 }
 
 function bandPhrase(band: string): string {
-  switch (band) {
-    case "trace":      return "Drizzle";
-    case "light":      return "Light rain";
-    case "moderate":   return "Moderate rain";
-    case "heavy":      return "Heavy rain";
-    case "very-heavy": return "Very heavy rain";
-    case "extreme":    return "Extreme rain";
-    default:           return "Precipitation";
-  }
+  return bandInfo(band).phrase;
 }
 
 function compassLongForDeg(deg: number): string {

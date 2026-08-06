@@ -163,17 +163,28 @@ interface Props {
 
 export function WeatherIcon({ name, size = 64, title }: Props) {
   const reduced = useReducedMotion();
-  let src: string;
+  // Ordered fallback chain: still (reduced motion) → resolution WEBP →
+  // GIF pool. A candidate that 404s advances to the next at runtime via
+  // onError; when everything fails, render nothing — a broken-image
+  // placeholder is worse than no icon (and some theme icon dirs don't
+  // cover every condition).
+  const candidates: string[] = [];
   if (reduced && STILLS_MAP[name]) {
-    src = `${STILLS_BASE}/${encodeURIComponent(STILLS_MAP[name])}`;
-  } else if (_iconResolution && WEBP_MAP[name]) {
-    src = `/assets/icons/${_iconResolution}x${_iconResolution}/${WEBP_MAP[name]}.webp`;
-  } else {
-    src = `${_iconBase}/${GIF_MAP[name] ?? "No-Data.gif"}`;
+    candidates.push(`${STILLS_BASE}/${encodeURIComponent(STILLS_MAP[name])}`);
   }
+  if (_iconResolution && WEBP_MAP[name]) {
+    candidates.push(`/assets/icons/${_iconResolution}x${_iconResolution}/${WEBP_MAP[name]}.webp`);
+  }
+  candidates.push(`${_iconBase}/${GIF_MAP[name] ?? "No-Data.gif"}`);
+
+  const [failed, setFailed] = useState(0);
+  useEffect(() => setFailed(0), [name, reduced]);
+
+  if (failed >= candidates.length) return null;
   return (
     <img
-      src={src}
+      src={candidates[failed]}
+      onError={() => setFailed((n) => n + 1)}
       alt={title ?? ""}
       width={size}
       height={size}

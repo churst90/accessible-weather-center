@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { AnnouncementQueue } from "./AnnouncementQueue";
+import { isModalOpen } from "./modality";
 
 /**
  * 2-D arrow navigation for scenes laid out as a grid of cells (columnar
@@ -33,6 +34,9 @@ export function useArrowGrid<T>(
   useEffect(() => {
     if (!enabled) return;
     const onKey = (e: KeyboardEvent) => {
+      // Modal open: the scene underneath stays mounted, but its arrows must
+      // not steal keys from (or announce over) the dialog's controls.
+      if (isModalOpen()) return;
       const len = itemsRef.current.length;
       const cols = Math.max(1, columnsRef.current);
       if (len === 0) return;

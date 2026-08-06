@@ -2,15 +2,7 @@ import type { StormTrackerData } from "../../core/scenes/scenes/StormTrackerScen
 import { useArrowList } from "../../a11y/useArrowList";
 import { useAnnouncer } from "../../a11y/AnnouncerContext";
 
-const BAND_LABELS: Record<string, string> = {
-  none: "None",
-  trace: "Trace",
-  light: "Light rain",
-  moderate: "Moderate rain",
-  heavy: "Heavy rain",
-  "very-heavy": "Very heavy rain",
-  extreme: "Extreme rain"
-};
+import { bandInfo } from "../../core/radar/IntensityLegend";
 
 function compassLabel(deg: number): string {
   const dirs = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
@@ -46,7 +38,7 @@ export function StormTrackerView({ data }: { data: StormTrackerData }) {
       : "Not approaching";
 
   const rows = [
-    { label: "Intensity", value: BAND_LABELS[storm.band] ?? storm.band },
+    { label: "Intensity", value: bandInfo(storm.band).label },
     { label: "Distance", value: `${storm.distanceFromHomeMi.toFixed(1)} miles` },
     { label: "Direction", value: compassLabel(storm.bearingFromHomeDeg) },
     { label: "Movement", value: movementText },

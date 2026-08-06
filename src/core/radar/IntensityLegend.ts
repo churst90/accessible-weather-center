@@ -55,3 +55,33 @@ export function describeCell(mmPerHour: number, includeColor = true): string {
 export function mmPerHourToInPerHour(mmPerHour: number): number {
   return mmPerHour / 25.4;
 }
+
+/**
+ * Canonical per-band presentation: one label, one spoken phrase, one hex
+ * color per band, used by EVERY view, canvas legend, and announcement.
+ * Before this existed in practice, five separate hand-rolled tables had
+ * drifted apart — the canvas legend called #ffcc00 "Heavy" while the storm
+ * markers used it for moderate.
+ */
+export interface BandInfo {
+  /** Short display label, e.g. "Heavy rain". */
+  label: string;
+  /** Spoken phrase for announcements, e.g. "Heavy rain". */
+  phrase: string;
+  /** Marker/legend hex color. */
+  color: string;
+}
+
+export const BAND_INFO: Record<PrecipBand, BandInfo> = {
+  "none":       { label: "Clear",           phrase: "No precipitation", color: "#3a3a3a" },
+  "trace":      { label: "Drizzle",         phrase: "Drizzle",          color: "#7fce6b" },
+  "light":      { label: "Light rain",      phrase: "Light rain",       color: "#3fa63f" },
+  "moderate":   { label: "Moderate rain",   phrase: "Moderate rain",    color: "#ffcc00" },
+  "heavy":      { label: "Heavy rain",      phrase: "Heavy rain",       color: "#ff7300" },
+  "very-heavy": { label: "Very heavy rain", phrase: "Very heavy rain",  color: "#e60000" },
+  "extreme":    { label: "Extreme rain",    phrase: "Extreme rain",     color: "#c700c7" },
+};
+
+export function bandInfo(band: PrecipBand | string): BandInfo {
+  return BAND_INFO[band as PrecipBand] ?? BAND_INFO["none"];
+}

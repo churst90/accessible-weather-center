@@ -4,6 +4,7 @@ import type { RainViewerClient } from "../../core/weather/RainViewerClient";
 import type { WeatherAlert } from "../../core/types";
 import { useArrowList } from "../../a11y/useArrowList";
 import { useAnnouncer } from "../../a11y/AnnouncerContext";
+import { bandInfo } from "../../core/radar/IntensityLegend";
 import { WeatherIcon, chooseIcon } from "../weatherscan/WeatherIcon";
 import { RadarMapCanvas } from "./RadarMapCanvas";
 
@@ -149,15 +150,7 @@ function describeStormRow(storm: TrackedStorm, i: number): string {
 }
 
 function intensityLabel(storm: TrackedStorm): string {
-  switch (storm.band) {
-    case "trace":      return "Drizzle";
-    case "light":      return "Light rain";
-    case "moderate":   return "Moderate rain";
-    case "heavy":      return "Heavy rain";
-    case "very-heavy": return "Very heavy rain";
-    case "extreme":    return "Extreme rain";
-    default:           return "Precipitation";
-  }
+  return bandInfo(storm.band).label;
 }
 
 function bearingShort(deg: number): string {

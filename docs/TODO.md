@@ -60,6 +60,19 @@ Prioritized backlog. Ordered top to bottom within each section. Items marked `[x
 - [x] ~~Broadcast capture pipeline~~ — `scripts/scrape_page_images.py` + `scrape_batch.sh`.
 - [x] ~~Legacy era research docs~~ — `docs/legacy-eras.md`, `docs/reference/`, `docs/reference-capture-plan.md`.
 
+## v0.11.0 — audit Phases 2 + 3 — DONE
+
+- [x] ~~No-built-in-TTS policy~~ — WebSpeechTts/TtsService, announcerMode, ttsVoice/ttsRate all removed. Screen reader (aria-live) + narrator clips are the only speech paths, by design.
+- [x] ~~AnnouncementQueue rebuild~~ — independent polite/assertive slots, repeat-breaking zero-width-space alternation, cancel() that actually clears the regions. Unit-tested.
+- [x] ~~Modality gate~~ — `src/a11y/modality.ts`; ModalDialog push/pop; KeyboardRouter + useArrowGrid/useArrowList + MapNav + PlacesMode all stand down under modals.
+- [x] ~~MapNavView reactivity~~ — subscribes to scanner updates, clamps selection on shrink.
+- [x] ~~Star4000 font paths + InterstateMono face~~; dead akkopro-light face removed.
+- [x] ~~IS1 icons (42px WEBP) + WeatherIcon runtime fallback chain~~ (still → WEBP → GIF → hidden, no more broken-image placeholders); ws3000/wsjr hero icons hidden; LDL stem guard.
+- [x] ~~Severe takeover specificity~~ — wins on all themes; IS2 uses the LOT8 severe background pool (pickBackground severe param finally wired).
+- [x] ~~High-contrast background neutralization~~; ~~stale per-scene background reset~~ (`--ws-theme-bg-image`).
+- [x] ~~Intensity table unification~~ — `IntensityLegend.BAND_INFO` is now the single source for band labels/phrases/colors across all five former tables; sampler color names from `classifyMmPerHour`.
+- [x] ~~7 unpooled Weatherscan city backgrounds added~~; ~~status-bar hotkey hints corrected~~.
+
 ## v0.10.0 — reliability release (audit Phase 1) — DONE
 
 All ten confirmed silent-failure bugs from `docs/code-audit-2026-08.md` fixed, plus the first unit-test suite and a map-nav feature. Details in CHANGELOG 0.10.0.
@@ -154,7 +167,7 @@ All ten confirmed silent-failure bugs from `docs/code-audit-2026-08.md` fixed, p
 
 - [x] ~~Place picker persistence~~ — STALE ENTRY: `PlacesStore` already persists (localStorage `awc.places.v1`). Still open: move both stores to `app.getPath("userData")` so dev and packaged builds share state (localStorage is origin-scoped).
 - [ ] **First-run setup flow.** Prompt for home location on first launch instead of the hard-coded Greeneville TN default in `defaultPlaces()`. The ZIP flow in Favorites (M → Z) already works; first-run just needs to open into it.
-- [ ] **Settings panel polish.** TTS voice picker, TTS rate slider (settings exist, nothing reads them), scene-duration overrides per flavor.
+- [ ] **Settings panel polish.** Scene-duration overrides per flavor. (TTS voice/rate items dropped — no-TTS policy as of v0.11.0.)
 - [ ] **Error/empty states for every scene.** v0.10.0 added the ErrorBoundary + SceneUnavailable safety net; per-scene visual empty states still worth fleshing out.
 - [x] ~~NWS retry/backoff~~ — STALE ENTRY: shipped long ago. `NwsClient.get` has 10s timeout, 3 retries, exponential backoff, and Retry-After handling.
 - [ ] **Production asset serving.** Dev middleware in `vite.config.ts` only handles dev. For Electron prod, register a custom `awc-asset://` protocol resolving to the assets folder.
@@ -213,8 +226,8 @@ All ten confirmed silent-failure bugs from `docs/code-audit-2026-08.md` fixed, p
 
 ## Known bugs / cleanup
 
-- [ ] `WebSpeechTts.setVoice` doesn't persist across reloads — `ttsVoice`/`ttsRate` settings exist but nothing reads them.
-- [ ] `AnnouncementQueue` doesn't actually queue — it overwrites, and the polite/assertive regions clear each other. Repeated identical announcements are silent (no aria-live mutation), and `cancel()` is a no-op in live-region mode. Full rebuild is audit Phase 2.
+- [x] ~~`WebSpeechTts.setVoice` persistence~~ — moot: built-in TTS removed entirely in v0.11.0 (no-TTS policy).
+- [x] ~~`AnnouncementQueue` overwrite/silent-repeat/cancel bugs~~ — rebuilt in v0.11.0 (independent channels, repeat-breaking, working cancel).
 - [x] ~~`KeyboardRouter` shortcut tests~~ — covered in `tests/KeyboardRouter.test.ts` (shifted symbols, digits, letters, editable-field guard, conflicts).
 - [ ] Tray icon still empty on Windows packs — root cause known: `dist/assets/logos/app-icon-180.png` never exists in prod (assets are gitignored and served by dev middleware only), and `nativeImage.createFromPath` returns an empty image instead of throwing. Blocked on "Production asset serving".
 

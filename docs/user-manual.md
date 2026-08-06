@@ -29,13 +29,10 @@ The application's core promise: **anything a sighted user can see, you can hear 
 
 ## Screen readers and speech modes
 
-The application has two ways of speaking, controlled by Settings → Accessibility → "Announcement mode":
+The application speaks through exactly two channels, by design:
 
-- **Screen reader only (default, recommended).** The application pushes all announcements into an aria-live region, and your screen reader — NVDA, JAWS, Narrator, VoiceOver — reads them. Use this if you run a screen reader; it means one voice, your voice, at your configured rate.
-- **Built-in speech.** The application speaks through the system's Web Speech engine. Use this only if you do *not* run a screen reader. Running both causes double speech.
-- **Both** and **Silent** exist for testing.
-
-Separately from announcements, the application can narrate scenes with **recorded voice clips** from authentic TWC narrators (see [Themes and narrators](#themes-and-narrators)). Clip narration plays as audio through the music/voice mixer and coexists fine with your screen reader — it's the weather-channel narrator experience, while your screen reader remains the precise data channel.
+1. **Your screen reader.** Every announcement — scene content, navigation readouts, alerts, status messages — is pushed into aria-live regions that NVDA, JAWS, Narrator, Orca, or VoiceOver read in your own voice, at your own rate. There is deliberately **no built-in text-to-speech**: the app never speaks with an OS voice, and there is nothing to configure or turn off.
+2. **Recorded narrator clips.** The authentic TWC narrator voices (see [Themes and narrators](#themes-and-narrators)) play as audio through the app's mixer — the weather-channel narrator experience. This coexists fine with your screen reader: the clips are the atmosphere, your screen reader is the precise data channel. Clip narration can be disabled in Settings → Audio.
 
 The main stage uses `role="application"`, so NVDA and JAWS switch to focus mode automatically. All shortcuts are global — you never need to find a specific control first.
 
@@ -159,7 +156,7 @@ A **high-contrast** overlay (Settings → Theme) can be layered on any theme for
 
 Open with `,` (comma). Close with Escape. The panel is a proper modal — focus moves in, Tab cycles inside it, and the scene behind is inert.
 
-- **Accessibility** — announcement mode (see above); map grid step default.
+- **Accessibility** — map grid step default. (Announcements always go to your screen reader; there is no speech engine to configure.)
 - **Theme** — visual theme; high contrast.
 - **Audio** — background music on/off and volume; voice-clip narration on/off; narrator; clip confidence; bundled vs synthesized alert tone; post-narration delay (how long a scene lingers after speech).
 - **NOAA Weather Radio** — enable, station, volume.
@@ -210,7 +207,7 @@ Sources and licenses for the fan-maintained portions are listed in the README's 
 
 **No sound at all.** Audio needs one keypress after launch ("Press any key to start audio"). Check the music/radio volumes (`1`, `2`) weren't nudged to 0%.
 
-**Double speech.** You're running a screen reader while "Announcement mode" is set to Built-in speech or Both. Set it to "Screen reader only" (Settings → Accessibility).
+**Two voices talking over each other.** The app itself has no built-in TTS, so overlapping speech means your screen reader plus the recorded narrator clips. If the clips bother you, turn off "Use voice clips for narration" in Settings → Audio, or lower the voice with the music/radio volume keys.
 
 **Scenes say "unavailable".** The NWS API is unreachable — check your connection. The app retries automatically and will serve the last good data where it has any (announcing it as such). If a scene errored, it shows a retry note and heals on the next cycle.
 

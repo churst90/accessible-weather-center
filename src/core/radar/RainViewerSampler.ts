@@ -1,6 +1,7 @@
 import type { LatLon, RadarCell, RadarFrame } from "../types";
 import type { RainViewerClient, RainViewerFrame, RainViewerManifest } from "../weather/RainViewerClient";
 import { decodePixel } from "./Palette";
+import { classifyMmPerHour } from "./IntensityLegend";
 import {
   TILE_SIZE,
   boxAround,
@@ -106,21 +107,11 @@ function collectSamples(
         dbz: decoded.dbz,
         mmPerHour: decoded.mmPerHour,
         band: decoded.band,
-        colorName: colorNameForBand(decoded.band)
+        // Spoken on-screen color from the canonical legend table, so
+        // "what color is that on the radar" always matches the rate.
+        colorName: classifyMmPerHour(decoded.mmPerHour).colorName
       });
     }
-  }
-}
-
-function colorNameForBand(band: RadarCell["band"]): string {
-  switch (band) {
-    case "trace":      return "light cyan";
-    case "light":      return "blue";
-    case "moderate":   return "green to yellow";
-    case "heavy":      return "orange";
-    case "very-heavy": return "red";
-    case "extreme":    return "magenta";
-    default:           return "clear";
   }
 }
 

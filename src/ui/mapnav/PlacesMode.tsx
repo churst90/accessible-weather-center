@@ -3,6 +3,7 @@ import type { Place, Observation } from "../../core/types";
 import type { WeatherService } from "../../core/weather/WeatherService";
 import type { AnnouncementQueue } from "../../a11y/AnnouncementQueue";
 import type { PlacesStore } from "../../core/places/PlacesStore";
+import { isModalOpen } from "../../a11y/modality";
 import { resolveZipToPlace } from "../../core/places/zipLookup";
 
 interface Props {
@@ -61,6 +62,7 @@ export function PlacesMode({ places, weather, announcer, store, active, onDrillI
   useEffect(() => {
     if (!active) return;
     const onKey = (e: KeyboardEvent) => {
+      if (isModalOpen()) return;
       const target = e.target as HTMLElement | null;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) {
         return;

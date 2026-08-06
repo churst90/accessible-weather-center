@@ -293,6 +293,7 @@ export const THEMES: ThemeDef[] = [
     label: "IntelliStar 1",
     defaultNarrator: "jim-cantore",
     iconSet: "/assets/icons/large",
+    iconResolution: 42,
     // IS1 (2003-2013) had its own dedicated production-music pool (Becker,
     // Chaquico, Cooling, Howard, Hughes, Sample). Strict filter keeps the
     // IS2 HD-era catalog out of the mix.
@@ -326,6 +327,9 @@ export const THEMES: ThemeDef[] = [
     defaultNarrator: "chandler",
     iconSet: "/assets/icons/large",
     iconResolution: 68,
+    // (IS2 keeps 68px HD WEBPs; IS1 below gets 42px — its /large GIF
+    // fallback dir actually contains .apng files, so without a WEBP
+    // resolution every icon 404ed.)
     // IS2 (2013+) used its own HD-era production music (Beach Night,
     // Beautiful Day, Destination Groove, etc.). Era-exclusive filter.
     musicTags: ["intellistar2"],
@@ -533,5 +537,10 @@ export function applyTheme(theme: ThemeDef): void {
     const picked = pickBackground(theme.id);
     if (picked) bgUrl = picked;
   }
-  root.style.setProperty("--ws-bg-image", bgUrl ? `url("${bgUrl}")` : "none");
+  const value = bgUrl ? `url("${bgUrl}")` : "none";
+  root.style.setProperty("--ws-bg-image", value);
+  // Remembered separately so the per-scene background effect can restore
+  // the theme-level background when a scene has no mapping of its own —
+  // otherwise the previous scene's art lingered.
+  root.style.setProperty("--ws-theme-bg-image", value);
 }

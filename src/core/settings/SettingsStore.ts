@@ -1,5 +1,3 @@
-import type { AnnouncerMode } from "../../a11y/AnnouncementQueue";
-
 /**
  * User-facing settings. Persisted to localStorage in v0.2; disk persistence
  * via Electron's userData path is on the TODO list. The store is reactive —
@@ -14,20 +12,8 @@ export interface Settings {
   musicEnabled: boolean;
   /** Confidence threshold for using AJ clips vs TTS fallback. */
   clipConfidence: "confirmed" | "likely" | "guess";
-  /** Use the AJ phrase composer at all (vs always TTS). */
+  /** Use recorded narrator clips at all (vs announcements only). */
   useAjVoice: boolean;
-  /** How announcements are spoken. "live-region" (default): push text to
-   *  the aria-live DOM region only — the user's screen reader (NVDA, JAWS,
-   *  VoiceOver) handles speech. "tts": use the built-in Web Speech API.
-   *  "both": push to both, for users experimenting with layered speech.
-   *  "off": no announcements at all. Default is "live-region" because
-   *  running both alongside NVDA causes double-speech. */
-  announcerMode: AnnouncerMode;
-  /** Built-in TTS voice name (whatever Web Speech API exposes). Only used
-   *  when announcerMode is "tts" or "both". */
-  ttsVoice: string | null;
-  /** TTS rate, 0.5 .. 2.0. Only used when announcerMode is "tts" or "both". */
-  ttsRate: number;
   /** Use high-contrast theme. */
   highContrast: boolean;
   /** Automatically advance scenes on their hold timer. When false, scenes
@@ -95,9 +81,6 @@ export const DEFAULT_SETTINGS: Settings = {
   musicEnabled: true,
   clipConfidence: "likely",
   useAjVoice: true,
-  announcerMode: "live-region",
-  ttsVoice: null,
-  ttsRate: 1.0,
   highContrast: false,
   autoCycle: true,
   useBundledAlertTone: false,

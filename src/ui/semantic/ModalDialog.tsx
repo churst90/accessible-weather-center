@@ -1,5 +1,6 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { pushModal, popModal } from "../../a11y/modality";
 
 interface Props {
   open: boolean;
@@ -50,6 +51,11 @@ export function ModalDialog({
   useEffect(() => {
     if (!open) return;
 
+    // Tell window-level key listeners (KeyboardRouter, arrow-nav hooks)
+    // that a modal owns the keyboard — `inert` blocks focus but not their
+    // window keydown handlers.
+    pushModal();
+
     // Remember what was focused before the dialog opened so we can restore it.
     previousFocusRef.current = (document.activeElement as HTMLElement) ?? null;
 
@@ -90,6 +96,7 @@ export function ModalDialog({
     window.addEventListener("keydown", onKey, { capture: true });
 
     return () => {
+      popModal();
       window.removeEventListener("keydown", onKey, { capture: true });
       if (root) root.removeAttribute("inert");
       const prev = previousFocusRef.current;

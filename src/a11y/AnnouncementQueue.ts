@@ -1,65 +1,65 @@
-import type { TtsService } from "./TtsService";
-
 /**
- * Bridges the app's "say this now" intent with both TTS and a DOM aria-live
- * region. The aria-live region is the source of truth for assistive tech that
- * isn't using our built-in TTS (NVDA, JAWS, VoiceOver). The built-in TTS is
- * for users who run the app standalone without a screen reader.
+ * The app's single channel for "say this to the user".
  *
- * Most users will want one or the other, not both. The mode flag picks.
+ * All speech reaches the user through exactly two paths, by design:
+ *   1. The user's screen reader (NVDA, JAWS, Orca, VoiceOver) reading the
+ *      aria-live regions this store feeds (see AnnouncementRegion).
+ *   2. Recorded narrator clips played by the PhraseSequencer.
+ *
+ * There is deliberately NO built-in TTS. The application's accessibility
+ * contract is to cooperate with whatever screen reader the user runs, not
+ * to bring its own voice.
+ *
+ * The polite and assertive channels are independent slots: an assertive
+ * alert no longer erases a polite scene announcement from the DOM (and
+ * vice versa), which the old single-slot implementation did.
  */
-export type AnnouncerMode = "tts" | "live-region" | "both" | "off";
 
 export interface Announcement {
-  id: string;
+  /** Monotonic — also used by the region to force a DOM mutation when the
+   *  same text is announced twice in a row (aria-live only fires on
+   *  mutation, so identical repeats used to be silent). */
+  id: number;
   text: string;
-  priority: "polite" | "assertive";
+}
+
+export interface AnnouncementState {
+  polite: Announcement | null;
+  assertive: Announcement | null;
 }
 
 export class AnnouncementQueue {
-  private subscribers = new Set<(latest: Announcement | null) => void>();
-  private latest: Announcement | null = null;
+  private subscribers = new Set<(state: AnnouncementState) => void>();
+  private state: AnnouncementState = { polite: null, assertive: null };
   private nextId = 0;
 
-  constructor(
-    private readonly tts: TtsService,
-    private mode: AnnouncerMode = "both"
-  ) {}
-
-  setMode(mode: AnnouncerMode): void {
-    this.mode = mode;
+  announce(text: string, priority: "polite" | "assertive" = "polite"): void {
+    const ann: Announcement = { id: ++this.nextId, text };
+    this.state = { ...this.state, [priority]: ann };
+    this.emit();
   }
 
-  async announce(text: string, priority: "polite" | "assertive" = "polite"): Promise<void> {
-    if (this.mode === "off") return;
-    const ann: Announcement = { id: String(++this.nextId), text, priority };
-    this.latest = ann;
-    if (this.mode === "live-region" || this.mode === "both") {
-      for (const fn of this.subscribers) fn(ann);
-    }
-    if (this.mode === "tts" || this.mode === "both") {
-      await this.tts.speak(text, { priority });
-    }
-  }
-
-  /**
-   * Push text to the aria-live region only, without firing TTS. Use this
-   * when the PhraseSequencer is handling audio — screen readers still need
-   * the text, but TTS would fight the clip playback.
-   */
-  announceLiveRegionOnly(text: string, priority: "polite" | "assertive" = "polite"): void {
-    const ann: Announcement = { id: String(++this.nextId), text, priority };
-    this.latest = ann;
-    for (const fn of this.subscribers) fn(ann);
-  }
-
+  /** Clear both live regions. Emptying the regions is the strongest
+   *  interruption the web platform offers a screen reader — it prevents a
+   *  queued announcement from being (re)read; the user's own screen-reader
+   *  silence key handles anything already mid-utterance. */
   cancel(): void {
-    this.tts.cancel();
+    if (!this.state.polite && !this.state.assertive) return;
+    this.state = { polite: null, assertive: null };
+    this.emit();
   }
 
-  subscribe(fn: (latest: Announcement | null) => void): () => void {
+  getState(): AnnouncementState {
+    return this.state;
+  }
+
+  subscribe(fn: (state: AnnouncementState) => void): () => void {
     this.subscribers.add(fn);
-    fn(this.latest);
+    fn(this.state);
     return () => this.subscribers.delete(fn);
+  }
+
+  private emit(): void {
+    for (const fn of this.subscribers) fn(this.state);
   }
 }

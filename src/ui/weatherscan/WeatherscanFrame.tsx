@@ -110,8 +110,8 @@ export function WeatherscanFrame({ sceneTitle, alertCount, children, statusHint,
         <div className="ws-status-bar" aria-hidden="true">
           <span>Tab scenes</span>
           <span>← → ↑ ↓ navigate</span>
-          <span>1–5 jump</span>
-          <span>M map</span>
+          <span>M favorites</span>
+          <span>N map nav</span>
           <span>Space pause</span>
           <span>, settings</span>
           <span>? help</span>

@@ -3,6 +3,7 @@ import type { LatLon, WeatherAlert } from "../../core/types";
 import type { TrackedStorm } from "../../core/radar/StormTracker";
 import type { RainViewerClient, RainViewerManifest, RainViewerFrame } from "../../core/weather/RainViewerClient";
 import { MapTileCache } from "../../core/radar/MapTileCache";
+import { BAND_INFO, bandInfo } from "../../core/radar/IntensityLegend";
 import {
   TILE_SIZE,
   lonToTileX,
@@ -566,16 +567,14 @@ function drawHighlightMarker(
   ctx.stroke();
 }
 
-/** Draw the precipitation intensity legend in the bottom-right corner. */
+/** Draw the precipitation intensity legend in the bottom-right corner.
+ *  Colors and labels come from IntensityLegend's BAND_INFO — the same
+ *  table the storm markers and every spoken description use, so the
+ *  legend can never disagree with the dots again (it used to call the
+ *  moderate color "Heavy"). */
 function drawPrecipLegend(ctx: CanvasRenderingContext2D, w: number, h: number): void {
-  const entries: Array<{ color: string; label: string }> = [
-    { color: "#90ee90", label: "Light" },
-    { color: "#00cc00", label: "Moderate" },
-    { color: "#ffcc00", label: "Heavy" },
-    { color: "#ff6600", label: "Very Heavy" },
-    { color: "#ff0000", label: "Intense" },
-    { color: "#cc00cc", label: "Extreme" }
-  ];
+  const entries = (["trace", "light", "moderate", "heavy", "very-heavy", "extreme"] as const)
+    .map((band) => ({ color: BAND_INFO[band].color, label: BAND_INFO[band].label }));
 
   const boxW = 90;
   const rowH = 14;
@@ -616,13 +615,5 @@ function drawPrecipLegend(ctx: CanvasRenderingContext2D, w: number, h: number): 
 }
 
 function stormColor(band: string): string {
-  switch (band) {
-    case "trace":      return "#90ee90";
-    case "light":      return "#00cc00";
-    case "moderate":   return "#ffcc00";
-    case "heavy":      return "#ff6600";
-    case "very-heavy": return "#ff0000";
-    case "extreme":    return "#cc00cc";
-    default:           return "#aaaaaa";
-  }
+  return bandInfo(band).color;
 }

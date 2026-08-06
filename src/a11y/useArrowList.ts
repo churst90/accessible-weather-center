@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { AnnouncementQueue } from "./AnnouncementQueue";
+import { isModalOpen } from "./modality";
 
 /**
  * Generic up/down arrow navigation for a list of items inside a scene view.
@@ -42,6 +43,8 @@ export function useArrowList<T>(
   useEffect(() => {
     if (!enabled) return;
     const onKey = (e: KeyboardEvent) => {
+      // Modal open: don't steal keys from or announce over the dialog.
+      if (isModalOpen()) return;
       const len = itemsRef.current.length;
       if (len === 0) return;
       if (e.key === "ArrowDown") {

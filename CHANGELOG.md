@@ -2,6 +2,44 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.11.0] — 2026-08-05
+
+Audit Phases 2 and 3: the accessibility core rebuilt around a clarified speech policy, plus the visual quick-win batch.
+
+### Speech policy clarified: no built-in TTS, ever
+
+The app now has exactly two speech paths by design: the user's screen reader (NVDA, JAWS, Narrator, Orca, VoiceOver) reading the aria-live regions, and the recorded narrator clips. The Web Speech API integration is gone.
+
+- **Removed:** `TtsService`/`WebSpeechTts`, the `announcerMode` setting ("tts" / "both" / "off" modes), and the never-wired `ttsVoice`/`ttsRate` settings. The Settings → Accessibility fieldset now simply states the policy.
+- This also retires two audit findings outright: "double speech when TTS mode is on alongside a screen reader" and "ttsVoice/ttsRate settings exist but nothing reads them."
+
+### Fixed — announcement core (audit Phase 2)
+
+#### AnnouncementQueue is no longer a single overwrite slot
+- **Was:** one `latest` announcement; an assertive alert erased the polite scene text from the DOM (and vice versa), repeating an identical announcement was silent (aria-live only fires on DOM mutation), and `cancel()` only affected the removed TTS path — a no-op for screen-reader users.
+- **Now:** polite and assertive are independent slots; repeats get a zero-width-space alternation so the DOM always mutates and NVDA speaks the second "Paused." too; `cancel()` empties both regions (the strongest interruption the platform offers — the screen reader's own silence key handles mid-utterance audio). Covered by unit tests.
+
+#### Window-level key handlers no longer fight open modals
+- **Was:** `inert` blocks focus but not window keydown listeners, so arrows inside a Settings dropdown were preventDefault-ed by the scene's arrow-grid hook and announced scene cells from behind the dialog; bare-letter shortcuts fired while focus sat on modal buttons.
+- **Now:** a shared modality gate (`src/a11y/modality.ts`): `ModalDialog` pushes on open / pops on close, and the KeyboardRouter, both arrow-nav hooks, Map Navigation, and Favorites mode all stand down while a modal is open. Escape is unaffected (the modal consumes it in capture phase). Covered by unit tests.
+
+#### Map Navigation now tracks the live radar
+- **Was:** the storm list was read once when the mode opened — the list, canvas markers, and announcements silently froze at entry-time state, and the selection index could point past the end when the list shrank.
+- **Now:** the view subscribes to the storm scanner's updates and clamps the selection when the list changes.
+
+### Fixed — visual layer (audit Phase 3)
+
+- **Star4000 fonts actually load.** The `@font-face` rules pointed at `/assets/fonts/star4000.ttf` but the files live in the `star4000/` subdirectory — every WS4000-family theme has been silently rendering in Lato. Also added the missing `InterstateMono` face (LED/clock readouts fell back to Courier New) and dropped the dead `akkopro-light` face.
+- **IntelliStar 1 icons render.** IS1 had no `iconResolution`, so every icon resolved to a GIF filename in a directory that contains only `.apng` files — 100% broken images. IS1 now uses the 42 px WEBP set, and `WeatherIcon` gained a runtime fallback chain (still → WEBP → GIF → nothing): an icon that 404s tries the next source and finally hides rather than showing a broken-image placeholder.
+- **WS3000 / WSJr no longer show icons** on Current Conditions / Overnight heroes — those text-page units never had them.
+- **LDL tiny icon** no longer guesses unmapped condition names as filename stems (broken img in the crawl label).
+- **Severe takeover works on every theme.** The orange emergency background lost the CSS specificity fight against the XL / WS4000-v2 / IS2 theme frame rules and silently never showed there. It now wins everywhere — except IntelliStar 2, which authentically swaps to the dedicated LOT8 severe background pool instead (previously dead code — `pickBackground(themeId, severe)` finally has a caller).
+- **High-contrast mode now actually clears the frame** — photo wallpapers and hardcoded theme gradients are stripped to solid black under the yellow-on-black palette; variables alone left photos behind the text.
+- **Stale per-scene backgrounds fixed.** Moving from a scene with mapped art to one without kept the previous scene's image; the frame now falls back to the theme-level background (`--ws-theme-bg-image`).
+- **One radar intensity table.** The five hand-rolled band→label/color tables (map-nav panel, radar table view, storm-tracker view, scanner speech, canvas markers + legend) had drifted — the canvas legend labeled the moderate color "Heavy". All of them now read from `IntensityLegend.BAND_INFO`, restoring the architecture doc's "one source of truth" invariant; the sampler's spoken radar-color names come from the same table.
+- **Weatherscan V1/V2 city pool grew by seven** authentic skylines that were on disk but never pooled (Los Angeles, Miami, Minneapolis, Nashville, New Haven, New York, North Carolina).
+- **Status bar hints corrected** — still advertised the removed "1–5 jump" scene keys and mislabeled M; now shows M favorites / N map nav.
+
 ## [0.10.0] — 2026-08-05
 
 Reliability release. A four-subsystem audit of the whole codebase (see `docs/code-audit-2026-08.md`) confirmed ten bugs that silently broke core promises of the app; all ten are fixed here, alongside the first unit-test suite and a new map-navigation feature.

@@ -7,7 +7,7 @@ import { StormScanner, describeStorm, type StormEvent } from "./core/radar/Storm
 import { PlacesStore, defaultPlaces } from "./core/places/PlacesStore";
 import { SettingsStore } from "./core/settings/SettingsStore";
 import { getTheme, applyTheme, getSceneOrder, type ThemeId } from "./core/settings/themes";
-import { getSceneBackground } from "./core/settings/backgroundCatalog";
+import { getSceneBackground, pickBackground } from "./core/settings/backgroundCatalog";
 import type { NarratorId } from "./audio/manifests/narratorSchema";
 import { SceneScheduler, type SchedulerEvent } from "./core/scenes/SceneScheduler";
 import { CurrentConditionsScene, type CurrentConditionsData } from "./core/scenes/scenes/CurrentConditionsScene";
@@ -29,7 +29,6 @@ import { TrafficScene, type TrafficData } from "./core/scenes/scenes/TrafficScen
 import { AirportDelaysScene, type AirportDelaysData } from "./core/scenes/scenes/AirportDelaysScene";
 import type { Scene } from "./core/scenes/Scene";
 
-import { WebSpeechTts } from "./a11y/TtsService";
 import { AnnouncementQueue } from "./a11y/AnnouncementQueue";
 import { KeyboardRouter } from "./a11y/KeyboardRouter";
 import { AnnouncerContext } from "./a11y/AnnouncerContext";
@@ -295,6 +294,10 @@ export default function App() {
     const sceneBg = getSceneBackground(settings.theme as ThemeId, scene.id);
     if (sceneBg) {
       document.documentElement.style.setProperty("--ws-bg-image", `url("${sceneBg}")`);
+    } else {
+      // No per-scene art for this scene: fall back to the theme-level
+      // background instead of leaving the previous scene's image up.
+      document.documentElement.style.setProperty("--ws-bg-image", "var(--ws-theme-bg-image, none)");
     }
 
     // NVDA / announcer always reads the full scene text.
@@ -703,15 +706,20 @@ export default function App() {
     };
   }, [services]);
 
-  // Announcer mode — kept in sync with the settings store so toggling the
-  // "live-region / built-in TTS / both / off" option takes effect without
-  // a restart. Default is "live-region" (NVDA and friends handle speech).
+  // IntelliStar 2 severe takeover: the real LOT8s switched to a dedicated
+  // severe background set, not a flat orange field. Swap the frame image
+  // while interrupted; the theme's severe CSS lets --ws-bg-image show
+  // through on this theme only.
   useEffect(() => {
-    const off = services.settings.subscribe((s) => {
-      services.announcer.setMode(s.announcerMode);
-    });
-    return off;
-  }, [services]);
+    if (activeThemeId !== "intellistar2") return;
+    const root = document.documentElement;
+    if (event.interrupted) {
+      const bg = pickBackground("intellistar2", true);
+      if (bg) root.style.setProperty("--ws-bg-image", `url("${bg}")`);
+    } else {
+      root.style.setProperty("--ws-bg-image", "var(--ws-theme-bg-image, none)");
+    }
+  }, [event.interrupted, activeThemeId]);
 
   // NWR Weather Radio + volume sliders — reactive to settings changes.
   // Subscribes to the settings store; on every change syncs music + radio
@@ -934,8 +942,10 @@ function SceneStage({
 
 function buildServices() {
   const settings = new SettingsStore();
-  const tts = new WebSpeechTts();
-  const announcer = new AnnouncementQueue(tts, settings.get().announcerMode);
+  // No built-in TTS by design: announcements reach the user through the
+  // aria-live regions (their screen reader speaks them), and the only
+  // app-generated speech is the recorded narrator clips.
+  const announcer = new AnnouncementQueue();
   const router = new KeyboardRouter();
 
   const mixer = new AudioMixer();
@@ -946,7 +956,7 @@ function buildServices() {
   const alertTones = new AlertTones(mixer);
   const nwr = new NwrPlayer(mixer);
 
-  const nws = new NwsClient("AccessibleWeatherCenter/0.10.0 (contact: codythurst@gmail.com)");
+  const nws = new NwsClient("AccessibleWeatherCenter/0.11.0 (contact: codythurst@gmail.com)");
   const faa = new FaaClient();
   const rainviewer = new RainViewerClient();
   const weather = new WeatherService(nws);
@@ -983,7 +993,7 @@ function buildServices() {
   scheduler.setSceneOrder(getSceneOrder(initialTheme));
 
   return {
-    settings, tts, announcer, router,
+    settings, announcer, router,
     mixer, music, clips, alertTones, sequencer, nwr,
     nws, faa, rainviewer, weather, places, scheduler, stormScanner
   };

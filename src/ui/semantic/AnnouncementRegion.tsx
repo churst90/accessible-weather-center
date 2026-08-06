@@ -1,24 +1,23 @@
 import { useEffect, useState } from "react";
-import type { AnnouncementQueue, Announcement } from "../../a11y/AnnouncementQueue";
+import type { AnnouncementQueue, AnnouncementState, Announcement } from "../../a11y/AnnouncementQueue";
 
 interface Props {
   queue: AnnouncementQueue;
 }
 
 /**
- * The single source of truth for screen readers. Every time a new
- * announcement comes through the queue, this region's text content is
- * replaced. NVDA/JAWS/VoiceOver pick it up via aria-live.
+ * The aria-live regions screen readers consume. Two independent regions —
+ * polite (scene narration, navigation readouts) and assertive (alerts,
+ * mode changes) — each holding its own latest announcement, so one channel
+ * updating never wipes the other's text out of the DOM.
  *
- * The element is positioned off-screen but kept readable to assistive tech.
- * Visual users see content via the WeatherscanFrame above; audio users
- * hear it via TTS or their screen reader announcing this region.
+ * The element is positioned off-screen but readable to assistive tech.
  */
 export function AnnouncementRegion({ queue }: Props) {
-  const [latest, setLatest] = useState<Announcement | null>(null);
+  const [state, setState] = useState<AnnouncementState>({ polite: null, assertive: null });
 
   useEffect(() => {
-    return queue.subscribe(setLatest);
+    return queue.subscribe(setState);
   }, [queue]);
 
   return (
@@ -30,7 +29,7 @@ export function AnnouncementRegion({ queue }: Props) {
         aria-atomic="true"
         data-testid="awc-live-polite"
       >
-        {latest?.priority === "polite" ? latest.text : ""}
+        {renderText(state.polite)}
       </div>
       <div
         className="sr-only"
@@ -39,8 +38,19 @@ export function AnnouncementRegion({ queue }: Props) {
         aria-atomic="true"
         data-testid="awc-live-assertive"
       >
-        {latest?.priority === "assertive" ? latest.text : ""}
+        {renderText(state.assertive)}
       </div>
     </>
   );
+}
+
+/**
+ * aria-live only fires when the DOM actually mutates, so announcing the
+ * same text twice in a row used to say nothing the second time. Suffixing
+ * a zero-width space on alternating announcement ids guarantees a mutation
+ * without changing what the screen reader speaks.
+ */
+function renderText(ann: Announcement | null): string {
+  if (!ann) return "";
+  return ann.id % 2 === 0 ? `${ann.text}​` : ann.text;
 }
