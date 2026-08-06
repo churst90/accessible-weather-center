@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import type { SettingsStore, Settings } from "../../core/settings/SettingsStore";
 import { THEMES, getTheme, THEME_CORE_SCENES, VALUE_ADD_SCENES, type ThemeId } from "../../core/settings/themes";
 import { NARRATORS } from "../../audio/manifests/narratorSchema";
-import { NWR_STATIONS } from "../../audio/nwrStations";
+import { BUNDLED_STATIONS, fetchActiveNwrStations, type NwrStation } from "../../audio/nwrStations";
+import { ModalDialog } from "../semantic/ModalDialog";
 
 interface Props {
   store: SettingsStore;
@@ -12,62 +13,53 @@ interface Props {
 }
 
 /**
- * Modal settings panel. Reachable via the , (comma) shortcut. The panel is
- * a real focus trap with a close button so screen readers don't get lost.
+ * Modal settings panel. Reachable via the , (comma) shortcut.
  *
- * v0.2 surface:
- *   - Music master enable
- *   - Per-flavor enable/disable checkboxes
- *   - AJ voice enable
- *   - Clip confidence threshold
- *   - High contrast theme
+ * Focus management, Tab trap, Escape handling, portal, and inert-on-root
+ * all live in ModalDialog. This component is just the content.
  */
 export function SettingsPanel({ store, open, onClose, flavors }: Props) {
   const [settings, setSettings] = useState<Settings>(store.get());
+  const [stations, setStations] = useState<NwrStation[]>(BUNDLED_STATIONS);
+  const [stationFetchError, setStationFetchError] = useState<string | null>(null);
 
   useEffect(() => store.subscribe(setSettings), [store]);
 
+  // On modal open: pull the live weatherUSA mount list so the call-sign
+  // autocomplete reflects actually-streaming stations, not the (shorter)
+  // bundled snapshot. The bundled list stays as the initial render and
+  // as the fallback if the IPC fetch fails (e.g. when running in the
+  // Vite browser preview with no Electron bridge).
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        onClose();
+    let cancelled = false;
+    void (async () => {
+      const result = await fetchActiveNwrStations();
+      if (cancelled || !result) return;
+      if (result.ok) {
+        // updateLiveStations mutated the internal array; mirror it to
+        // React state so the datalist re-renders with the live list.
+        // Rebuild from the (now-updated) bundled+live merged order.
+        const merged = [...BUNDLED_STATIONS];
+        const bundledCs = new Set(BUNDLED_STATIONS.map((s) => s.callSign.toUpperCase()));
+        for (const live of result.stations) {
+          const cs = live.callSign.toUpperCase();
+          if (bundledCs.has(cs)) continue;
+          merged.push({ callSign: live.callSign, city: live.name || live.description || live.callSign, state: "" });
+        }
+        merged.sort((a, b) => (a.state + a.city).localeCompare(b.state + b.city));
+        setStations(merged);
+        setStationFetchError(null);
+      } else {
+        setStationFetchError(result.error);
       }
-    };
-    window.addEventListener("keydown", onKey, { capture: true });
-    return () => window.removeEventListener("keydown", onKey, { capture: true });
-  }, [open, onClose]);
-
-  if (!open) return null;
+    })();
+    return () => { cancelled = true; };
+  }, [open]);
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="awc-settings-title"
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,0.7)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 1000
-      }}
-    >
-      <div
-        style={{
-          background: "var(--ws-bg-mid)",
-          border: "2px solid var(--ws-accent)",
-          padding: "24px 32px",
-          minWidth: 480,
-          maxHeight: "85vh",
-          overflow: "auto",
-          color: "var(--ws-text)"
-        }}
-      >
-        <h2 id="awc-settings-title" style={{ marginTop: 0 }}>Settings</h2>
+    <ModalDialog open={open} onClose={onClose} labelledBy="awc-settings-title">
+      <h2 id="awc-settings-title" style={{ marginTop: 0 }}>Settings</h2>
 
         <fieldset style={{ border: "1px solid var(--ws-accent)", padding: 12, marginBottom: 16 }}>
           <legend>Accessibility</legend>
@@ -200,18 +192,23 @@ export function SettingsPanel({ store, open, onClose, flavors }: Props) {
               type="text"
               list="awc-nwr-stations"
               value={settings.nwrCallSign ?? ""}
-              placeholder="e.g. KEC49 (auto from favorite if blank)"
+              placeholder="e.g. KEB98 (auto from favorite if blank)"
               onChange={(e) => store.update({ nwrCallSign: e.target.value.toUpperCase() || null })}
-              style={{ width: 280 }}
+              style={{ width: 320 }}
             />
             <datalist id="awc-nwr-stations">
-              {NWR_STATIONS.map((s) => (
+              {stations.map((s) => (
                 <option key={s.callSign} value={s.callSign}>
-                  {s.city}, {s.state} — {s.frequency} MHz
+                  {s.state ? `${s.city}, ${s.state}` : s.city}{s.note ? ` — ${s.note}` : ""}
                 </option>
               ))}
             </datalist>
           </label>
+          <p style={{ marginTop: 0, marginBottom: 8, fontSize: 11, color: "var(--ws-text-dim)" }}>
+            {stationFetchError
+              ? `Using bundled station list (live fetch failed: ${stationFetchError}). Some mounts may be offline.`
+              : `${stations.length} stations listed — live mount list refreshed from weatherUSA on open. Unlisted call signs can be typed directly.`}
+          </p>
           <label style={{ display: "block" }}>
             Weather Radio volume: {Math.round(settings.nwrVolume * 100)}%{" "}
             <input
@@ -308,19 +305,15 @@ export function SettingsPanel({ store, open, onClose, flavors }: Props) {
             <input
               type="checkbox"
               checked={settings.highContrast}
-              onChange={(e) => {
-                store.update({ highContrast: e.target.checked });
-                document.body.dataset.contrast = e.target.checked ? "high" : "normal";
-              }}
+              onChange={(e) => store.update({ highContrast: e.target.checked })}
             />{" "}
             High contrast theme
           </label>
         </fieldset>
 
-        <button autoFocus onClick={onClose} style={{ padding: "8px 16px" }}>
-          Close (Esc)
-        </button>
-      </div>
-    </div>
+      <button onClick={onClose} style={{ padding: "8px 16px" }}>
+        Close (Esc)
+      </button>
+    </ModalDialog>
   );
 }

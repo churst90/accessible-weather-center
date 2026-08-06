@@ -2,6 +2,45 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.6] — 2026-04-16
+
+Four accessibility / UX fixes reported after a real NVDA test run.
+
+### Fixed
+
+#### Volume keys (1 / Shift+1 / 2 / Shift+2) caused the screen to flash dark/light
+- **Root cause:** the theme effect at `App.tsx:173-199` subscribed to the settings store and called `applyTheme()`, `setIconBase()`, `setIconResolution()`, `setMusicTags()`, plus three `document.body.dataset` writes on **every** settings change — including volume nudges. That touched theme CSS variables and triggered the theme's own CSS transitions, producing a visible flash. "Sometimes stays dark" was the transition being interrupted mid-step by the next keypress.
+- **Fix:** the effect now tracks `prevThemeId` and `prevContrast` and skips the DOM/CSS work when neither has actually changed. Volume changes (and music-enable, NWR, etc.) fire through the other subscribers that don't touch theme state, leaving the scene untouched.
+
+#### Escape didn't exit Favorites (M) or Map Nav (N) modes
+- **Root cause:** the Escape shortcut at `App.tsx:598-604` only cancelled speech. Both M and N announce *"press N or Escape to exit"* but there was no Escape handler wired for those modes.
+- **Fix:** the stop-speech handler now checks `viewModeRef.current` first — if `"places"` or `"mapnav"`, it clears the view mode, resumes the scheduler, and announces "Returning to scenes." Otherwise it falls back to the original cancel-speech behavior.
+
+#### Escape inside Settings / Help could bleed through to the scene
+- `SettingsPanel` and `HelpDialog` Escape listeners used capture phase + `preventDefault()` — but `preventDefault()` does not stop event propagation. The global KeyboardRouter's Escape handler would ALSO fire, silencing a scene narration (or, after the above fix, exiting a places/mapnav view mode) in addition to closing the modal.
+- **Fix:** both modal Escape listeners now call `stopPropagation()` + `stopImmediatePropagation()`. (Moot now that the logic lives in `ModalDialog` — see next entry.)
+
+#### Settings / Help modals didn't properly trap focus under NVDA
+- **Root cause:** both modals rendered inside the React tree as children of the app root. There was no explicit focus movement on open — React's `autoFocus` was on the Close button at the bottom of the card, and even when it worked NVDA stayed on the scene stage because focus never actually moved into the dialog. No `aria-hidden` / `inert` on the background. No Tab trap. Result: NVDA thought focus was still on the scene, so Tab walked scene shortcuts and Enter required two presses on comboboxes (first to leave browse mode on the scene, then to open the combobox).
+- **Fix:** new shared `ModalDialog` component (`src/ui/semantic/ModalDialog.tsx`) owns modal concerns: renders via `createPortal` to `document.body` (so the dialog is a sibling of `#root`, not a descendant of `role="application"`); sets `inert` on `#root` while open; moves focus explicitly to the first interactive control on open; restores focus to the previously-focused element on close; traps Tab / Shift+Tab within the dialog with wrap-around; consumes Escape with `stopImmediatePropagation`; closes on backdrop click. Both `SettingsPanel` and `HelpDialog` are now just content, wrapped in `<ModalDialog>`.
+
+#### NWR Weather Radio — every stream was failing
+- **Root cause (the big one):** the bundled 60-station list in `src/audio/nwrStations.ts` was built from public NWS transmitter call signs (e.g. `KEC49` Buffalo, `WXL58` Nashville). But weatherUSA doesn't relay the full NWS catalog — it runs an Icecast server where community contributors post SDR receiver feeds. The mount points that actually serve audio are a different set of call signs (often with `_2` / `_3` suffixes, and often from different metros). `KEC49` returned 404; the actually-live Buffalo mount is `KEB98`. Of the 60 bundled stations, roughly 90% were dead mounts.
+- **Fix:**
+  - `nwrStations.ts` rewritten around an "active mount" model. `BUNDLED_STATIONS` is now a curated 35-entry snapshot of known-live weatherUSA mounts as of April 2026, with cities parsed from Icecast metadata (not fabricated).
+  - New `fetchActiveNwrStations()` pulls the live mount list from `https://radio.weatherusa.net/status-json.xsl` at runtime. weatherUSA doesn't send CORS headers, so the fetch happens in the Electron main process via a new `nwr:fetchActiveStations` IPC channel (see `electron/main.ts`) exposed through the preload bridge.
+  - weatherUSA's status JSON sometimes embeds malformed entries like `"title": - ,` — the main-process fetcher tolerates that by patching the text before `JSON.parse`.
+  - `SettingsPanel` runs the live fetch when the modal opens, merges results with `BUNDLED_STATIONS`, and renders the combined list in the call-sign datalist. A small hint under the field shows either the station count or the fetch-failure reason.
+  - `suggestCallSignForPlace()` and `findStation()` now walk the active list, so the app never auto-connects the user to a dead mount.
+
+### Changed
+
+#### `SettingsPanel` high-contrast handler simplified
+- The checkbox used to set `document.body.dataset.contrast` manually AND write to the settings store. The theme effect in `App.tsx` (now properly guarded) handles the DOM write, so the handler just updates the store.
+
+#### Escape shortcut description updated in Help
+- Was "Silence current speech." Now "Exit Favorites / Map Nav, otherwise silence current speech."
+
 ## [0.9.5] — 2026-04-15
 
 Accessibility-mode fix (double-speech eliminated), mnemonic startup resilience, NWR stream status announcements.

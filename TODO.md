@@ -60,6 +60,13 @@ Prioritized backlog. Ordered top to bottom within each section. Items marked `[x
 - [x] ~~Broadcast capture pipeline~~ — `scripts/scrape_page_images.py` + `scrape_batch.sh`.
 - [x] ~~Legacy era research docs~~ — `docs/legacy-eras.md`, `docs/reference/`, `docs/reference-capture-plan.md`.
 
+## v0.9.6 — NVDA modal focus, Escape, volume flash, NWR stations — DONE
+
+- [x] ~~Volume key screen flash~~ — `applyTheme()` now diffs `prevThemeId` / `prevContrast` and skips CSS work on volume changes.
+- [x] ~~Escape didn't exit M/N modes~~ — stop-speech handler checks viewMode first; Favorites and Map Nav now exit on Escape.
+- [x] ~~Modal focus trap under NVDA~~ — new shared `ModalDialog` component owns portal, inert, explicit focus movement, Tab wrap trap, and Escape dispatch. `SettingsPanel` and `HelpDialog` refactored onto it.
+- [x] ~~NWR every-station-fails bug~~ — bundled list was 90% dead mounts (fabricated NWS call signs vs. weatherUSA's actually-active Icecast mounts). New `fetchActiveNwrStations()` pulls live list from `status-json.xsl` via Electron main-process IPC (CORS bypass), merges with 35-entry curated bundled snapshot.
+
 ## v0.9.5 — accessibility-mode fix + startup resilience — DONE
 
 - [x] ~~Double-speech with NVDA~~ — added `announcerMode` setting (default `"live-region"`); `AnnouncementQueue` no longer hardcoded to `"both"`. Accessibility fieldset added to the Settings panel with four options.

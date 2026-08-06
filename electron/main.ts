@@ -86,6 +86,50 @@ function createTray(): void {
   });
 }
 
+// Fetch weatherUSA's Icecast status JSON and return the list of mount
+// points that are actually serving audio. We do this in main rather than
+// renderer because radio.weatherusa.net doesn't send an
+// Access-Control-Allow-Origin header, so browser fetch would be blocked.
+//
+// Also tolerates a known malformed-JSON quirk: some entries embed
+// `"title": - ,` with an unquoted dash as the value. We patch that before
+// JSON.parse so the whole response doesn't fail.
+ipcMain.handle("nwr:fetchActiveStations", async () => {
+  type Source = {
+    bitrate?: number;
+    server_name?: string;
+    server_description?: string;
+    listenurl?: string;
+  };
+  try {
+    const res = await fetch("https://radio.weatherusa.net/status-json.xsl", {
+      headers: { "User-Agent": "AccessibleWeatherCenter/0.9.6" }
+    });
+    if (!res.ok) return { ok: false, error: `HTTP ${res.status}` };
+    let text = await res.text();
+    text = text.replace(/"title":\s*-\s*,/g, '"title":null,');
+    text = text.replace(/"title":\s*-\s*}/g, '"title":null}');
+    const data = JSON.parse(text) as { icestats?: { source?: Source[] } };
+    const sources = data.icestats?.source ?? [];
+    const active = sources
+      .filter((s) => s.bitrate || s.server_name)
+      .map((s) => {
+        const m = s.listenurl?.match(/NWR\/(.+?)\.mp3/);
+        return m
+          ? {
+              callSign: m[1],
+              description: (s.server_description || "").trim(),
+              name: (s.server_name || "").trim()
+            }
+          : null;
+      })
+      .filter((v): v is NonNullable<typeof v> => v !== null);
+    return { ok: true, stations: active };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+  }
+});
+
 ipcMain.handle("notify", (_evt, payload: { title: string; body: string }) => {
   if (Notification.isSupported()) {
     const notification = new Notification({

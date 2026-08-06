@@ -170,28 +170,38 @@ export default function App() {
 
   // Apply theme on mount and when settings change.
   // Also updates music filtering, icon set, and scene order to match the active theme.
+  //
+  // Only does expensive DOM/CSS work when the theme or contrast actually
+  // changed — without this guard, every volume nudge (1 / Shift+1 / 2 /
+  // Shift+2) would re-run applyTheme() and trigger a CSS transition
+  // cascade, making the screen flash dark/light on every keypress.
   useEffect(() => {
     let prevThemeId: ThemeId | null = null;
+    let prevContrast: boolean | null = null;
     const apply = (s: typeof services.settings extends { get(): infer R } ? R : never) => {
       const themeId = s.theme as ThemeId;
-      setActiveThemeId(themeId);
-      const theme = getTheme(themeId);
-      applyTheme(theme);
-      document.body.dataset.theme = themeId;
-      document.body.dataset.contrast = s.highContrast ? "high" : "normal";
-      // Theme-specific icon set
-      setIconBase(theme.iconSet);
-      setIconResolution(theme.iconResolution ?? null);
-      // Theme-specific music filtering — deferred to avoid disrupting
-      // playback during initialization
-      try { services.music.setMusicTags(theme.musicTags); } catch { /* ignore */ }
-      // Reorder scenes to match the era-authentic loop when theme changes.
-      // Stop any playing narration first — the old clips belong to the
-      // previous theme's narrator and shouldn't overlap into the new one.
-      if (themeId !== prevThemeId) {
+      const contrast = s.highContrast;
+      const themeChanged = themeId !== prevThemeId;
+      const contrastChanged = contrast !== prevContrast;
+      if (!themeChanged && !contrastChanged) return;
+
+      if (themeChanged) {
+        setActiveThemeId(themeId);
+        const theme = getTheme(themeId);
+        applyTheme(theme);
+        document.body.dataset.theme = themeId;
+        setIconBase(theme.iconSet);
+        setIconResolution(theme.iconResolution ?? null);
+        try { services.music.setMusicTags(theme.musicTags); } catch { /* ignore */ }
+        // Stop any playing narration first — the old clips belong to the
+        // previous theme's narrator and shouldn't overlap into the new one.
         services.sequencer.stop();
         services.scheduler.setSceneOrder(getSceneOrder(themeId));
         prevThemeId = themeId;
+      }
+      if (contrastChanged) {
+        document.body.dataset.contrast = contrast ? "high" : "normal";
+        prevContrast = contrast;
       }
     };
     apply(services.settings.get());
@@ -596,8 +606,23 @@ export default function App() {
         handler: () => setHelpOpen(true)
       }),
       r.register({
-        id: "stop-speech", keys: "Escape", group: "Speech", description: "Silence current speech",
+        id: "stop-speech", keys: "Escape", group: "Speech",
+        description: "Exit Favorites / Map Nav, otherwise silence current speech",
         handler: () => {
+          // Priority 1: if we're in a non-scene view mode, Escape exits it.
+          // This matches the announced contract ("N or Escape to exit")
+          // and matches user expectation for modal-like overlays.
+          const mode = viewModeRef.current;
+          if (mode === "places" || mode === "mapnav") {
+            services.announcer.cancel();
+            services.sequencer.stop();
+            setViewMode("scenes");
+            void services.scheduler.resume();
+            void services.announcer.announce("Returning to scenes.", "assertive");
+            return;
+          }
+          // Priority 2: in scene mode, Escape silences the current
+          // announcement and any playing narration clip.
           services.announcer.cancel();
           services.sequencer.abort();
         }
