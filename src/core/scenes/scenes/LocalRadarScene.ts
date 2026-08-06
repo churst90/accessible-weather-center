@@ -47,8 +47,6 @@ export class LocalRadarScene implements Scene<LocalRadarData> {
       data,
       speech: speak(data),
       holdMs: this.defaultHoldMs,
-      musicCue: null,
-      jacksonCue: null
     };
   }
 }

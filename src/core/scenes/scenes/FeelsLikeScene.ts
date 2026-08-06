@@ -50,8 +50,6 @@ export class FeelsLikeScene implements Scene<FeelsLikeData> {
       data,
       speech: speak(data),
       holdMs: this.defaultHoldMs,
-      musicCue: null,
-      jacksonCue: null,
     };
   }
 }

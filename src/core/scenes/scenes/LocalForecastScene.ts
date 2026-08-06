@@ -21,8 +21,6 @@ export class LocalForecastScene implements Scene<LocalForecastData> {
       data,
       speech: speak(data),
       holdMs: this.defaultHoldMs,
-      musicCue: null,
-      jacksonCue: null,
     };
   }
 }

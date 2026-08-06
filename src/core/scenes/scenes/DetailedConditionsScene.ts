@@ -20,8 +20,6 @@ export class DetailedConditionsScene implements Scene<DetailedConditionsData> {
       data,
       speech: speak(data),
       holdMs: this.defaultHoldMs,
-      musicCue: null,
-      jacksonCue: null,
     };
   }
 }

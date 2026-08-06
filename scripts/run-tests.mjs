@@ -48,7 +48,7 @@ const bundled = readdirSync(outDir)
   .filter((f) => f.endsWith(".test.mjs"))
   .map((f) => path.join(outDir, f));
 
-const result = spawnSync(process.execPath, ["--test", ...bundled], {
+const result = spawnSync(process.execPath, ["--test", "--test-force-exit", ...bundled], {
   stdio: "inherit",
   cwd: root
 });

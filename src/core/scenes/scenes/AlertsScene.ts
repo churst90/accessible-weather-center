@@ -25,8 +25,6 @@ export class AlertsScene implements Scene<AlertsData> {
       data,
       speech: speak(data),
       holdMs: this.defaultHoldMs,
-      musicCue: alerts.length > 0 ? "alert" : null,
-      jacksonCue: alerts.length > 0 ? "watch_warning" : null
     };
   }
 }

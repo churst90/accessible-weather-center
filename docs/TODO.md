@@ -60,6 +60,16 @@ Prioritized backlog. Ordered top to bottom within each section. Items marked `[x
 - [x] ~~Broadcast capture pipeline~~ — `scripts/scrape_page_images.py` + `scrape_batch.sh`.
 - [x] ~~Legacy era research docs~~ — `docs/legacy-eras.md`, `docs/reference/`, `docs/reference-capture-plan.md`.
 
+## v0.12.0 — audit Phase 4 (structure) — DONE
+
+- [x] ~~buildServices → src/bootstrap.ts~~ — App.tsx is wiring/UI only.
+- [x] ~~Alert polling → core/alerts/AlertWatcher.ts~~ — service with events, fresh-dedupe, setPlace seam, generation guard. Unit-tested.
+- [x] ~~(themeId, sceneId) → view registry~~ — `src/ui/scenes/sceneRegistry.tsx`; THEME_VIEWS override table is where the v1.0 era renderers plug in.
+- [x] ~~Dead code~~ — TravelCities.ts deleted; musicCue/jacksonCue fields removed from RenderedScene.
+- [x] ~~Electron hardening~~ — CSP meta in index.html; setWindowOpenHandler deny + will-navigate guard.
+- [x] ~~SceneScheduler + AlertWatcher unit tests~~ — 57 tests total.
+- Still open from the Phase-4 wishlist: keyboard-shortcut registration extraction from App.tsx (200-line effect, entangled with app state — low payoff), narration dispatch moving into scenes (the per-scene-id chain in App's scene-change effect), per-theme *frame* variants (WeatherscanFrame is still a single component; needed alongside the view registry for LOT8s/L-bar).
+
 ## v0.11.0 — audit Phases 2 + 3 — DONE
 
 - [x] ~~No-built-in-TTS policy~~ — WebSpeechTts/TtsService, announcerMode, ttsVoice/ttsRate all removed. Screen reader (aria-live) + narrator clips are the only speech paths, by design.

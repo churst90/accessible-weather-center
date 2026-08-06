@@ -53,8 +53,6 @@ export class StormTrackerScene implements Scene<StormTrackerData> {
       data,
       speech: speak(data),
       holdMs: this.defaultHoldMs,
-      musicCue: null,
-      jacksonCue: null
     };
   }
 }

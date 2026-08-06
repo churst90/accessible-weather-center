@@ -33,8 +33,6 @@ export class TrafficScene implements Scene<TrafficData> {
       data,
       speech: `Traffic for ${ctx.place.name} — ${data.reason}`,
       holdMs: this.defaultHoldMs,
-      musicCue: null,
-      jacksonCue: null,
     };
   }
 }

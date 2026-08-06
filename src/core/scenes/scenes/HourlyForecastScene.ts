@@ -21,8 +21,6 @@ export class HourlyForecastScene implements Scene<HourlyForecastData> {
       data,
       speech: speak(data),
       holdMs: this.defaultHoldMs,
-      musicCue: "calm",
-      jacksonCue: "next_few_hours"
     };
   }
 }

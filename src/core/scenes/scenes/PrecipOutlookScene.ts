@@ -48,8 +48,6 @@ export class PrecipOutlookScene implements Scene<PrecipOutlookData> {
       data,
       speech: speak(data),
       holdMs: this.defaultHoldMs,
-      musicCue: null,
-      jacksonCue: null,
     };
   }
 }

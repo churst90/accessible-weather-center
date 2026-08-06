@@ -250,9 +250,7 @@ export class SceneScheduler {
         title: scene.title,
         data: { error: String(err) },
         speech: `${scene.title} is unavailable right now.`,
-        holdMs: 5000,
-        musicCue: null,
-        jacksonCue: null
+        holdMs: 5000
       };
     }
     // Stale-result guard: if a newer enter() has started (user pressed

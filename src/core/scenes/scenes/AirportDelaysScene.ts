@@ -61,8 +61,6 @@ export class AirportDelaysScene implements Scene<AirportDelaysData> {
       data,
       speech: speak(data),
       holdMs: this.defaultHoldMs,
-      musicCue: null,
-      jacksonCue: null,
     };
   }
 }

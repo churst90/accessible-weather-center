@@ -20,8 +20,6 @@ export class CurrentConditionsScene implements Scene<CurrentConditionsData> {
       data,
       speech: speak(data),
       holdMs: this.defaultHoldMs,
-      musicCue: "calm",
-      jacksonCue: "currently_in"
     };
   }
 }

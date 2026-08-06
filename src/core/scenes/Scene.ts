@@ -30,10 +30,6 @@ export interface RenderedScene<TData = unknown> {
   speech: string;
   /** Suggested hold time in milliseconds. */
   holdMs: number;
-  /** Suggested music track id, or null for silence. */
-  musicCue: string | null;
-  /** Suggested Alan Jackson clip id, or null. */
-  jacksonCue: string | null;
 }
 
 export interface Scene<TData = unknown> {

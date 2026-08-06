@@ -49,8 +49,6 @@ export class TravelCitiesScene implements Scene<TravelCitiesData> {
       data,
       speech: speak(data),
       holdMs: this.defaultHoldMs,
-      musicCue: null,
-      jacksonCue: null
     };
   }
 }

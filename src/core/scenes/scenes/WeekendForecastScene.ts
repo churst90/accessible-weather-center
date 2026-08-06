@@ -34,8 +34,6 @@ export class WeekendForecastScene implements Scene<WeekendForecastData> {
       data,
       speech: speak(data),
       holdMs: this.defaultHoldMs,
-      musicCue: null,
-      jacksonCue: null,
     };
   }
 }

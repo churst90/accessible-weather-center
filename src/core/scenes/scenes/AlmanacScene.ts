@@ -38,8 +38,6 @@ export class AlmanacScene implements Scene<AlmanacData> {
       data,
       speech: speak(data),
       holdMs: this.defaultHoldMs,
-      musicCue: null,
-      jacksonCue: null
     };
   }
 }

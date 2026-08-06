@@ -1,6 +1,6 @@
 {
   "name": "accessible-weather-center",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "private": true,
   "description": "Fully accessible, speech- and keyboard-driven weather application with a Weatherscan-style cycling display.",
   "main": "dist-electron/main.js",

@@ -26,8 +26,6 @@ export class OvernightForecastScene implements Scene<OvernightForecastData> {
       data,
       speech: speak(data),
       holdMs: this.defaultHoldMs,
-      musicCue: null,
-      jacksonCue: null
     };
   }
 }

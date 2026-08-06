@@ -2,6 +2,31 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.12.0] — 2026-08-05
+
+Audit Phase 4: structural. No user-visible behavior changes intended — this release reshapes the code so the next round of features (era-authentic renderers, web deployment) has clean seams to build on.
+
+### Changed
+
+#### App.tsx is now wiring/UI only (~250 lines lighter)
+- **`src/bootstrap.ts`** — `buildServices()` and the flavor list moved out of the component file. Pure construction: no DOM, no timers; services start when App's effects call `start()`.
+- **`src/core/alerts/AlertWatcher.ts`** — the NWS alert polling engine extracted from a component effect into a real service mirroring StormScanner's shape: it owns the polling loop, the fresh-alert dedupe, and home-change re-pointing (`setPlace()` clears the seen-set so alerts active at a new home announce fresh, with a generation guard against stale in-flight polls). App now just subscribes and does presentation: announce, tone, OS notification, ticker, severe interrupt. The alert engine is unit-testable for the first time — and tested.
+- The alert watcher re-points from the same places-store subscription that re-points the scheduler and storm scanner, so there is exactly one "home changed" seam.
+
+#### Scene views resolve through a (theme, scene) registry
+- **`src/ui/scenes/sceneRegistry.tsx`** replaces the 17-case switch in `SceneStage`. `resolveSceneView(themeId, sceneId)` checks a per-theme override table before the default views. The override table is the extension point the v1.0 era renderers (WS3000/WSJr text-page stack, IntelliStar 2 LOT8s windowed layout, Weatherscan V2 L-bar) plug into without touching the stage or the default views — the previous flat switch had no seam for structural per-theme variants.
+
+#### Electron hardening
+- **CSP** added to `index.html`: scripts locked to `'self'`; data/tile/stream hosts allowed for fetch/img/media; `object-src 'none'`. The renderer displays remote-derived text (NWS alerts, FAA XML, Icecast metadata), so script injection is the scenario to shut off.
+- **Navigation guards** in `electron/main.ts`: `setWindowOpenHandler` denies all popups; `will-navigate` only permits the dev server (dev) or `file://` (prod).
+
+### Removed (dead code)
+- `src/core/places/TravelCities.ts` — 25-city table + converters with zero importers (TravelCitiesScene uses PlacesStore favorites).
+- `musicCue` / `jacksonCue` fields on `RenderedScene` — produced by every scene, consumed by nothing (App composes narration by scene id).
+
+### Added
+- **13 new unit tests** (57 total): `SceneScheduler` (first-scene entry, the error-fallback shape SceneStage depends on, disabled-flavor skipping, wrap-around, the stale-prepare generation guard, interrupt/resume, order-change current-scene preservation) and `AlertWatcher` (fresh-alert dedup across polls, severity tracking, seen-set reset on home change, same-place no-op, outage resilience).
+
 ## [0.11.0] — 2026-08-05
 
 Audit Phases 2 and 3: the accessibility core rebuilt around a clarified speech policy, plus the visual quick-win batch.

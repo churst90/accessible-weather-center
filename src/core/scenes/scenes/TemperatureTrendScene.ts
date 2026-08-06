@@ -56,8 +56,6 @@ export class TemperatureTrendScene implements Scene<TemperatureTrendData> {
       data,
       speech: speak(data),
       holdMs: this.defaultHoldMs,
-      musicCue: null,
-      jacksonCue: null
     };
   }
 }

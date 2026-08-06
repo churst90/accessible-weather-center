@@ -25,6 +25,15 @@ function createWindow(): void {
   });
   mainWindow.setMenuBarVisibility(false);
 
+  // Navigation hardening: the renderer displays remote-derived strings
+  // (alert text, FAA XML, Icecast metadata). A crafted link or redirect
+  // must not be able to navigate the window or spawn new ones.
+  mainWindow.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
+  mainWindow.webContents.on("will-navigate", (event, url) => {
+    const allowed = isDev ? url.startsWith("http://localhost:5173") : url.startsWith("file://");
+    if (!allowed) event.preventDefault();
+  });
+
   if (isDev) {
     mainWindow.loadURL("http://localhost:5173");
     if (process.env.AWC_DEVTOOLS === "1") {

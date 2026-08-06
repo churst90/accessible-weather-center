@@ -49,8 +49,6 @@ export class ExtendedForecastScene implements Scene<ExtendedForecastData> {
       data,
       speech: speak(data),
       holdMs: this.defaultHoldMs,
-      musicCue: "uplift",
-      jacksonCue: "extended_forecast"
     };
   }
 }
