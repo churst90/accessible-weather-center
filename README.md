@@ -2,7 +2,7 @@
 
 A fully accessible, speech- and keyboard-driven weather application with a Weatherscan-style cycling display. Designed accessibility-first: every visual is mirrored by a semantic narration so blind and low-vision users get the same information at the same fidelity as sighted users — including weather radar, which is normally inaccessible.
 
-> Status: **v0.9.6 — NVDA modal focus trap, Escape fixes, volume-flash fix, NWR live station directory**. Settings and Help modals now portal out of the application region, move focus into the dialog on open, set the main app `inert`, and trap Tab with wrap-around — fixing NVDA getting "stuck on the scene" inside dialogs. Escape now exits Favorites / Map Nav modes (matched the announced contract), silences speech outside those modes, and no longer bleeds through modal close. Volume keys (1, 2, Shift+1, Shift+2) no longer trigger an `applyTheme()` cascade — the theme effect skips its DOM/CSS work when the theme hasn't actually changed. NOAA Weather Radio station directory replaced: the bundled 60-station list was mostly dead weatherUSA mount points; now a curated 35-station active-mount snapshot, refreshed at Settings-open from `radio.weatherusa.net/status-json.xsl` via an Electron main-process IPC channel (the Icecast endpoint has no CORS headers). Announcement mode now defaults to "screen reader only" (aria-live region); built-in TTS is opt-in via Settings for users running the app without NVDA / JAWS / VoiceOver. Mnemonic startup is bounded by a 6-second timeout so a failed clip can't stall the scene loop. NWR stream reports connect / recovery / hard-failure status via announcements, gives up after five consecutive failures, and includes a connect-timeout guard. Ten visual themes across seven TWC hardware families. Live NWR transmitter audio streamable in the background on a dedicated audio bus. Three-bus AudioMixer: music, voice, radio — each with independent volume control. Columnar forecast layouts with weather icons (per-theme resolution: WSXL→42×42, IS2→68×68 HD WEBP). Per-scene background templates for WS4000-v1/WSJr. Tab-based scene switching plus 2-D arrow navigation inside each scene. Era-correct logos (TWC, NOAA, IntelliStar). Persistent Lower Display Line (LDL) crawl with per-condition section icon. Static-PNG icon fallback under `prefers-reduced-motion: reduce`. Assets are gitignored — see Fan-sourced assets section below.
+> Status: **v0.10.0 — reliability release.** Ten confirmed bugs fixed from a full-codebase audit, headlined by: severe-alert polling now follows your home location when you change it (it used to keep watching the boot-time city); storm movement is no longer falsely reported as "Stationary" between radar frame updates; new-storm announcements are no longer silently suppressed by shifting storm ids; one failed network launch no longer bricks all scenes until restart; a render crash now speaks a recovery hint instead of white-screening silently; the `?` Help shortcut actually opens Help; Weather Radio recovers after repeated stream failures and picks stations state-aware; narration no longer overlaps itself on rapid scene changes; music no longer surges over narration when you touch the volume keys; wintry forecasts narrate with the correct wintry clips. New: the Map Navigation grid explorer's step size is adjustable (1 / 3 / 5 / 10 / 25 miles) live with the bracket keys and persisted in Settings. New: a unit-test suite (`npm test`, zero added dependencies) covering the storm tracker, weather cache, keyboard router, narration condition-mapping, and station matching. See [CHANGELOG.md](CHANGELOG.md) for the full details and [docs/user-manual.md](docs/user-manual.md) for the user manual.
 
 ## What this project is
 
@@ -31,9 +31,16 @@ npm run build
 npm run start
 ```
 
+Unit tests (uses only what's already installed — esbuild plus Node's built-in test runner):
+
+```bash
+npm test             # all tests
+npm test Storm       # only test files whose name matches
+```
+
 ### Configure your NWS User-Agent
 
-The NWS API requires a real `User-Agent` identifying you. Edit `src/App.tsx` (`buildServices`) and replace `configure-me@example.com` with your contact before using anything beyond local dev.
+The NWS API requires a real `User-Agent` identifying you. If you fork this project, edit `src/App.tsx` (`buildServices`) and replace the contact email with your own before using anything beyond local dev.
 
 ## Keyboard shortcuts
 
@@ -53,11 +60,13 @@ The NWS API requires a real `User-Agent` identifying you. Edit `src/App.tsx` (`b
 | `3` | Speak active weather alerts (or "no active alerts") |
 | `,` | Open Settings |
 | `?` | Open Help dialog (full shortcut list) |
-| `Esc` | Silence current speech / close the current modal |
+| `Esc` | Exit Favorites / Map Nav, otherwise silence current speech / close the current modal |
+
+Inside Map Navigation (`N`): `Tab` cycles Storms / Alerts / Grid Explorer modes; arrows walk items or move the grid cursor; `[` and `]` change the grid step size (1, 3, 5, 10, or 25 miles per press); `Home` returns to your location; `Enter` reads full detail.
 
 The stage carries `role="application"` so NVDA stays in focus mode automatically — no need to toggle browse vs focus each session.
 
-For new users: see **[USER_GUIDE.md](USER_GUIDE.md)**.
+For new users: see the **[User Manual](docs/user-manual.md)**.
 
 ## Themes
 
@@ -103,7 +112,7 @@ Optional live NWR transmitter stream that plays in the background regardless of 
 
 **Turn it on/off:** press `0` anywhere in the app, or open Settings (`,`) → "NOAA Weather Radio" → "Enable Weather Radio stream". The keyboard toggle announces what's playing ("Weather Radio on. KEC49, Buffalo NY.").
 
-**Pick a station:** open Settings → NOAA Weather Radio → Call sign. Type any weatherUSA mount-point call sign (e.g. `KEB98` for Buffalo, `KEC60` for Milwaukee) or pick from the autocomplete. The list is a curated bundled snapshot (~35 stations with parsed city/state) merged with a live fetch from `radio.weatherusa.net/status-json.xsl` that runs when you open Settings — so the dropdown reflects mounts that are *currently streaming*, not a catalog of transmitters that may or may not relay. If you leave the field blank and Weather Radio is enabled, the app fuzzy-matches your favorite location to the nearest known active transmitter. **Important:** weatherUSA does not carry every NWS transmitter — contributors post SDR feeds from where they live. Your local call sign may not be there; pick the closest metro that is.
+**Pick a station:** open Settings → NOAA Weather Radio → Call sign. Type any weatherUSA mount-point call sign (e.g. `KEB98` for Buffalo, `KEC60` for Milwaukee) or pick from the autocomplete. The list is a curated bundled snapshot (~35 stations with parsed city/state) merged with a live fetch from `radio.weatherusa.net/status-json.xsl` that runs when you open Settings — so the dropdown reflects mounts that are *currently streaming*, not a catalog of transmitters that may or may not relay. If you leave the field blank and Weather Radio is enabled, the app matches your favorite location — city and state together, so a Columbus, Ohio home never lands on Columbus, Georgia — to the nearest known active transmitter. **Important:** weatherUSA does not carry every NWS transmitter — contributors post SDR feeds from where they live. Your local call sign may not be there; pick the closest metro that is.
 
 **Adjust the volume from the keyboard:**
 - `1` raises **Music** volume by 5%; `Shift+1` lowers it by 5%.
@@ -116,7 +125,7 @@ Optional live NWR transmitter stream that plays in the background regardless of 
 
 ### When a stream is unavailable
 
-If a transmitter is offline or your network blocks the Icecast feed, the player retries with exponential backoff (2s, 4s, 8s, 16s, 30s). A connect-timeout guard also catches servers that accept the connection but never send data. After five consecutive failures the player gives up and announces *"Weather Radio stream for {call sign} is unavailable. Press comma to open settings and choose another station, or disable Weather Radio."* — you'll hear this via your screen reader (or built-in TTS, if enabled). When a stream finally starts flowing, it announces *"Weather Radio streaming from {call sign}."* Switching to a different call sign resets the failure counter and starts fresh.
+If a transmitter is offline or your network blocks the Icecast feed, the player retries with exponential backoff (2s, 4s, 8s, 16s, 30s). A connect-timeout guard also catches servers that accept the connection but never send data. After five consecutive failures the player gives up and announces *"Weather Radio stream for {call sign} is unavailable. Press comma to open settings and choose another station, or disable Weather Radio."* — you'll hear this via your screen reader (or built-in TTS, if enabled). When a stream finally starts flowing, it announces *"Weather Radio streaming from {call sign}."* Re-selecting a station (even the same one) or changing any audio setting retries a failed stream; switching call signs resets the failure counter and starts fresh.
 
 ### Legal
 
@@ -153,9 +162,10 @@ src/
 electron/
 ├── main.ts                    # Electron main process: window, tray, notifications
 └── preload.ts                 # Context-bridged IPC
+tests/                         # Unit tests (npm test — esbuild + node:test, no extra deps)
 ```
 
-For architectural rationale (visual/semantic split, radar legend invariant, scene lifecycle, storm tracking, dual-tier alerts, LDL crawl), see **[docs/architecture.md](docs/architecture.md)**.
+For architectural rationale (visual/semantic split, radar legend invariant, scene lifecycle, storm tracking, dual-tier alerts, LDL crawl), see **[docs/architecture.md](docs/architecture.md)**. For the August 2026 full-codebase audit that drove the v0.10.0 fixes, see **[docs/code-audit-2026-08.md](docs/code-audit-2026-08.md)**. The backlog lives in **[docs/TODO.md](docs/TODO.md)**.
 
 ## Accessibility design rules
 
@@ -189,7 +199,7 @@ This project is personal and not distributed. The authentic TWC visual recreatio
 
 **Important:** "The Weather Channel" logo and name are trademarks of The Weather Channel. This project is a personal, non-commercial recreation and does not claim affiliation or endorsement. If you fork or redistribute, you are responsible for the IP implications in your jurisdiction.
 
-The `assets/` directory is **gitignored** — it contains ~5 GB of fonts, icons, backgrounds, narration clips, and music that must be sourced separately. Only `assets/.gitkeep` is committed to preserve the directory. See **[USER_GUIDE.md#assets](USER_GUIDE.md#assets)** for how to set up your local asset library.
+The `assets/` directory is **gitignored** — it contains ~5 GB of fonts, icons, backgrounds, narration clips, and music that must be sourced separately. Only `assets/.gitkeep` is committed to preserve the directory. See **[the User Manual](docs/user-manual.md#assets)** for how to set up your local asset library.
 
 NWS and FAA data, and the NOAA seal, are US Government works and are in the public domain.
 

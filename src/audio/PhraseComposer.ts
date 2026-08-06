@@ -768,7 +768,7 @@ function describeCondition(text: string): string {
  * with windy conditions"). When the observation shows wind >= 15 mph, we pick
  * the windy variant if one exists.
  */
-function guessConditionCode(text: string | null, isWindy: boolean): number | null {
+export function guessConditionCode(text: string | null, isWindy: boolean): number | null {
   if (!text) return null;
   const t = text.toLowerCase();
 
@@ -859,7 +859,7 @@ function guessConditionCode(text: string | null, isWindy: boolean): number | nul
  *
  * Windy variants are typically code+10 (e.g., 3000=partly cloudy, 3010=partly cloudy and windy).
  */
-function guessCcshForecastCode(text: string | null, timeHint: TimeHint, isWindy: boolean): number | null {
+export function guessCcshForecastCode(text: string | null, timeHint: TimeHint, isWindy: boolean): number | null {
   if (!text) return null;
   const t = text.toLowerCase();
   const w = isWindy;
@@ -1020,7 +1020,7 @@ function guessCcshForecastCode(text: string | null, timeHint: TimeHint, isWindy:
  *   8000-8400: Transition conditions (rain turning to snow, etc.)
  *   9003:      Morning clouds
  */
-function guessCcefForecastCode(text: string | null, timeHint: TimeHint, _isWindy: boolean): number | null {
+export function guessCcefForecastCode(text: string | null, timeHint: TimeHint, _isWindy: boolean): number | null {
   if (!text) return null;
   const t = text.toLowerCase();
 
@@ -1031,25 +1031,28 @@ function guessCcefForecastCode(text: string | null, timeHint: TimeHint, _isWindy
   if (/snow.*freez.*rain|snow.*and.*ice/.test(t))             return 8400;
 
   // ── Time-of-day: morning (6xxx) ──
+  // Specific compounds MUST come before their general fallbacks — /shower/
+  // would swallow "snow showers" and /rain/ would swallow "rain and snow".
+  // (The CCSH blocks below always had this ordering; these two didn't.)
   if (timeHint === "morning" || /early|ending/.test(t)) {
     if (/drizzle/.test(t))                                    return 6003;
-    if (/shower/.test(t) && !(/thunder/.test(t)))             return 6103;
-    if (/thunderstorm/.test(t))                               return 6143;
-    if (/rain/.test(t))                                       return 6303;
     if (/rain.*snow/.test(t))                                 return 6403;
     if (/wintry mix/.test(t))                                 return 6703;
     if (/snow.*shower/.test(t))                               return 6803;
+    if (/shower/.test(t) && !(/thunder/.test(t)))             return 6103;
+    if (/thunderstorm/.test(t))                               return 6143;
+    if (/rain/.test(t))                                       return 6303;
     if (/snow/.test(t))                                       return 6903;
     if (/cloud/.test(t))                                      return 9003;
   }
 
   // ── Time-of-day: afternoon/evening (7xxx) ──
   if (timeHint === "afternoon" || timeHint === "night" || /late|overnight|developing|afternoon/.test(t)) {
+    if (/rain.*snow/.test(t))                                 return 7403;
+    if (/snow.*shower/.test(t))                               return 7803;
     if (/shower/.test(t) && !(/thunder/.test(t)))             return 7103;
     if (/thunderstorm/.test(t))                               return 7143;
     if (/rain/.test(t))                                       return 7303;
-    if (/rain.*snow/.test(t))                                 return 7403;
-    if (/snow.*shower/.test(t))                               return 7803;
     if (/snow/.test(t))                                       return 7903;
   }
 
@@ -1116,9 +1119,9 @@ function guessCcefForecastCode(text: string | null, timeHint: TimeHint, _isWindy
  * "Tonight", "Monday Night" → "night"; "This Afternoon" → "afternoon";
  * "Monday" (daytime) → "day"; etc.
  */
-type TimeHint = "morning" | "afternoon" | "night" | "day" | null;
+export type TimeHint = "morning" | "afternoon" | "night" | "day" | null;
 
-function periodTimeHint(periodName: string, isDaytime: boolean): TimeHint {
+export function periodTimeHint(periodName: string, isDaytime: boolean): TimeHint {
   const n = periodName.toLowerCase();
   if (/tonight|overnight/.test(n)) return "night";
   if (/night/.test(n)) return "night";

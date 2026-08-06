@@ -2,6 +2,76 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.10.0] — 2026-08-05
+
+Reliability release. A four-subsystem audit of the whole codebase (see `docs/code-audit-2026-08.md`) confirmed ten bugs that silently broke core promises of the app; all ten are fixed here, alongside the first unit-test suite and a new map-navigation feature.
+
+### Fixed
+
+#### Severe-alert polling was pinned to the boot-time home location
+- **Root cause:** the alert-polling effect read `services.places.home()` once when it mounted and its dependency array never changed — so after changing home via Favorites, alert announcements, the severe ticker, scene interrupts, and OS notifications kept watching the *old* city until app restart.
+- **Fix:** the active home is now React state (`homePlace`) fed by the places-store subscription; the polling effect restarts whenever it changes and re-announces alerts already active at the new location (`App.tsx`).
+
+#### Storms were announced as "Stationary" on roughly 4 of every 5 scans
+- **Root cause:** the scanner polls every 2 minutes but RainViewer publishes a new radar frame roughly every 10. Nothing checked whether the frame had changed, so most scans re-tracked identical data — every storm's centroid compared against itself, movement zeroed, and views read "Stationary" for storms genuinely moving 40 mph.
+- **Fix:** `StormScanner` records the last sampled frame's timestamp and skips re-sampling/re-tracking (while still heartbeating subscribers) until RainViewer actually advances.
+
+#### New-storm announcements could be silently swallowed
+- **Root cause:** storm ids were positional (`storm_1` = nearest to home). When a new storm appeared closer than existing ones, every id shifted; the genuinely-new storm inherited an id the announcement dedup had already seen, so exactly the announcement that matters most — a new storm close to you — was suppressed.
+- **Fix:** `StormTracker` now mints persistent ids (`track_N`) that follow each storm across frames via the matcher, with a claimed-set so two current cells can never share one previous storm's id. The dedup layer keys on these stable ids.
+
+#### One failed launch bricked all weather scenes until restart
+- **Root cause:** `WeatherService.ensureGrid` cached the in-flight gridpoint promise and never evicted it on rejection — an offline start or NWS blip outlasting the client's retries meant every subsequent request replayed the same cached error forever.
+- **Fix:** rejected grid promises evict themselves. Additionally, all TTL caches now serve **stale-while-error**: if a refresh fails but an expired entry exists, the old data is served (its original timestamp preserved — new `lastFetchedAt()` keeps the age honest) instead of degrading the scene to "unavailable".
+
+#### A scene render crash white-screened the app in silence
+- **Root cause:** `SceneScheduler`'s prepare-failure fallback substitutes `{ error }` for scene data while keeping the scene id; the per-id views cast and dereference immediately → TypeError. With no ErrorBoundary anywhere, the whole tree — including the aria-live region — unmounted. For a screen-reader user the app simply went quiet.
+- **Fix:** `SceneStage` detects the error shape and renders `SceneUnavailable` with a retry note; a new `ErrorBoundary` (`src/ui/semantic/ErrorBoundary.tsx`) wraps the stage with a `role="alert"` fallback that announces itself and resets on scene change.
+
+#### The `?` Help shortcut could never fire
+- **Root cause:** pressing Shift+/ produces `key: "?"` with `shiftKey: true`; the router built the spec `shift+?` which never matched the registered `?`. Opening Help by keyboard was impossible — and it is Help's only trigger.
+- **Fix:** shifted punctuation no longer gets a `shift+` prefix (the character itself encodes the shift); letters and digits keep modifier semantics (`shift+m`, `shift+1` still distinct). Covered by unit tests.
+
+#### Weather Radio's "failed" state was a dead end
+- **Root cause:** after five consecutive stream failures the player gives up and the announcement says "choose another station" — but the App-side guard only reconnected when the call sign *changed*, so re-picking the same station (or the network recovering) did nothing until NWR was toggled off and on.
+- **Fix:** any settings change while the player reports "failed" now retries the connection.
+
+#### NWR station auto-pick could choose the wrong state
+- **Root cause:** `suggestCallSignForPlace` matched by city substring in list order — "Columbus, OH" matched the Columbus **GA** transmitter first. A blind user has no easy way to notice they're hearing another state's weather radio.
+- **Fix:** matching is now city+state first, then a same-state guard on city-only hits, then state-only fallback. Covered by unit tests.
+
+#### Rapid scene changes could produce overlapping, unstoppable narration
+- **Root cause:** `PhraseSequencer`'s `onended`/`onerror` handlers unconditionally nulled the shared `currentAudio`/`abortResolve` fields. `stop()` resets the old clip with `load()`, which fires its error event on a later task — by then a new clip owns those fields, and the stale event cleared them, leaving the new clip unstoppable (it played to completion over the next scene's narration).
+- **Fix:** handlers now use identity guards — they only release the fields if they still refer to their own clip.
+
+#### Volume keys surged music back over active narration
+- **Root cause:** `AudioMixer.setMusicLevel` ramped the music gain straight to the user level with no awareness of ducking; App calls it on every settings change, so pressing `1`/`Shift+1` mid-narration undid the duck.
+- **Fix:** the mixer tracks duck state; while ducked, level changes apply to the duck target (never louder than the user's chosen level) and the full level takes effect at the next unduck. Ramps are now anchored with `cancelScheduledValues` + `setValueAtTime` so rapid sequences transition smoothly.
+
+#### Wintry forecasts narrated with the wrong clips
+- **Root cause:** in `guessCcefForecastCode`'s morning and evening blocks, general patterns preceded specific ones — `/shower/` swallowed "snow showers", `/rain/` swallowed "rain and snow" and shadowed "wintry mix". "Snow showers ending early" narrated as plain showers.
+- **Fix:** specific compounds reordered above their general fallbacks in both blocks, mirroring the (already-correct) CCSH ordering. Covered by unit tests against representative NWS phrasing.
+
+### Added
+
+#### Configurable Map Navigation grid step
+- The grid explorer's cursor step is now adjustable: **1, 3, 5, 10, or 25 miles** per arrow press. Press `[` for a smaller step and `]` for a larger one inside grid mode — the change is announced ("Grid step: 5 miles per press.") and persisted. A default lives in Settings → Accessibility → "Map grid step". Entering grid mode announces the current step and the bracket keys.
+- Steps are now true miles in both axes: the east–west step converts miles to degrees at the cursor's latitude instead of using a fixed degree offset (which stretched with latitude).
+- The Help dialog gained an "Inside Map Navigation" section documenting the mode's keys.
+
+#### Unit-test suite with zero new dependencies
+- `npm test` bundles `tests/*.test.ts` with the already-installed esbuild and runs them under Node's built-in `node --test` runner (`scripts/run-tests.mjs`) — chosen because npm package installation is unreliable on this project's drive. 39 tests cover `StormTracker` (stable ids, movement vectors, split-cell claiming), `WeatherService` (rejection eviction, stale-while-error, TTL), `KeyboardRouter` (shifted symbols, digit normalization, editable-field guard), the PhraseComposer guess functions (CCEF ordering regression), `nwrStations` matching, and `TileMath` (haversine, bearings, round-trips, point-in-polygon).
+- The narration guess functions (`guessConditionCode`, `guessCcshForecastCode`, `guessCcefForecastCode`, `periodTimeHint`) are now exported for testability.
+
+#### User manual
+- New `docs/user-manual.md` — a complete guide written for screen-reader users: first launch, every mode and shortcut, Weather Radio setup, themes and narrators, settings reference, asset setup, and troubleshooting.
+
+### Changed
+- `README.md` returned to the repository root (GitHub renders it there); `docs/` keeps the specialized documentation. Version numbers unified at 0.10.0 (package.json had said 0.1.0 since the initial commit).
+- NWS `User-Agent` now ships a real contact address instead of the `configure-me@example.com` placeholder.
+- `tsconfig.json` gained `noEmit` — `tsc -b` was emitting ~92 compiled `.js` files alongside their sources in `src/` on every build (Vite does the real compiling; tsc only typechecks).
+- Icecast status parsing in the Electron main process now tolerates the single-mount case where `icestats.source` is a bare object rather than an array.
+
 ## [0.9.6] — 2026-04-16
 
 Four accessibility / UX fixes reported after a real NVDA test run.

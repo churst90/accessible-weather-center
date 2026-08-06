@@ -59,7 +59,14 @@ export interface Settings {
   nwrCallSign: string | null;
   /** NWR bus volume, 0..1. */
   nwrVolume: number;
+  /** Map Navigation grid-explorer step size in miles per arrow press.
+   *  Adjustable live with [ and ] inside grid mode; this stores the
+   *  preference across sessions. One of GRID_STEP_PRESETS_MI. */
+  mapGridStepMi: number;
 }
+
+/** Allowed grid-explorer step sizes, miles per arrow press. */
+export const GRID_STEP_PRESETS_MI = [1, 3, 5, 10, 25] as const;
 
 const STORAGE_KEY = "awc.settings.v1";
 
@@ -101,6 +108,7 @@ export const DEFAULT_SETTINGS: Settings = {
   nwrEnabled: false,
   nwrCallSign: null,
   nwrVolume: 0.5,
+  mapGridStepMi: 10,
 };
 
 export class SettingsStore {

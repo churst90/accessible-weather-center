@@ -113,19 +113,32 @@ export function findStation(callSign: string | null): NwrStation | null {
   return activeStations.find((s) => s.callSign.toUpperCase() === cs) ?? null;
 }
 
-/** Pick a default call sign for a place name. Best-effort fuzzy match by
- *  city or state name. Null if nothing close. Only suggests from the
+/** Pick a default call sign for a place name. Best-effort fuzzy match,
+ *  most-specific first. Null if nothing close. Only suggests from the
  *  active list, so we never default the user to a dead mount. */
 export function suggestCallSignForPlace(placeName: string): string | null {
   if (!placeName) return null;
   const lower = placeName.toLowerCase();
-  const byCity = activeStations.find((s) => lower.includes(s.city.toLowerCase()));
-  if (byCity) return byCity.callSign;
-  const byState = activeStations.find((s) => {
+  const matchesState = (s: NwrStation) => {
     const stateLower = s.state.toLowerCase();
-    return lower.includes(`, ${stateLower}`) || lower.endsWith(` ${stateLower}`);
-  });
-  return byState?.callSign ?? null;
+    return stateLower !== "" &&
+      (lower.includes(`, ${stateLower}`) || lower.endsWith(` ${stateLower}`));
+  };
+  // City AND state first. City-only matching auto-picked the wrong state's
+  // transmitter for shared city names — a Columbus OH home silently got
+  // Columbus GA weather radio, which a blind user has no easy way to notice.
+  const byCityState = activeStations.find(
+    (s) => lower.includes(s.city.toLowerCase()) && matchesState(s)
+  );
+  if (byCityState) return byCityState.callSign;
+  // City-only next — but not when the place names a state we DO have
+  // stations for; in that case a same-state station is the safer pick.
+  const stateStations = activeStations.filter(matchesState);
+  const byCity = activeStations.find((s) => lower.includes(s.city.toLowerCase()));
+  if (byCity && (stateStations.length === 0 || matchesState(byCity))) {
+    return byCity.callSign;
+  }
+  return stateStations[0]?.callSign ?? byCity?.callSign ?? null;
 }
 
 /** Replace the active station list with a fresh fetch result. Merges

@@ -126,20 +126,23 @@ export class PhraseSequencer {
       await new Promise<void>((resolve) => {
         // Save the resolve function so stop() can unblock us.
         this.abortResolve = resolve;
-        audio.onended = () => {
-          this.abortResolve = null;
-          this.currentAudio = null;
+        const settle = () => {
+          // Identity guards, not unconditional nulling: stop() resets a
+          // clip with load(), which fires its error event on a later task.
+          // By then a NEW clip may own these fields — a stale event that
+          // blindly nulled them left the new clip unstoppable (its audio
+          // kept playing over the next scene's narration).
+          if (this.abortResolve === resolve) this.abortResolve = null;
+          if (this.currentAudio === audio) this.currentAudio = null;
           resolve();
         };
-        audio.onerror = () => {
-          this.abortResolve = null;
-          this.currentAudio = null;
-          resolve();
-        };
+        audio.onended = settle;
+        audio.onerror = settle;
       });
     } catch {
-      this.abortResolve = null;
-      this.currentAudio = null;
+      // audio.play() rejected — this clip never registered abortResolve,
+      // so only release the element reference if it is still ours.
+      if (this.currentAudio === audio) this.currentAudio = null;
     } finally {
       try { node.disconnect(); } catch { /* ignore */ }
     }

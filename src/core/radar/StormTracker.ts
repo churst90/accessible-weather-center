@@ -41,7 +41,13 @@ export interface TrackResult {
 }
 
 export class StormTracker {
-  private previous: { storms: StormCell[]; capturedAt: Date } | null = null;
+  private previous: { storms: TrackedStorm[]; capturedAt: Date } | null = null;
+  /** Monotonic counter for minting persistent storm ids. The clusterer's
+   *  positional ids (storm_1 = nearest) shift every time a new storm appears
+   *  closer to home, which broke announcement dedup — a genuinely new storm
+   *  could inherit an already-announced id and be silently skipped. Ids
+   *  minted here follow the storm across frames instead. */
+  private nextTrackId = 0;
 
   /** Wipe the tracker's memory. Use this when home changes so we don't
    *  accidentally match storms across two different bounding boxes. */
@@ -58,8 +64,13 @@ export class StormTracker {
       ? Math.max(0.1, (current.capturedAt.getTime() - prev.capturedAt.getTime()) / 60_000)
       : 0;
 
+    // Each previous storm may match at most one current storm; without this
+    // two current cells splitting off one old cell would share an id.
+    const claimed = new Set<string>();
+
     const tracked: TrackedStorm[] = current.storms.map((s) => {
-      const match = prev ? findMatch(s, prev.storms) : null;
+      const match = prev ? findMatch(s, prev.storms, claimed) : null;
+      if (match) claimed.add(match.id);
       let movementDeg: number | null = null;
       let movementMph: number | null = null;
       let intensifiedBands = 0;
@@ -81,6 +92,7 @@ export class StormTracker {
 
       return {
         ...s,
+        id: match ? match.id : `track_${++this.nextTrackId}`,
         movementDeg,
         movementMph,
         isNew: !match,
@@ -91,15 +103,20 @@ export class StormTracker {
       };
     });
 
-    this.previous = { storms: current.storms, capturedAt: current.capturedAt };
+    this.previous = { storms: tracked, capturedAt: current.capturedAt };
     return { capturedAt: current.capturedAt, storms: tracked };
   }
 }
 
-function findMatch(target: StormCell, candidates: StormCell[]): StormCell | null {
-  let best: StormCell | null = null;
+function findMatch(
+  target: StormCell,
+  candidates: TrackedStorm[],
+  claimed: Set<string>
+): TrackedStorm | null {
+  let best: TrackedStorm | null = null;
   let bestDist = Infinity;
   for (const c of candidates) {
+    if (claimed.has(c.id)) continue;
     const d = haversineMiles(target.centroid, c.centroid);
     if (d > MAX_MATCH_MI) continue;
     if (Math.abs(bandIndex(target.band) - bandIndex(c.band)) > 1) continue;

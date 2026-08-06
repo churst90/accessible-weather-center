@@ -1,6 +1,6 @@
 {
   "name": "accessible-weather-center",
-  "version": "0.1.0",
+  "version": "0.10.0",
   "private": true,
   "description": "Fully accessible, speech- and keyboard-driven weather application with a Weatherscan-style cycling display.",
   "main": "dist-electron/main.js",
@@ -11,7 +11,8 @@
     "build": "tsc -b && vite build && npm run build:electron",
     "start": "npm run build && electron .",
     "typecheck": "tsc -b --noEmit && tsc -p tsconfig.electron.json --noEmit",
-    "lint": "eslint src electron --ext .ts,.tsx"
+    "test": "node scripts/run-tests.mjs",
+    "lint": "eslint src electron"
   },
   "dependencies": {
     "react": "^18.3.1",

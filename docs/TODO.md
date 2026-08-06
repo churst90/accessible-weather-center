@@ -60,6 +60,27 @@ Prioritized backlog. Ordered top to bottom within each section. Items marked `[x
 - [x] ~~Broadcast capture pipeline~~ — `scripts/scrape_page_images.py` + `scrape_batch.sh`.
 - [x] ~~Legacy era research docs~~ — `docs/legacy-eras.md`, `docs/reference/`, `docs/reference-capture-plan.md`.
 
+## v0.10.0 — reliability release (audit Phase 1) — DONE
+
+All ten confirmed silent-failure bugs from `docs/code-audit-2026-08.md` fixed, plus the first unit-test suite and a map-nav feature. Details in CHANGELOG 0.10.0.
+
+- [x] ~~Alert poller pinned to boot-time home~~ — `homePlace` React state; polling restarts and re-announces on home change.
+- [x] ~~False "Stationary" storms~~ — StormScanner gates on RainViewer frame time; unchanged frames aren't re-tracked.
+- [x] ~~Suppressed new-storm announcements~~ — StormTracker mints stable `track_N` ids that follow storms across frames.
+- [x] ~~Grid-lookup rejection cached forever~~ — evicts on failure; TTL caches serve stale-while-error with honest `lastFetchedAt()`.
+- [x] ~~Scene crash = silent white screen~~ — ErrorBoundary with role="alert" fallback + SceneUnavailable for the scheduler's error data shape.
+- [x] ~~`?` Help shortcut unmatchable~~ — shifted punctuation no longer gets a `shift+` prefix in KeyboardRouter.
+- [x] ~~NWR sticky-failed~~ — settings changes retry a failed stream.
+- [x] ~~NWR wrong-state station autopick~~ — city+state matching before city-only.
+- [x] ~~PhraseSequencer stale-handler race~~ — identity guards in onended/onerror.
+- [x] ~~Music surging over narration~~ — AudioMixer duck-state flag; anchored gain ramps.
+- [x] ~~Wrong wintry CCEF clips~~ — specific regex patterns reordered above general ones.
+- [x] ~~Configurable Map Nav grid step~~ — 1/3/5/10/25 mi, `[`/`]` live cycling, persisted, Settings UI, Help section.
+- [x] ~~Unit tests~~ — `npm test`: esbuild + node:test, zero new deps; 39 tests over StormTracker, WeatherService, KeyboardRouter, PhraseComposer guesses, nwrStations, TileMath.
+- [x] ~~User manual~~ — `docs/user-manual.md`.
+- [x] ~~tsconfig noEmit~~ — tsc no longer sprays compiled .js into src/.
+- [x] ~~README back at repo root~~; versions unified at 0.10.0; real NWS User-Agent contact.
+
 ## v0.9.6 — NVDA modal focus, Escape, volume flash, NWR stations — DONE
 
 - [x] ~~Volume key screen flash~~ — `applyTheme()` now diffs `prevThemeId` / `prevContrast` and skips CSS work on volume changes.
@@ -131,11 +152,11 @@ Prioritized backlog. Ordered top to bottom within each section. Items marked `[x
 
 ## Usability gaps
 
-- [ ] **Place picker UI.** Search NWS for a place by ZIP or city/state, save to `PlacesStore`. Persist to disk (electron-store or flat JSON in `app.getPath("userData")`). `SettingsStore` already persists via localStorage; `PlacesStore` is next.
-- [ ] **First-run setup flow.** Prompt for home location and contact email on first launch instead of editing `App.tsx`.
-- [ ] **Settings panel polish.** TTS voice picker, TTS rate slider, scene-duration overrides per flavor.
-- [ ] **Error/empty states for every scene.** Right now most degrade to "unavailable" strings; flesh out the visual fallbacks.
-- [ ] **NWS retry/backoff.** Wrap `NwsClient.get` with retry-after handling and a circuit breaker.
+- [x] ~~Place picker persistence~~ — STALE ENTRY: `PlacesStore` already persists (localStorage `awc.places.v1`). Still open: move both stores to `app.getPath("userData")` so dev and packaged builds share state (localStorage is origin-scoped).
+- [ ] **First-run setup flow.** Prompt for home location on first launch instead of the hard-coded Greeneville TN default in `defaultPlaces()`. The ZIP flow in Favorites (M → Z) already works; first-run just needs to open into it.
+- [ ] **Settings panel polish.** TTS voice picker, TTS rate slider (settings exist, nothing reads them), scene-duration overrides per flavor.
+- [ ] **Error/empty states for every scene.** v0.10.0 added the ErrorBoundary + SceneUnavailable safety net; per-scene visual empty states still worth fleshing out.
+- [x] ~~NWS retry/backoff~~ — STALE ENTRY: shipped long ago. `NwsClient.get` has 10s timeout, 3 retries, exponential backoff, and Retry-After handling.
 - [ ] **Production asset serving.** Dev middleware in `vite.config.ts` only handles dev. For Electron prod, register a custom `awc-asset://` protocol resolving to the assets folder.
 
 ## Radar — accessible map navigation
@@ -192,10 +213,10 @@ Prioritized backlog. Ordered top to bottom within each section. Items marked `[x
 
 ## Known bugs / cleanup
 
-- [ ] `WebSpeechTts.setVoice` doesn't persist across reloads — needs to live in settings.
-- [ ] `AnnouncementQueue` doesn't actually queue — it overwrites. For long narration that's fine, but an alert preempting scene speech loses the original. Consider a "resume after assertive" mode.
-- [ ] `KeyboardRouter` modifier-only chords (`Ctrl+Shift+P`) aren't covered by tests.
-- [ ] Tray icon still empty on Windows packs.
+- [ ] `WebSpeechTts.setVoice` doesn't persist across reloads — `ttsVoice`/`ttsRate` settings exist but nothing reads them.
+- [ ] `AnnouncementQueue` doesn't actually queue — it overwrites, and the polite/assertive regions clear each other. Repeated identical announcements are silent (no aria-live mutation), and `cancel()` is a no-op in live-region mode. Full rebuild is audit Phase 2.
+- [x] ~~`KeyboardRouter` shortcut tests~~ — covered in `tests/KeyboardRouter.test.ts` (shifted symbols, digits, letters, editable-field guard, conflicts).
+- [ ] Tray icon still empty on Windows packs — root cause known: `dist/assets/logos/app-icon-180.png` never exists in prod (assets are gitignored and served by dev middleware only), and `nativeImage.createFromPath` returns an empty image instead of throwing. Blocked on "Production asset serving".
 
 ## Repo setup
 

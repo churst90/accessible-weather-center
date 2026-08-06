@@ -5,6 +5,7 @@ import type { StormScanner, RadarProbeResult } from "../../core/radar/StormScann
 import type { RainViewerClient } from "../../core/weather/RainViewerClient";
 import type { WeatherService } from "../../core/weather/WeatherService";
 import type { AnnouncementQueue } from "../../a11y/AnnouncementQueue";
+import { GRID_STEP_PRESETS_MI, type SettingsStore } from "../../core/settings/SettingsStore";
 import { pointInPolygon } from "../../core/radar/TileMath";
 import { RadarMapCanvas } from "../scenes/RadarMapCanvas";
 
@@ -32,6 +33,15 @@ const MODE_LABELS: Record<NavMode, string> = {
   grid: "Grid Explorer"
 };
 
+/** Snap an arbitrary mile value to the closest allowed grid-step preset. */
+function nearestPreset(mi: number): number {
+  let best: number = GRID_STEP_PRESETS_MI[0];
+  for (const p of GRID_STEP_PRESETS_MI) {
+    if (Math.abs(p - mi) < Math.abs(best - mi)) best = p;
+  }
+  return best;
+}
+
 /** Collected context about the grid cursor position. */
 interface GridContext {
   location: LocationInfo | null;
@@ -46,6 +56,7 @@ interface Props {
   rainviewer: RainViewerClient;
   weather: WeatherService;
   announcer: AnnouncementQueue;
+  settings: SettingsStore;
   active: boolean;
 }
 
@@ -55,6 +66,7 @@ export function MapNavView({
   rainviewer,
   weather,
   announcer,
+  settings,
   active
 }: Props) {
   const [mode, setMode] = useState<NavMode>("storms");
@@ -62,6 +74,11 @@ export function MapNavView({
   const [alertIdx, setAlertIdx] = useState(0);
   const [alerts, setAlerts] = useState<WeatherAlert[]>([]);
   const [gridCursor, setGridCursor] = useState<LatLon>({ ...place.coord });
+  // Miles moved per arrow press in grid mode. Snap the persisted value to
+  // the nearest preset in case an old/edited settings blob has an odd one.
+  const [gridStepMi, setGridStepMi] = useState<number>(() =>
+    nearestPreset(settings.get().mapGridStepMi)
+  );
   const [highlightCoord, setHighlightCoord] = useState<LatLon | null>(null);
   const [gridCtx, setGridCtx] = useState<GridContext>({
     location: null,
@@ -192,7 +209,10 @@ export function MapNavView({
         const nextIdx = ((curIdx + dir) % NAV_MODES.length + NAV_MODES.length) % NAV_MODES.length;
         const next = NAV_MODES[nextIdx];
         setMode(next);
-        void announcer.announce(`Map navigation: ${MODE_LABELS[next]} mode.`, "assertive");
+        const gridHint = next === "grid"
+          ? ` Arrow keys move ${gridStepMi} mile${gridStepMi === 1 ? "" : "s"}; press left or right bracket to change the step.`
+          : "";
+        void announcer.announce(`Map navigation: ${MODE_LABELS[next]} mode.${gridHint}`, "assertive");
         return;
       }
 
@@ -261,21 +281,43 @@ export function MapNavView({
     };
 
     const handleGridKeys = (e: KeyboardEvent) => {
-      const step = 0.15; // ~10 miles per keypress
+      // Convert the mile step to degrees at the cursor's latitude so a
+      // "5 mile" press really moves ~5 miles east-west too (a fixed degree
+      // step stretches with latitude).
+      const latStep = gridStepMi / 69;
+      const lonStep = gridStepMi / (69.172 * Math.max(0.2, Math.cos((gridCursor.lat * Math.PI) / 180)));
       let newCursor: LatLon | null = null;
+
+      if (e.key === "[" || e.key === "]") {
+        // Cycle the step through the presets. Announced, persisted.
+        e.preventDefault();
+        const dir = e.key === "]" ? 1 : -1;
+        const presets = GRID_STEP_PRESETS_MI;
+        const idx = presets.indexOf(nearestPreset(gridStepMi) as (typeof presets)[number]);
+        const next = presets[Math.min(presets.length - 1, Math.max(0, idx + dir))];
+        if (next !== gridStepMi) {
+          setGridStepMi(next);
+          settings.update({ mapGridStepMi: next });
+        }
+        void announcer.announce(
+          `Grid step: ${next} mile${next === 1 ? "" : "s"} per press.`,
+          "polite"
+        );
+        return;
+      }
 
       if (e.key === "ArrowUp") {
         e.preventDefault();
-        newCursor = { lat: gridCursor.lat + step, lon: gridCursor.lon };
+        newCursor = { lat: gridCursor.lat + latStep, lon: gridCursor.lon };
       } else if (e.key === "ArrowDown") {
         e.preventDefault();
-        newCursor = { lat: gridCursor.lat - step, lon: gridCursor.lon };
+        newCursor = { lat: gridCursor.lat - latStep, lon: gridCursor.lon };
       } else if (e.key === "ArrowLeft") {
         e.preventDefault();
-        newCursor = { lat: gridCursor.lat, lon: gridCursor.lon - step };
+        newCursor = { lat: gridCursor.lat, lon: gridCursor.lon - lonStep };
       } else if (e.key === "ArrowRight") {
         e.preventDefault();
-        newCursor = { lat: gridCursor.lat, lon: gridCursor.lon + step };
+        newCursor = { lat: gridCursor.lat, lon: gridCursor.lon + lonStep };
       } else if (e.key === "Home") {
         e.preventDefault();
         newCursor = { ...place.coord };
@@ -306,7 +348,7 @@ export function MapNavView({
 
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [active, storms, alerts, stormIdx, alertIdx, gridCursor, gridCtx.location, place, announcer, probeAtCursor, scheduleGeocode]);
+  }, [active, storms, alerts, stormIdx, alertIdx, gridCursor, gridStepMi, settings, gridCtx.location, place, announcer, probeAtCursor, scheduleGeocode]);
 
   // Announce mode on activation.
   useEffect(() => {

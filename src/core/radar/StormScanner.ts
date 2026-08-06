@@ -97,6 +97,8 @@ export class StormScanner {
   private listeners = new Set<(e: StormEvent) => void>();
   private lastAnnouncedIds = new Set<string>();
   private inflight: Promise<void> | null = null;
+  /** Unix time (s) of the last frame we actually sampled and tracked. */
+  private lastFrameTime: number | null = null;
 
   constructor(
     private readonly client: RainViewerClient,
@@ -173,6 +175,7 @@ export class StormScanner {
     this.place = place;
     this.tracker.reset();
     this.lastAnnouncedIds.clear();
+    this.lastFrameTime = null;
     this.snapshot = { capturedAt: null, storms: [], lastFrame: null, lastError: null };
     void this.refresh();
   }
@@ -212,6 +215,16 @@ export class StormScanner {
       }
       const frame = past[past.length - 1];
 
+      // RainViewer publishes a new past frame roughly every 10 minutes but we
+      // poll every 2. Re-tracking an unchanged frame compares each storm's
+      // centroid against itself, zeroing every movement vector — which the
+      // views then announce as "Stationary". Keep the last real track (and
+      // skip the tile fetches) until the frame actually advances.
+      if (this.lastFrameTime !== null && frame.time === this.lastFrameTime) {
+        this.emit({ kind: "updated", all: this.snapshot.storms });
+        return;
+      }
+
       const sampleOpts: SampleOptions = {
         zoom: this.opts.zoom,
         stepPx: this.opts.stepPx,
@@ -222,6 +235,7 @@ export class StormScanner {
       const clustered = clusterStorms(radarFrame, this.place.coord);
       const tracked: TrackResult = this.tracker.track(clustered, this.place.coord);
 
+      this.lastFrameTime = frame.time;
       this.snapshot = {
         capturedAt: tracked.capturedAt,
         storms: tracked.storms,

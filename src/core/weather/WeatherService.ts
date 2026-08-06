@@ -40,6 +40,12 @@ export class WeatherService {
     let inflight = this.gridCache.get(key);
     if (!inflight) {
       inflight = this.nws.resolveGridpoint(place.coord).then((grid) => ({ ...place, nwsGrid: grid }));
+      // Evict on failure. Caching the rejected promise means one bad launch
+      // (offline start, NWS blip outlasting the client's retries) poisons
+      // every future request for this place until app restart.
+      inflight.catch(() => {
+        if (this.gridCache.get(key) === inflight) this.gridCache.delete(key);
+      });
       this.gridCache.set(key, inflight);
     }
     return inflight;
@@ -84,6 +90,21 @@ export class WeatherService {
     );
   }
 
+  /**
+   * When did we last successfully fetch this kind of data for this place?
+   * Lets scenes qualify what they show ("as of 12 minutes ago") when a
+   * refresh fails and stale data is served instead.
+   */
+  lastFetchedAt(kind: "observation" | "forecast" | "hourly" | "alerts", key: string): Date | null {
+    const map =
+      kind === "observation" ? this.obsCache :
+      kind === "forecast" ? this.forecastCache :
+      kind === "hourly" ? this.hourlyCache :
+      this.alertCache;
+    const hit = map.get(key);
+    return hit ? new Date(hit.at) : null;
+  }
+
   private async cached<T>(
     map: Map<string, { at: number; value: T }>,
     key: string,
@@ -93,8 +114,18 @@ export class WeatherService {
     const hit = map.get(key);
     const now = Date.now();
     if (hit && now - hit.at < ttlMs) return hit.value;
-    const value = await fetcher();
-    map.set(key, { at: now, value });
-    return value;
+    try {
+      const value = await fetcher();
+      map.set(key, { at: now, value });
+      return value;
+    } catch (err) {
+      // Stale-while-error: minutes-old data beats "unavailable" for a
+      // weather display. The expired entry stays in the map (we never
+      // delete on expiry), so serve it and let the next cycle retry.
+      // The entry's timestamp is NOT refreshed — lastFetchedAt() stays
+      // honest about the age of what's shown.
+      if (hit) return hit.value;
+      throw err;
+    }
   }
 }

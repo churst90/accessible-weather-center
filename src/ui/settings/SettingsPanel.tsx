@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { SettingsStore, Settings } from "../../core/settings/SettingsStore";
+import { GRID_STEP_PRESETS_MI, type SettingsStore, type Settings } from "../../core/settings/SettingsStore";
 import { THEMES, getTheme, THEME_CORE_SCENES, VALUE_ADD_SCENES, type ThemeId } from "../../core/settings/themes";
 import { NARRATORS } from "../../audio/manifests/narratorSchema";
 import { BUNDLED_STATIONS, fetchActiveNwrStations, type NwrStation } from "../../audio/nwrStations";
@@ -79,6 +79,21 @@ export function SettingsPanel({ store, open, onClose, flavors }: Props) {
             Use "Screen reader only" if you run NVDA, JAWS, Narrator, or VoiceOver — the app will push
             announcements to an aria-live region for your screen reader to read. Use "Built-in speech"
             only when running the app without any screen reader.
+          </p>
+          <label style={{ display: "block", marginTop: 8 }}>
+            Map grid step:{" "}
+            <select
+              value={String(settings.mapGridStepMi)}
+              onChange={(e) => store.update({ mapGridStepMi: Number(e.target.value) })}
+            >
+              {GRID_STEP_PRESETS_MI.map((mi) => (
+                <option key={mi} value={String(mi)}>{mi} mile{mi === 1 ? "" : "s"} per arrow press</option>
+              ))}
+            </select>
+          </label>
+          <p style={{ marginTop: 4, fontSize: 12, color: "var(--ws-text-dim)" }}>
+            How far the cursor moves per arrow press in Map Navigation's grid explorer (N, then Tab to
+            Grid Explorer). You can also change it live with the left and right bracket keys.
           </p>
         </fieldset>
 

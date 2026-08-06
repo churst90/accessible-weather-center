@@ -86,11 +86,19 @@ function weight(token: string): number {
 
 function specFromEvent(e: KeyboardEvent): string {
   const parts: string[] = [];
+  const keyName = eventKeyName(e);
+  // Shifted punctuation (?, !, ~, …) already encodes the shift in the
+  // character itself — "?" IS Shift+/ on a US layout. Including "shift"
+  // in the spec made such shortcuts unmatchable: "?" registered as "?"
+  // but the event built "shift+?". Letters and digits keep the modifier
+  // (shift+a and shift+1 are distinct, deliberate specs).
+  const shiftedSymbol =
+    e.shiftKey && keyName.length === 1 && !/[a-z0-9 ]/.test(keyName);
   if (e.ctrlKey) parts.push("ctrl");
   if (e.altKey) parts.push("alt");
-  if (e.shiftKey) parts.push("shift");
+  if (e.shiftKey && !shiftedSymbol) parts.push("shift");
   if (e.metaKey) parts.push("meta");
-  parts.push(eventKeyName(e));
+  parts.push(keyName);
   return normalizeKeySpec(parts.join("+"));
 }
 

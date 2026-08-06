@@ -14,6 +14,11 @@ export class AudioMixer {
   private duckLevel = 0.15;
   private musicLevel = 0.6;
   private radioLevel = 0.5;
+  /** True while narration holds the music bus down. setMusicLevel() must
+   *  respect this — it used to ramp straight back to full volume, so any
+   *  settings change mid-narration (volume keys!) surged music over the
+   *  voice clips. */
+  private ducked = false;
 
   ensureStarted(): AudioContext {
     if (!this.ctx) {
@@ -53,22 +58,20 @@ export class AudioMixer {
   }
 
   duck(): void {
-    if (this.musicGain && this.ctx) {
-      this.musicGain.gain.linearRampToValueAtTime(this.duckLevel, this.ctx.currentTime + 0.15);
-    }
+    this.ducked = true;
+    this.rampMusicTo(this.duckTarget(), 0.15);
   }
 
   unduck(): void {
-    if (this.musicGain && this.ctx) {
-      this.musicGain.gain.linearRampToValueAtTime(this.musicLevel, this.ctx.currentTime + 0.2);
-    }
+    this.ducked = false;
+    this.rampMusicTo(this.musicLevel, 0.2);
   }
 
   setMusicLevel(v: number): void {
     this.musicLevel = clamp01(v);
-    if (this.musicGain && this.ctx) {
-      this.musicGain.gain.linearRampToValueAtTime(this.musicLevel, this.ctx.currentTime + 0.1);
-    }
+    // While narration is ducking, the new user level takes effect only in
+    // the duck target; the full level applies at the next unduck().
+    this.rampMusicTo(this.ducked ? this.duckTarget() : this.musicLevel, 0.1);
   }
 
   setRadioLevel(v: number): void {
@@ -76,6 +79,22 @@ export class AudioMixer {
     if (this.radioGain && this.ctx) {
       this.radioGain.gain.linearRampToValueAtTime(this.radioLevel, this.ctx.currentTime + 0.1);
     }
+  }
+
+  /** Never duck LOUDER than the user's chosen music level. */
+  private duckTarget(): number {
+    return Math.min(this.duckLevel, this.musicLevel);
+  }
+
+  private rampMusicTo(target: number, seconds: number): void {
+    if (!this.musicGain || !this.ctx) return;
+    const gain = this.musicGain.gain;
+    // Anchor the ramp at the current value; without this, rapid
+    // duck/unduck/setLevel sequences produce jumpy transitions because
+    // linearRamp interpolates from the previous *scheduled* point.
+    gain.cancelScheduledValues(this.ctx.currentTime);
+    gain.setValueAtTime(gain.value, this.ctx.currentTime);
+    gain.linearRampToValueAtTime(target, this.ctx.currentTime + seconds);
   }
 }
 

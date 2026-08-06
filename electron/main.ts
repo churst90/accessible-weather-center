@@ -109,8 +109,11 @@ ipcMain.handle("nwr:fetchActiveStations", async () => {
     let text = await res.text();
     text = text.replace(/"title":\s*-\s*,/g, '"title":null,');
     text = text.replace(/"title":\s*-\s*}/g, '"title":null}');
-    const data = JSON.parse(text) as { icestats?: { source?: Source[] } };
-    const sources = data.icestats?.source ?? [];
+    const data = JSON.parse(text) as { icestats?: { source?: Source[] | Source } };
+    // Icecast returns a bare object (not a one-element array) when only a
+    // single mount is live.
+    const raw = data.icestats?.source;
+    const sources = Array.isArray(raw) ? raw : raw ? [raw] : [];
     const active = sources
       .filter((s) => s.bitrate || s.server_name)
       .map((s) => {

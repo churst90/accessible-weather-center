@@ -46,7 +46,9 @@ import { composeCurrentConditions, composeExtendedForecast, composeHourlyForecas
 import { setIconBase, setIconResolution, chooseIcon } from "./ui/weatherscan/WeatherIcon";
 import { WeatherscanFrame } from "./ui/weatherscan/WeatherscanFrame";
 import { AnnouncementRegion } from "./ui/semantic/AnnouncementRegion";
+import { ErrorBoundary } from "./ui/semantic/ErrorBoundary";
 import { HelpDialog } from "./ui/semantic/HelpDialog";
+import { SceneUnavailable } from "./ui/scenes/SceneUnavailable";
 import { CurrentConditionsView } from "./ui/scenes/CurrentConditionsView";
 import { HourlyForecastView } from "./ui/scenes/HourlyForecastView";
 import { ExtendedForecastView } from "./ui/scenes/ExtendedForecastView";
@@ -106,6 +108,10 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [placesList, setPlacesList] = useState(services.places.list());
+  // The active home as React state so effects that watch it (alert polling)
+  // restart when the user changes home — services.places.home() read once
+  // inside an effect goes stale forever.
+  const [homePlace, setHomePlace] = useState(() => services.places.home());
   const [activeThemeId, setActiveThemeId] = useState<ThemeId>(services.settings.get().theme as ThemeId);
   const [ldlIconName, setLdlIconName] = useState<string | undefined>(undefined);
   const startedRef = useRef(false);
@@ -125,6 +131,9 @@ export default function App() {
       setPlacesList(list);
       const home = list.find((p) => p.isHome) ?? list[0];
       if (home) {
+        // Preserve identity when the home hasn't actually changed so the
+        // effects keyed on homePlace don't restart on unrelated list edits.
+        setHomePlace((prev) => (prev && prev.id === home.id ? prev : home));
         const themeId = services.settings.get().theme as ThemeId;
         services.scheduler.setContext({ place: home, weather: services.weather, themeId });
         services.stormScanner.setPlace(home);
@@ -351,9 +360,12 @@ export default function App() {
   // Poll active alerts. Severe/Extreme alerts trigger an interrupt:
   // auto-jump to alerts scene, orange visual takeover.
   useEffect(() => {
-    const home = services.places.home();
+    const home = homePlace;
     if (!home) return;
     let cancelled = false;
+    // Fresh location, fresh slate: alerts already active at the new home
+    // should announce (and interrupt if severe) as if they just arrived.
+    lastAlertIdsRef.current = new Set();
     const refresh = async () => {
       let list;
       try {
@@ -426,7 +438,7 @@ export default function App() {
       cancelled = true;
       clearInterval(id);
     };
-  }, [services]);
+  }, [services, homePlace]);
 
   // Register keyboard shortcuts.
   useEffect(() => {
@@ -721,7 +733,12 @@ export default function App() {
         services.nwr.disconnect();
         return;
       }
-      if (services.nwr.getCallSign() !== desired) {
+      // Reconnect on a call-sign change, and also retry when the player has
+      // given up ("failed" after 5 straight failures). Without the second
+      // condition the failed state was sticky: the failure announcement says
+      // "choose another station", but re-picking the same station — or any
+      // other settings change after the network recovered — was a no-op.
+      if (services.nwr.getCallSign() !== desired || services.nwr.getStatus() === "failed") {
         services.nwr.connect(desired);
       }
     });
@@ -801,10 +818,13 @@ export default function App() {
             rainviewer={services.rainviewer}
             weather={services.weather}
             announcer={services.announcer}
+            settings={services.settings}
             active
           />
         ) : (
-          <SceneStage event={event} rainviewer={services.rainviewer} alerts={alertsList} />
+          <ErrorBoundary resetKey={`${event.scene?.id ?? "none"}:${event.index}`}>
+            <SceneStage event={event} rainviewer={services.rainviewer} alerts={alertsList} />
+          </ErrorBoundary>
         )}
       </WeatherscanFrame>
       <SettingsPanel
@@ -860,6 +880,18 @@ function SceneStage({
 }) {
   const scene = event.scene;
   if (!scene) return <p>Loading…</p>;
+  // SceneScheduler's prepare-failure fallback keeps the real scene id but
+  // substitutes `{ error }` for the data — the per-id views would cast and
+  // crash on it, so catch that shape before the switch.
+  const maybeError = (scene.data as { error?: unknown } | null | undefined)?.error;
+  if (typeof maybeError === "string") {
+    return (
+      <SceneUnavailable
+        title={scene.title}
+        reason="This scene could not load its data right now. It will retry on the next cycle."
+      />
+    );
+  }
   switch (scene.id) {
     case "current":
       return <CurrentConditionsView data={scene.data as CurrentConditionsData} />;
@@ -914,7 +946,7 @@ function buildServices() {
   const alertTones = new AlertTones(mixer);
   const nwr = new NwrPlayer(mixer);
 
-  const nws = new NwsClient("AccessibleWeatherCenter/0.9.5 (contact: configure-me@example.com)");
+  const nws = new NwsClient("AccessibleWeatherCenter/0.10.0 (contact: codythurst@gmail.com)");
   const faa = new FaaClient();
   const rainviewer = new RainViewerClient();
   const weather = new WeatherService(nws);

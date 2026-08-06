@@ -44,6 +44,32 @@ export function HelpDialog({ router, open, onClose }: Props) {
           </ul>
         </section>
       ))}
+      <section style={{ marginBottom: 16 }}>
+        <h3 style={{ marginBottom: 8, color: "var(--ws-accent)" }}>Inside Map Navigation (N)</h3>
+        <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+          {[
+            ["Tab / Shift+Tab", "Switch mode: Storms, Alerts, Grid Explorer"],
+            ["Arrows", "Walk storms / alerts, or move the grid cursor"],
+            ["[ and ]", "Grid Explorer: smaller / larger step (1, 3, 5, 10, 25 miles)"],
+            ["Home", "Grid Explorer: jump back to your location"],
+            ["Enter", "Full detail for the current storm, alert, or grid position"],
+            ["Escape or N", "Return to scenes"]
+          ].map(([k, d]) => (
+            <li
+              key={k}
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                padding: "6px 0",
+                borderBottom: "1px solid rgba(255,255,255,0.1)"
+              }}
+            >
+              <span style={{ fontFamily: "var(--ws-font-led)", color: "var(--ws-led)" }}>{k}</span>
+              <span>{d}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
       <button onClick={onClose} style={{ padding: "8px 16px", marginTop: 8 }}>
         Close (Esc)
       </button>
