@@ -1,7 +1,109 @@
-import { app, BrowserWindow, Tray, Menu, nativeImage, Notification, ipcMain } from "electron";
+import { app, BrowserWindow, Tray, Menu, nativeImage, Notification, ipcMain, protocol, net } from "electron";
+import * as fs from "node:fs";
 import * as path from "node:path";
+import { pathToFileURL } from "node:url";
 
 const isDev = process.env.NODE_ENV === "development";
+
+/**
+ * Custom scheme the packaged app is served from.
+ *
+ * Why not file://: every media URL the renderer builds is root-relative
+ * ("/assets/narration/..."), because that is what the web deployment needs.
+ * Loaded over file://, those resolve against the filesystem root — the app
+ * would look for /assets/narration on the system drive and 404 everything.
+ * Serving the app from a scheme with a host gives "/" a meaning we control,
+ * so the same URLs work in Electron and in a browser with no branching in
+ * the renderer.
+ */
+const APP_SCHEME = "awc-asset";
+const APP_ORIGIN = `${APP_SCHEME}://app`;
+
+// Must be called before `app.ready`. `standard` gives the scheme normal URL
+// parsing and a real origin; `stream` is what lets <audio> issue Range
+// requests against it, which media playback and seeking depend on.
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: APP_SCHEME,
+    privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true, bypassCSP: false }
+  }
+]);
+
+/**
+ * Where the media library lives, in priority order:
+ *   1. AWC_ASSETS_DIR                      — explicit override
+ *   2. <userData>/assets                   — where scripts/fetch-assets.mjs puts it
+ *   3. <resources>/assets                  — if bundled into the installer
+ *   4. <repo>/assets                       — running unpackaged from source
+ *
+ * Resolved once per launch. The app is designed to run without any of these
+ * (system fonts, no music, screen-reader narration only), so a miss here is
+ * degraded, not fatal.
+ */
+function resolveAssetsDir(): string | null {
+  const candidates = [
+    process.env.AWC_ASSETS_DIR,
+    path.join(app.getPath("userData"), "assets"),
+    path.join(process.resourcesPath ?? "", "assets"),
+    path.join(__dirname, "..", "assets")
+  ].filter((p): p is string => Boolean(p));
+
+  for (const dir of candidates) {
+    try {
+      if (fs.existsSync(dir) && fs.statSync(dir).isDirectory()) return dir;
+    } catch {
+      // Unreadable candidate — try the next one.
+    }
+  }
+  return null;
+}
+
+let assetsDir: string | null = null;
+
+/**
+ * Serve the app bundle and the media library over APP_SCHEME.
+ *
+ * "/assets/*" maps into the media library; everything else maps into the
+ * built renderer in dist/. Requests are delegated to net.fetch against a
+ * file:// URL rather than read manually, so Range requests, MIME sniffing
+ * and streaming all behave the way <audio> expects.
+ */
+function registerAppProtocol(): void {
+  assetsDir = resolveAssetsDir();
+  const distDir = path.join(__dirname, "..", "dist");
+  if (!assetsDir) {
+    console.warn("[awc] No assets directory found. Running without media.");
+  }
+
+  protocol.handle(APP_SCHEME, async (request) => {
+    const url = new URL(request.url);
+    let rel = decodeURIComponent(url.pathname);
+    if (rel === "/" || rel === "") rel = "/index.html";
+
+    let root: string;
+    if (rel.startsWith("/assets/")) {
+      if (!assetsDir) return new Response("Media library not installed", { status: 404 });
+      root = assetsDir;
+      rel = rel.slice("/assets".length);
+    } else {
+      root = distDir;
+    }
+
+    // Contain the request inside its root. Without this, "/../../etc/passwd"
+    // in a URL the renderer was tricked into requesting would escape.
+    const target = path.join(root, rel);
+    const rootResolved = path.resolve(root) + path.sep;
+    if (!path.resolve(target).startsWith(rootResolved)) {
+      return new Response("Forbidden", { status: 403 });
+    }
+
+    try {
+      return await net.fetch(pathToFileURL(target).toString());
+    } catch {
+      return new Response("Not found", { status: 404 });
+    }
+  });
+}
 
 let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
@@ -30,7 +132,7 @@ function createWindow(): void {
   // must not be able to navigate the window or spawn new ones.
   mainWindow.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
   mainWindow.webContents.on("will-navigate", (event, url) => {
-    const allowed = isDev ? url.startsWith("http://localhost:5173") : url.startsWith("file://");
+    const allowed = isDev ? url.startsWith("http://localhost:5173") : url.startsWith(APP_ORIGIN);
     if (!allowed) event.preventDefault();
   });
 
@@ -40,7 +142,7 @@ function createWindow(): void {
       mainWindow.webContents.openDevTools({ mode: "detach" });
     }
   } else {
-    mainWindow.loadFile(path.join(__dirname, "..", "dist", "index.html"));
+    mainWindow.loadURL(`${APP_ORIGIN}/index.html`);
   }
 
   mainWindow.once("ready-to-show", () => {
@@ -61,9 +163,10 @@ function createWindow(): void {
 
 function createTray(): void {
   // Use the app icon for the tray. Electron resizes to ~16x16 on Windows.
-  const iconPath = isDev
-    ? path.join(__dirname, "..", "assets", "logos", "app-icon-180.png")
-    : path.join(__dirname, "..", "dist", "assets", "logos", "app-icon-180.png");
+  // Sourced from the media library, which may not be installed — the catch
+  // below falls back to an empty image rather than failing to start.
+  const iconRoot = assetsDir ?? path.join(__dirname, "..", "assets");
+  const iconPath = path.join(iconRoot, "logos", "app-icon-180.png");
   let icon: Electron.NativeImage;
   try {
     icon = nativeImage.createFromPath(iconPath).resize({ width: 16, height: 16 });
@@ -169,6 +272,9 @@ app.whenReady().then(() => {
   // and the menu just clutters the frame. Set DevTools can still be opened
   // with AWC_DEVTOOLS=1 at launch.
   Menu.setApplicationMenu(null);
+  // Dev loads from the Vite server, which already serves /assets via its own
+  // middleware; the custom scheme is only needed for packaged builds.
+  if (!isDev) registerAppProtocol();
   createWindow();
   createTray();
 

@@ -1,0 +1,137 @@
+name: Build binaries
+
+# Builds installers for Windows, macOS and Linux.
+#
+#  - push to main / manual run: build all three and keep them as workflow
+#    artifacts for 14 days, so you can test a build without cutting a release.
+#  - push of a v* tag: build all three AND attach them to a GitHub Release.
+#
+# electron-builder is installed with npx rather than being a devDependency:
+# adding new packages to the lockfile deadlocks on the author's working
+# drive (see electron-builder.yml). CI resolves it fresh each run.
+#
+# Builds are UNSIGNED. There is no Apple Developer certificate and no
+# Windows code-signing certificate, so macOS gatekeeper and Windows
+# SmartScreen will both complain on first launch. The README documents what
+# users need to do about it.
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    name: Typecheck and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+
+  build:
+    name: Build ${{ matrix.os }}
+    needs: test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      # One platform failing shouldn't throw away the other two.
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: --linux
+            artifact: linux
+          - os: windows-latest
+            platform: --win
+            artifact: windows
+          - os: macos-latest
+            platform: --mac
+            artifact: macos
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build renderer and main process
+        run: npm run build
+
+      # The media library is not in the repo and is not bundled, so this
+      # produces an installer that runs in degraded mode until the user
+      # fetches assets. That is the intended shape — see electron-builder.yml.
+      - name: Package
+        run: npx --yes electron-builder@25 ${{ matrix.platform }} --publish never
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Skip the code-signing steps we have no certificates for.
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: awc-${{ matrix.artifact }}
+          retention-days: 14
+          if-no-files-found: error
+          path: |
+            release/*.exe
+            release/*.dmg
+            release/*.zip
+            release/*.AppImage
+            release/*.deb
+            release/*.tar.gz
+
+  release:
+    name: Attach to release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Publish
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/**/*
+          draft: true
+          generate_release_notes: true
+          body: |
+            ## Installing
+
+            Download the file for your platform below, then install the media
+            library separately — it is not bundled, because it is ~1.3 GB.
+
+            **Windows:** `.exe` installer, or the `portable` build to run
+            without installing. SmartScreen will warn that the publisher is
+            unknown; the builds are unsigned.
+
+            **macOS:** `.dmg` (Intel `x64` or Apple Silicon `arm64`). Unsigned
+            and unnotarized, so after copying to Applications run:
+            `xattr -dr com.apple.quarantine "/Applications/Accessible Weather Center.app"`
+
+            **Linux:** `.AppImage` (chmod +x and run), `.deb`, or `.tar.gz`.
+
+            ## Media library
+
+            The app runs without it, using system fonts, no music and
+            screen-reader narration only. For the full experience, download
+            the `assets-*.tar.gz` files from this release and unpack them
+            into the app's data directory — see the README for the exact
+            path per platform, or run `npm run assets:fetch` from a source
+            checkout.

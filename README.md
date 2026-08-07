@@ -2,7 +2,7 @@
 
 A fully accessible, speech- and keyboard-driven weather application with a Weatherscan-style cycling display. Designed accessibility-first: every visual is mirrored by a semantic narration so blind and low-vision users get the same information at the same fidelity as sighted users — including weather radar, which is normally inaccessible.
 
-> Status: **v0.12.0 — structural release.** App.tsx slimmed to wiring/UI: service construction lives in `src/bootstrap.ts`, NWS alert polling is a real tested service (`core/alerts/AlertWatcher.ts`), and scene views resolve through a `(theme, scene)` registry — the seam the era-authentic renderers (WS3000 text pages, IntelliStar 2 LOT8s, Weatherscan L-bar) will plug into. Electron gained a CSP and navigation guards. 57 unit tests. Prior: v0.11.0 — Speech policy clarified: the app has exactly two speech paths — your screen reader reading the aria-live regions, and the recorded narrator clips. The Web Speech built-in TTS is removed entirely. The announcement system was rebuilt (independent polite/assertive channels that no longer erase each other, identical repeats now speak, Escape's cancel works for screen-reader users), a shared modality gate stops scene shortcuts and arrow keys from firing underneath open dialogs, and Map Navigation now tracks the live radar instead of freezing at entry. Visual batch: the Star4000 fonts load for the first time (a path typo had every WS4000 theme in fallback fonts), IntelliStar 1 icons render (were 100% broken images), the severe-weather takeover now wins on every theme (IS2 authentically swaps to its LOT8 severe background art), high-contrast mode strips photo wallpapers, per-scene backgrounds reset properly, and all radar intensity labels/colors flow from one canonical table. Prior release 0.10.0 fixed ten audit-confirmed reliability bugs and added the test suite and the adjustable map-nav grid step. See [CHANGELOG.md](CHANGELOG.md) and [docs/user-manual.md](docs/user-manual.md).
+> Status: **Phase 5 — web preparation (unreleased, on top of v0.12.0).** The app no longer assumes one hard-coded location: a required first-run dialog asks for your ZIP, and nothing is fetched or announced until you answer. The media library was re-encoded from 5.2 GB to 1.3 GB (narration to MP3, backgrounds to WebP) and verified file-by-file against the originals. NOAA Weather Radio now works in a browser via a same-origin reverse proxy, since the Icecast host sends no CORS headers. Packaged Electron builds finally serve their own assets through a custom `awc-asset://` scheme, and there is CI to build Windows/macOS/Linux installers. Deployment tooling for weather.codyhurst.com lives in `deploy/`. 65 unit tests. Prior: v0.12.0 — structural release; App.tsx slimmed to wiring/UI, alert polling became a tested service, scene views resolve through a `(theme, scene)` registry. v0.11.0 — no-built-in-TTS policy, announcement system rebuilt, modality gate, and the visual batch that finally loaded the Star4000 fonts and IntelliStar icons. See [CHANGELOG.md](CHANGELOG.md) and [docs/user-manual.md](docs/user-manual.md).
 
 ## What this project is
 
@@ -16,7 +16,43 @@ This project is a deliberate attempt to build a weather experience that:
 4. **Stays running in the background** so the user gets toast notifications when conditions worsen or alerts are issued.
 5. **Honors the TWC visual era** you pick — scene layout, typography, palette, crawl behavior, and narrator all match the hardware unit.
 
-## Quick start
+## Install
+
+**In a browser:** <https://weather.codyhurst.com/app/> — nothing to install.
+
+**Desktop:** download an installer from [Releases](https://github.com/churst90/accessible-weather-center/releases).
+
+| Platform | File | Notes |
+|----------|------|-------|
+| Windows | `.exe` installer, or `portable` | Unsigned — SmartScreen will warn about an unknown publisher. Choose "More info" → "Run anyway". |
+| macOS | `.dmg` (`x64` Intel / `arm64` Apple Silicon) | Unsigned and unnotarized. After copying to Applications, run:<br>`xattr -dr com.apple.quarantine "/Applications/Accessible Weather Center.app"` |
+| Linux | `.AppImage`, `.deb`, `.tar.gz` | AppImage: `chmod +x` then run. |
+
+Code signing certificates cost money per year and this is a personal project, so the builds are unsigned. The warnings above are the operating systems telling you exactly that — not a sign anything is wrong, but also not something to ignore blindly on software you didn't build yourself. The [build workflow](.github/workflows/build.yml) is public and produces the binaries from this source.
+
+### The media library
+
+Installers do **not** include the ~1.3 GB of fonts, icons, background art, narration clips and music. The application runs fine without it — system fonts, no music, screen-reader narration only — so this is an enhancement, not a prerequisite.
+
+To add it, download the `assets-*.tar.gz` files from the media release and unpack them all into one directory:
+
+| Platform | Location |
+|----------|----------|
+| Windows | `%APPDATA%\accessible-weather-center\assets` |
+| macOS | `~/Library/Application Support/accessible-weather-center/assets` |
+| Linux | `~/.config/accessible-weather-center/assets` |
+
+Or, from a source checkout, let the script do it:
+
+```bash
+npm run assets:fetch -- --list        # see categories and sizes
+npm run assets:fetch -- --app-data    # download, verify, unpack into the app's data dir
+npm run assets:fetch -- --only fonts,icons --app-data   # just the small ones
+```
+
+Downloads are checksummed, and re-running skips anything already verified — so an interrupted 1.3 GB fetch just resumes.
+
+## Quick start (development)
 
 ```bash
 npm install
@@ -31,6 +67,15 @@ npm run build
 npm run start
 ```
 
+Building installers (electron-builder is fetched by `npx` rather than being a devDependency — see [electron-builder.yml](electron-builder.yml) for why):
+
+```bash
+npm run dist:linux   # or dist:win / dist:mac — output in release/
+```
+
+Cross-platform builds are better left to CI: push a `v*` tag and
+[the workflow](.github/workflows/build.yml) builds all three and drafts a release.
+
 Unit tests (uses only what's already installed — esbuild plus Node's built-in test runner):
 
 ```bash
@@ -40,7 +85,7 @@ npm test Storm       # only test files whose name matches
 
 ### Configure your NWS User-Agent
 
-The NWS API requires a real `User-Agent` identifying you. If you fork this project, edit `src/App.tsx` (`buildServices`) and replace the contact email with your own before using anything beyond local dev.
+The NWS API requires a real `User-Agent` identifying you. If you fork this project, edit `src/bootstrap.ts` (`buildServices`) and replace the contact email with your own before using anything beyond local dev.
 
 ## Keyboard shortcuts
 
@@ -139,8 +184,9 @@ src/
 │   ├── types.ts
 │   ├── weather/   # NwsClient, RainViewerClient, FaaClient, WeatherService
 │   ├── radar/     # IntensityLegend, StormScanner, StormClusterer, StormTracker
-│   ├── places/    # PlacesStore, TravelCities
+│   ├── places/    # PlacesStore (first-run aware), zipLookup
 │   ├── scenes/    # Scene interface, SceneScheduler, scene implementations
+│   ├── alerts/    # AlertWatcher — NWS alert polling service
 │   └── settings/  # SettingsStore, themes, backgroundCatalog
 ├── a11y/        # Accessibility plumbing.
 │   ├── AnnouncementQueue.ts   # Polite + assertive aria-live channels
@@ -150,19 +196,24 @@ src/
 │   ├── useArrowList.ts        # 1-D list navigation
 │   └── useArrowGrid.ts        # 2-D grid navigation (columns × rows)
 ├── audio/       # AudioMixer with ducking, MusicPlayer, ClipLibrary, PhraseSequencer
+│   ├── nwrStations.ts         # NWR transmitter directory (bundled + live)
+│   └── nwrEndpoints.ts        # Upstream vs. same-origin proxy selection
 ├── ui/
 │   ├── weatherscan/           # Decorative visual skin (frame, LDL crawl, CSS per theme)
 │   ├── semantic/              # aria-live region — what screen readers actually consume
-│   ├── scenes/                # React renderers (column grids, hero cards, readouts)
+│   ├── scenes/                # React renderers + sceneRegistry ((theme,scene) -> view)
 │   ├── mapnav/                # Places / Alerts / Storms / Grid Explorer sub-modes
 │   └── settings/              # Settings panel
 ├── platform/desktop/          # Electron-specific bridges
-├── App.tsx                    # Service wiring
+├── bootstrap.ts               # buildServices() — constructs and wires everything
+├── App.tsx                    # Service wiring / UI only
 └── main.tsx                   # React entry
 electron/
 ├── main.ts                    # Electron main process: window, tray, notifications
 └── preload.ts                 # Context-bridged IPC
 tests/                         # Unit tests (npm test — esbuild + node:test, no extra deps)
+deploy/                        # nginx vhost + server-setup.sh + publish.sh
+.github/workflows/build.yml    # Windows / macOS / Linux installer CI
 ```
 
 For architectural rationale (visual/semantic split, radar legend invariant, scene lifecycle, storm tracking, dual-tier alerts, LDL crawl), see **[docs/architecture.md](docs/architecture.md)**. For the August 2026 full-codebase audit that drove the v0.10.0 fixes, see **[docs/code-audit-2026-08.md](docs/code-audit-2026-08.md)**. The backlog lives in **[docs/TODO.md](docs/TODO.md)**.
@@ -190,16 +241,18 @@ These are *load-bearing*, not stylistic preferences:
 
 ## Fan-sourced assets and attribution
 
-This project is personal and not distributed. The authentic TWC visual recreations rely on community-sourced assets — fonts, icons, logos, backgrounds — that originated with the Weather Channel's broadcast systems. Where practical, assets come from MIT-licensed fan projects:
+The authentic TWC visual recreations rely on community-sourced assets — fonts, icons, logos, backgrounds, narration and music — that originated with The Weather Channel's broadcast systems. Where practical, assets come from MIT-licensed fan projects:
 
 - **WeatherStar fonts** (Star3000, Star4000, StarJR families) and 41 animated weather-condition GIF icons — from [wesellis/FUN-WeatherStar-4000](https://github.com/wesellis/FUN-WeatherStar-4000) and [netbymatt/ws4kp](https://github.com/netbymatt/ws4kp) (MIT).
 - **TWC logo, NOAA seal, IntelliStar wordmark, LDL strip template** — from [mewtek/OpenStar](https://github.com/mewtek/OpenStar) (MIT).
 - **WeatherStar XL cloud wallpaper** — same source.
 - **IntelliStar 1/2 city-gradient backgrounds** — TWC-derived fan archives.
 
-**Important:** "The Weather Channel" logo and name are trademarks of The Weather Channel. This project is a personal, non-commercial recreation and does not claim affiliation or endorsement. If you fork or redistribute, you are responsible for the IP implications in your jurisdiction.
+**Important:** "The Weather Channel", "Weatherscan", "WeatherStar" and "IntelliStar" are trademarks of The Weather Channel. This project is a non-commercial recreation and does not claim affiliation or endorsement.
 
-The `assets/` directory is **gitignored** — it contains ~5 GB of fonts, icons, backgrounds, narration clips, and music that must be sourced separately. Only `assets/.gitkeep` is committed to preserve the directory. See **[the User Manual](docs/user-manual.md#assets)** for how to set up your local asset library.
+**A note on redistribution.** The MIT-licensed fan projects above are clearly redistributable. The rest of the library — narration clips, production music, and broadcast-derived background art — is not licensed to anyone, and publishing it as a public download is a different act from keeping a personal copy. That decision, and its consequences, belong to whoever publishes it. `scripts/package-assets.mjs` exists to make the mechanics easy; it does not make the rights question go away. Fonts in particular are commercial typefaces (Frutiger, Interstate, Akzidenz-Grotesk, Helvetica Neue) whose licences do not permit redistribution.
+
+The `assets/` directory is **gitignored** — ~1.3 GB of fonts, icons, backgrounds, narration clips and music, sourced separately. Only `assets/.gitkeep` is committed to preserve the directory. The application is explicitly designed to run without it. See **[the User Manual](docs/user-manual.md#assets)** for the expected layout and **[docs/asset-pipeline.md](docs/asset-pipeline.md)** for how the library is encoded.
 
 NWS and FAA data, and the NOAA seal, are US Government works and are in the public domain.
 

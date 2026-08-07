@@ -1,0 +1,88 @@
+# electron-builder configuration.
+#
+# Deliberately NOT in package.json, and electron-builder is deliberately NOT
+# in devDependencies: `npm install -D <new-pkg>` reliably deadlocks on the
+# ntfs3 mount this repo lives on. CI installs it on demand with npx, so the
+# lockfile stays untouched and local installs keep working.
+#
+# Build locally:   npx electron-builder --linux   (or --win / --mac)
+# Build in CI:     .github/workflows/build.yml does all three.
+
+appId: com.codyhurst.accessibleweathercenter
+productName: Accessible Weather Center
+copyright: Copyright © 2026 Cody Hurst
+
+directories:
+  output: release
+  buildResources: build
+
+# The media library is NOT bundled. It is ~1.3 GB, which would make every
+# installer unusable to download, and the app is explicitly designed to run
+# without it (system fonts, no music, screen-reader narration only). Users
+# install it separately with `npm run assets:fetch`, which unpacks into the
+# app's userData directory where the custom protocol handler looks for it.
+# See docs/asset-pipeline.md and the README.
+files:
+  - dist/**/*
+  - dist-electron/**/*
+  - package.json
+  - "!**/*.map"
+
+# Anything listed here would be copied into the installer as-is. Kept empty
+# on purpose — see the note above.
+extraResources: []
+
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+    - target: portable
+      arch: [x64]
+  artifactName: ${productName}-${version}-windows-${arch}.${ext}
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  # Screen-reader users should not have to hunt a silent installer.
+  runAfterFinish: true
+
+mac:
+  target:
+    - target: dmg
+      arch: [x64, arm64]
+    - target: zip
+      arch: [x64, arm64]
+  category: public.app-category.weather
+  artifactName: ${productName}-${version}-macos-${arch}.${ext}
+  # No Apple Developer certificate, so builds are unsigned and unnotarized.
+  # macOS will refuse to open them on first launch until the user clears the
+  # quarantine flag — the README documents the exact command.
+  identity: null
+
+dmg:
+  writeUpdateInfo: false
+
+linux:
+  target:
+    - target: AppImage
+      arch: [x64]
+    - target: deb
+      arch: [x64]
+    - target: tar.gz
+      arch: [x64]
+  category: Science
+  synopsis: Fully accessible weather application with a Weatherscan-style cycling display
+  artifactName: ${productName}-${version}-linux-${arch}.${ext}
+
+deb:
+  depends:
+    - libgtk-3-0
+    - libnotify4
+    - libnss3
+    - libxss1
+    - libxtst6
+    - xdg-utils
+    - libatspi2.0-0

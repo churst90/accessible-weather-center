@@ -2,6 +2,22 @@
 
 Prioritized backlog. Ordered top to bottom within each section. Items marked `[x]` shipped in a prior release; `[ ]` is still open.
 
+## Phase 5 — web + distribution (in progress)
+
+- [x] ~~First-run ZIP flow~~ — see Usability gaps.
+- [x] ~~Asset transcode~~ — 5244 MB → 1338 MB (74%), verified file-by-file. `scripts/build-web-assets.mjs` (+ `--verify`), `scripts/check-asset-refs.mjs`, `docs/asset-pipeline.md`.
+- [x] ~~NWR browser support~~ — `src/audio/nwrEndpoints.ts` picks upstream vs. same-origin proxy; Vite dev proxy + nginx `/nwr/` block. The Icecast host sends no CORS headers, so a browser cannot otherwise list stations or feed the stream to WebAudio.
+- [x] ~~Electron production asset protocol~~ — see Usability gaps.
+- [x] ~~Deployment tooling~~ — `deploy/nginx/weather.codyhurst.com.conf`, `deploy/server-setup.sh`, `deploy/publish.sh`, `docs/web-deployment.md`.
+- [x] ~~Binary build pipeline~~ — `electron-builder.yml` + `.github/workflows/build.yml`; Windows/macOS/Linux on tag push. Unsigned.
+- [x] ~~Media library distribution~~ — `scripts/package-assets.mjs` (per-category tarballs + checksums for a GitHub Release), `scripts/fetch-assets.mjs` (verify + unpack, resumable).
+- [ ] **Deploy to the OVH box.** The nginx config has never been syntax-checked — there is no nginx on the dev machine. Run `nginx -t` before the first reload.
+- [ ] **Landing page.** Cody is writing this to match his other sites; `server-setup.sh` drops a placeholder and never overwrites it.
+- [ ] **Cut the first release.** Tag `v0.13.0` to trigger the build workflow, then decide what (if anything) of the media library gets published — see the redistribution note in the README.
+- [ ] **Move persistence to Electron userData.** localStorage is origin-scoped; dev (localhost:5173) and packaged (`awc-asset://app`) builds do not share settings. Note the scheme change means existing packaged-build users start fresh.
+- [ ] **Test the packaged build end to end.** The `awc-asset://` protocol typechecks and is written against Electron 33's `protocol.handle` + `net.fetch`, but has not been run in a packaged app yet.
+- [ ] **Fix or drop the dead Jim Cantore radar clips.** `narration/Jim Cantore/Vocal Local/Default_Phrases_Local_Radar/RADAR_DEFAULT{1,2}` — referenced since the initial commit, directory never existed.
+
 ## v0.8 — Theme consolidation + authentic layouts + logos — DONE
 
 - [x] ~~Retire `classic90s` theme~~ — was a soft duplicate of WS4000. Users migrate to `ws4000` on load.
@@ -176,11 +192,11 @@ All ten confirmed silent-failure bugs from `docs/code-audit-2026-08.md` fixed, p
 ## Usability gaps
 
 - [x] ~~Place picker persistence~~ — STALE ENTRY: `PlacesStore` already persists (localStorage `awc.places.v1`). Still open: move both stores to `app.getPath("userData")` so dev and packaged builds share state (localStorage is origin-scoped).
-- [ ] **First-run setup flow.** Prompt for home location on first launch instead of the hard-coded Greeneville TN default in `defaultPlaces()`. The ZIP flow in Favorites (M → Z) already works; first-run just needs to open into it.
+- [x] ~~First-run setup flow~~ — SHIPPED (Phase 5). `FirstRunSetup.tsx`: required, non-dismissable ZIP prompt; `defaultPlaces()` now returns a neutral placeholder; the seed is not persisted so quitting mid-setup re-prompts; scene loop, scanner, alert watcher and NWR autopick all held until setup completes.
 - [ ] **Settings panel polish.** Scene-duration overrides per flavor. (TTS voice/rate items dropped — no-TTS policy as of v0.11.0.)
 - [ ] **Error/empty states for every scene.** v0.10.0 added the ErrorBoundary + SceneUnavailable safety net; per-scene visual empty states still worth fleshing out.
 - [x] ~~NWS retry/backoff~~ — STALE ENTRY: shipped long ago. `NwsClient.get` has 10s timeout, 3 retries, exponential backoff, and Retry-After handling.
-- [ ] **Production asset serving.** Dev middleware in `vite.config.ts` only handles dev. For Electron prod, register a custom `awc-asset://` protocol resolving to the assets folder.
+- [x] ~~Production asset serving~~ — SHIPPED (Phase 5). Packaged builds load from an `awc-asset://app` scheme registered in `electron/main.ts`, so root-relative `/assets/...` URLs work identically in Electron and the browser. Media resolves from `AWC_ASSETS_DIR`, then userData, then resources, then the repo; path-traversal guarded; served via `net.fetch` so Range requests work for audio seeking.
 
 ## Radar — accessible map navigation
 

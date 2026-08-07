@@ -12,7 +12,16 @@
     "start": "npm run build && electron .",
     "typecheck": "tsc -b --noEmit && tsc -p tsconfig.electron.json --noEmit",
     "test": "node scripts/run-tests.mjs",
-    "lint": "eslint src electron"
+    "lint": "eslint src electron",
+    "assets:build": "node scripts/build-web-assets.mjs",
+    "assets:verify": "node scripts/build-web-assets.mjs --verify",
+    "assets:check": "node scripts/check-asset-refs.mjs",
+    "assets:package": "node scripts/package-assets.mjs",
+    "assets:fetch": "node scripts/fetch-assets.mjs",
+    "dist": "npm run build && npx --yes electron-builder@25",
+    "dist:linux": "npm run build && npx --yes electron-builder@25 --linux",
+    "dist:win": "npm run build && npx --yes electron-builder@25 --win",
+    "dist:mac": "npm run build && npx --yes electron-builder@25 --mac"
   },
   "dependencies": {
     "react": "^18.3.1",
