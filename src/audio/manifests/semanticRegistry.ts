@@ -61,7 +61,7 @@ export type CompassDir =
   | "S" | "SSW" | "SW" | "WSW"
   | "W" | "WNW" | "NW" | "NNW";
 
-/** Wind speed range tokens used in clip filenames (e.g. `AT_10_15.wav`). */
+/** Wind speed range tokens used in clip filenames (e.g. `AT_10_15.mp3`). */
 export type WindRange =
   | "Below_5" | "5_10" | "10_15" | "10_20" | "15_25" | "20_30" | "25_35"
   | "25_40" | "35_50" | "40_60" | "50_70" | "60_80" | "70_90" | "80_100"
@@ -172,75 +172,75 @@ function splitId(id: SemanticId): [Category, string] {
 // ───────────────────────── Period maps ───────────────────────────────
 
 const AJ_PERIOD_MAP: Partial<Record<PeriodKey, string>> = {
-  MON: "VocalLocal/Periods2/MON.wav",
-  TUE: "VocalLocal/Periods2/TUE.wav",
-  WED: "VocalLocal/Periods2/WED.wav",
-  THU: "VocalLocal/Periods2/THU.wav",
-  FRI: "VocalLocal/Periods2/FRI.wav",
-  SAT: "VocalLocal/Periods2/SAT.wav",
-  SUN: "VocalLocal/Periods2/SUN.wav",
+  MON: "VocalLocal/Periods2/MON.mp3",
+  TUE: "VocalLocal/Periods2/TUE.mp3",
+  WED: "VocalLocal/Periods2/WED.mp3",
+  THU: "VocalLocal/Periods2/THU.mp3",
+  FRI: "VocalLocal/Periods2/FRI.mp3",
+  SAT: "VocalLocal/Periods2/SAT.mp3",
+  SUN: "VocalLocal/Periods2/SUN.mp3",
   // Weekday night clips — MON7/TUE7/... are the "on Monday night." form,
   // which works as a period intro for the extended / weekend forecasts.
-  MON_NIGHT: "VocalLocal/Periods2/MON7.wav",
-  TUE_NIGHT: "VocalLocal/Periods2/TUE7.wav",
-  WED_NIGHT: "VocalLocal/Periods2/WED7.wav",
-  THU_NIGHT: "VocalLocal/Periods2/THU7.wav",
-  FRI_NIGHT: "VocalLocal/Periods2/FRI7.wav",
-  SAT_NIGHT: "VocalLocal/Periods2/SAT7.wav",
-  SUN_NIGHT: "VocalLocal/Periods2/SUN7.wav",
-  TODAY: "VocalLocal/Periods2/TODAY1.wav",
-  TONIGHT: "VocalLocal/Periods2/TONIGHT1.wav",
-  OVERNIGHT: "VocalLocal/Periods2/OVERNIGHT.wav",
-  AFTERNOON: "VocalLocal/Periods2/AFTERNOON1.wav",
+  MON_NIGHT: "VocalLocal/Periods2/MON7.mp3",
+  TUE_NIGHT: "VocalLocal/Periods2/TUE7.mp3",
+  WED_NIGHT: "VocalLocal/Periods2/WED7.mp3",
+  THU_NIGHT: "VocalLocal/Periods2/THU7.mp3",
+  FRI_NIGHT: "VocalLocal/Periods2/FRI7.mp3",
+  SAT_NIGHT: "VocalLocal/Periods2/SAT7.mp3",
+  SUN_NIGHT: "VocalLocal/Periods2/SUN7.mp3",
+  TODAY: "VocalLocal/Periods2/TODAY1.mp3",
+  TONIGHT: "VocalLocal/Periods2/TONIGHT1.mp3",
+  OVERNIGHT: "VocalLocal/Periods2/OVERNIGHT.mp3",
+  AFTERNOON: "VocalLocal/Periods2/AFTERNOON1.mp3",
 };
 
 const JC_PERIOD_MAP: Partial<Record<PeriodKey, string>> = {
-  MON: "Vocal Local/Periods2/MON.wav",
-  TUE: "Vocal Local/Periods2/TUE.wav",
-  WED: "Vocal Local/Periods2/WED.wav",
-  THU: "Vocal Local/Periods2/THU.wav",
-  FRI: "Vocal Local/Periods2/FRI.wav",
-  SAT: "Vocal Local/Periods2/SAT.wav",
-  SUN: "Vocal Local/Periods2/SUN.wav",
-  MON_NIGHT: "Vocal Local/Periods2/Monday_Night.wav",
-  TUE_NIGHT: "Vocal Local/Periods2/Tuesday_Night.wav",
-  WED_NIGHT: "Vocal Local/Periods2/Wednesday_Night.wav",
-  THU_NIGHT: "Vocal Local/Periods2/Thursday_Night.wav",
-  FRI_NIGHT: "Vocal Local/Periods2/Friday_Night.wav",
-  SAT_NIGHT: "Vocal Local/Periods2/Saturday_Night.wav",
-  SUN_NIGHT: "Vocal Local/Periods2/Sunday_Night.wav",
-  OVERNIGHT: "Vocal Local/Periods2/OVERNIGHT1.wav",
-  TODAY: "Vocal Local/Periods2/TODAY1.wav",
-  TONIGHT: "Vocal Local/Periods2/TONIGHT1.wav",
-  AFTERNOON: "Vocal Local/Periods2/AFTERNOON1.wav",
+  MON: "Vocal Local/Periods2/MON.mp3",
+  TUE: "Vocal Local/Periods2/TUE.mp3",
+  WED: "Vocal Local/Periods2/WED.mp3",
+  THU: "Vocal Local/Periods2/THU.mp3",
+  FRI: "Vocal Local/Periods2/FRI.mp3",
+  SAT: "Vocal Local/Periods2/SAT.mp3",
+  SUN: "Vocal Local/Periods2/SUN.mp3",
+  MON_NIGHT: "Vocal Local/Periods2/Monday_Night.mp3",
+  TUE_NIGHT: "Vocal Local/Periods2/Tuesday_Night.mp3",
+  WED_NIGHT: "Vocal Local/Periods2/Wednesday_Night.mp3",
+  THU_NIGHT: "Vocal Local/Periods2/Thursday_Night.mp3",
+  FRI_NIGHT: "Vocal Local/Periods2/Friday_Night.mp3",
+  SAT_NIGHT: "Vocal Local/Periods2/Saturday_Night.mp3",
+  SUN_NIGHT: "Vocal Local/Periods2/Sunday_Night.mp3",
+  OVERNIGHT: "Vocal Local/Periods2/OVERNIGHT1.mp3",
+  TODAY: "Vocal Local/Periods2/TODAY1.mp3",
+  TONIGHT: "Vocal Local/Periods2/TONIGHT1.mp3",
+  AFTERNOON: "Vocal Local/Periods2/AFTERNOON1.mp3",
 };
 
 // ───────────────────────── Named clip maps ───────────────────────────
 
 // Severe alert clips use the verified Default_Phrases_Severe/ set. There
-// are also older /severe/*.wav files with identical text at lower whisper
+// are also older /severe/*.mp3 files with identical text at lower whisper
 // confidence and verified:false — intentionally not mapped here so the
 // registry has a single canonical source per intent.
 const AJ_NAMED_MAP: Partial<Record<NamedIntent, string>> = {
-  current_intro:     "VocalLocal/Intros_Curr_Cond/CC_INTRO1.wav",
-  current_intro_alt: "VocalLocal/Intros_Curr_Cond/CC_INTRO2.wav",
-  alert_tornado:     "VocalLocal/Default_Phrases_Severe/TOR001.wav",
-  alert_tstorm:      "VocalLocal/Default_Phrases_Severe/SVR001.wav",
-  alert_flood:       "VocalLocal/Default_Phrases_Severe/FFW001.wav",
+  current_intro:     "VocalLocal/Intros_Curr_Cond/CC_INTRO1.mp3",
+  current_intro_alt: "VocalLocal/Intros_Curr_Cond/CC_INTRO2.mp3",
+  alert_tornado:     "VocalLocal/Default_Phrases_Severe/TOR001.mp3",
+  alert_tstorm:      "VocalLocal/Default_Phrases_Severe/SVR001.mp3",
+  alert_flood:       "VocalLocal/Default_Phrases_Severe/FFW001.mp3",
 };
 
 // The mnemonic and alert tones live outside narrator trees — they're not
 // narrator-specific audio, so not mapped per-narrator here. JC's severe
 // clips are under "Default phrases severe/" (space-separated, lowercase)
 // — there's a parallel "Weatherscan severe/" folder with near-duplicate
-// DEFAULT.wav versions; the 001 set is preferred as it matches AJ's
+// DEFAULT.mp3 versions; the 001 set is preferred as it matches AJ's
 // naming convention and has viewer-area phrasing.
 const JC_NAMED_MAP: Partial<Record<NamedIntent, string>> = {
-  current_intro:     "Vocal Local/Default_Phrases_Now/CC_INTRO1.wav",
-  current_intro_alt: "Vocal Local/Default_Phrases_Now/CC_INTRO2.wav",
-  alert_tornado:     "Default phrases severe/TOR001.wav",
-  alert_tstorm:      "Default phrases severe/SVR001.wav",
-  alert_flood:       "Default phrases severe/FFW001.wav",
+  current_intro:     "Vocal Local/Default_Phrases_Now/CC_INTRO1.mp3",
+  current_intro_alt: "Vocal Local/Default_Phrases_Now/CC_INTRO2.mp3",
+  alert_tornado:     "Default phrases severe/TOR001.mp3",
+  alert_tstorm:      "Default phrases severe/SVR001.mp3",
+  alert_flood:       "Default phrases severe/FFW001.mp3",
 };
 
 // ───────────────────────── Category resolvers ───────────────────────
@@ -265,55 +265,55 @@ const AJ_RESOLVERS: NarratorResolvers = {
   temp: (p) => {
     const n = Number(p);
     if (!Number.isInteger(n)) return null;
-    if (n === 0)                   return `${AJ_VL}/Temps_Specific/Zero.wav`;
-    if (n > 0 && n <= 139)         return `${AJ_VL}/Temps_Specific/${n}.wav`;
-    if (n < 0 && n >= -99)         return `${AJ_VL}/Temps_Specific/M${-n}.wav`;
+    if (n === 0)                   return `${AJ_VL}/Temps_Specific/Zero.mp3`;
+    if (n > 0 && n <= 139)         return `${AJ_VL}/Temps_Specific/${n}.mp3`;
+    if (n < 0 && n >= -99)         return `${AJ_VL}/Temps_Specific/M${-n}.mp3`;
     return null;
   },
   tempHigh: (p) => {
     const n = Number(p);
     if (!Number.isInteger(n) || n < 0 || n > 130) return null;
-    return `${AJ_VL}/Temps_Highs/HIGH_${n}.wav`;
+    return `${AJ_VL}/Temps_Highs/HIGH_${n}.mp3`;
   },
   tempLow: (p) => {
     const n = Number(p);
     if (!Number.isInteger(n) || n < 0 || n > 105) return null;
-    return `${AJ_VL}/Temps_Lows/LOW_${n}.wav`;
+    return `${AJ_VL}/Temps_Lows/LOW_${n}.mp3`;
   },
-  tempHighRange: (p) => `${AJ_VL}/Temps_High_Ranges/HIGH_${p}.wav`,
-  tempRange:     (p) => `${AJ_VL}/Temps_Ranges1/${p}.wav`,
-  tempRange2:    (p) => `${AJ_VL}/Temps_Ranges2/TEMP_${p}.wav`,
+  tempHighRange: (p) => `${AJ_VL}/Temps_High_Ranges/HIGH_${p}.mp3`,
+  tempRange:     (p) => `${AJ_VL}/Temps_Ranges1/${p}.mp3`,
+  tempRange2:    (p) => `${AJ_VL}/Temps_Ranges2/TEMP_${p}.mp3`,
 
   // Conditions — AJ zero-pads CCSH codes < 1000 to 4 digits.
-  cc:   (p) => `${AJ_VL}/Wx_Phrases_Curr_Cond/${p}.wav`,
+  cc:   (p) => `${AJ_VL}/Wx_Phrases_Curr_Cond/${p}.mp3`,
   ccsh: (p) => {
     const n = Number(p);
     if (!Number.isFinite(n)) return null;
     const padded = n < 1000 ? String(n).padStart(4, "0") : String(n);
-    return `${AJ_VL}/Wx_Phrases_Shortcast/${padded}.wav`;
+    return `${AJ_VL}/Wx_Phrases_Shortcast/${padded}.mp3`;
   },
-  ccef: (p) => `${AJ_VL}/Wx_Phrases_Ext_Fcast/${p}.wav`,
+  ccef: (p) => `${AJ_VL}/Wx_Phrases_Ext_Fcast/${p}.mp3`,
 
   // Wind — AJ has 3 direction variants, compound "and-inc/dim", AND
   // folder name is "Winds_Misc" (with 's').
-  windDir1:     (p) => `${AJ_VL}/Wind_Dir1/${p}_W.wav`,
-  windDir2:     (p) => `${AJ_VL}/Wind_Dir2/W_${p}.wav`,
-  windDir3:     (p) => `${AJ_VL}/Wind_Dir3/${p}.wav`,
-  windAtSpeed:  (p) => `${AJ_VL}/Wind_At_Speed/AT_${p}.wav`,
-  windSpeed:    (p) => `${AJ_VL}/Wind_Speed/${p}.wav`,
-  windAndInc:   (p) => `${AJ_VL}/Wind_And_Increasing/And_Inc_${p}.wav`,
-  windAndDim:   (p) => `${AJ_VL}/Wind_And_Diminishing/And_Dim_${p}.wav`,
-  windInc:      (p) => `${AJ_VL}/Wind_Increasing/Inc_${p}.wav`,
-  windDim:      (p) => `${AJ_VL}/Wind_Diminishing/Dim_${p}.wav`,
-  windBecoming: (p) => `${AJ_VL}/Wind_Becoming/Bec_${p}.wav`,
-  windShifting: (p) => `${AJ_VL}/Wind_Shifting/Shift_${p}.wav`,
-  windCalm:     ()  => `${AJ_VL}/Winds_Misc/W9900.wav`,
+  windDir1:     (p) => `${AJ_VL}/Wind_Dir1/${p}_W.mp3`,
+  windDir2:     (p) => `${AJ_VL}/Wind_Dir2/W_${p}.mp3`,
+  windDir3:     (p) => `${AJ_VL}/Wind_Dir3/${p}.mp3`,
+  windAtSpeed:  (p) => `${AJ_VL}/Wind_At_Speed/AT_${p}.mp3`,
+  windSpeed:    (p) => `${AJ_VL}/Wind_Speed/${p}.mp3`,
+  windAndInc:   (p) => `${AJ_VL}/Wind_And_Increasing/And_Inc_${p}.mp3`,
+  windAndDim:   (p) => `${AJ_VL}/Wind_And_Diminishing/And_Dim_${p}.mp3`,
+  windInc:      (p) => `${AJ_VL}/Wind_Increasing/Inc_${p}.mp3`,
+  windDim:      (p) => `${AJ_VL}/Wind_Diminishing/Dim_${p}.mp3`,
+  windBecoming: (p) => `${AJ_VL}/Wind_Becoming/Bec_${p}.mp3`,
+  windShifting: (p) => `${AJ_VL}/Wind_Shifting/Shift_${p}.mp3`,
+  windCalm:     ()  => `${AJ_VL}/Winds_Misc/W9900.mp3`,
 
   // Precip probability — AJ uses P9{decile}1 under Wx_Phrases_Precip.
   precipProb: (p) => precipRelPath(p, `${AJ_VL}/Wx_Phrases_Precip`, /*excludeTen=*/ false),
 
   // Qualifiers — numeric code under Wx_Phrases_Qualifiers.
-  qualifier: (p) => `${AJ_VL}/Wx_Phrases_Qualifiers/${p}.wav`,
+  qualifier: (p) => `${AJ_VL}/Wx_Phrases_Qualifiers/${p}.mp3`,
 
   // No rate-OP / accumulation for AJ.
 };
@@ -329,49 +329,49 @@ const JC_RESOLVERS: NarratorResolvers = {
   temp: (p) => {
     const n = Number(p);
     if (!Number.isInteger(n)) return null;
-    if (n >= 0 && n <= 130)  return `${JC_VL}/Temps_Specific/${n}.wav`;
-    if (n < 0 && n >= -99)   return `${JC_VL}/Temps_Specific/M${-n}.wav`;
+    if (n >= 0 && n <= 130)  return `${JC_VL}/Temps_Specific/${n}.mp3`;
+    if (n < 0 && n >= -99)   return `${JC_VL}/Temps_Specific/M${-n}.mp3`;
     return null;
   },
   tempHigh: (p) => {
     const n = Number(p);
     if (!Number.isInteger(n) || n < 0 || n > 130) return null;
-    return `${JC_VL}/Temps_Highs/HIGH_${n}.wav`;
+    return `${JC_VL}/Temps_Highs/HIGH_${n}.mp3`;
   },
   tempLow: (p) => {
     const n = Number(p);
     if (!Number.isInteger(n) || n < 0 || n > 105) return null;
-    return `${JC_VL}/Temps_Lows/LOW_${n}.wav`;
+    return `${JC_VL}/Temps_Lows/LOW_${n}.mp3`;
   },
   // JC does not ship Temps_Ranges* / Temps_High_Ranges.
 
   // Conditions — JC does NOT zero-pad CCSH codes.
-  cc:   (p) => `${JC_VL}/Wx_Phrases_Curr_Cond/${p}.wav`,
-  ccsh: (p) => `${JC_VL}/Wx_Phrases_Shortcast/${p}.wav`,
+  cc:   (p) => `${JC_VL}/Wx_Phrases_Curr_Cond/${p}.mp3`,
+  ccsh: (p) => `${JC_VL}/Wx_Phrases_Shortcast/${p}.mp3`,
   // JC does not ship Wx_Phrases_Ext_Fcast.
 
   // Wind — JC has Wind_Dir1/At_Speed/Increasing/Diminishing/Becoming/Shifting,
   // folder is "Wind_Misc" (no 's'), and no compound "and-inc/dim" clips.
-  windDir1:     (p) => `${JC_VL}/Wind_Dir1/${p}_W.wav`,
-  windAtSpeed:  (p) => `${JC_VL}/Wind_At_Speed/AT_${p}.wav`,
-  windInc:      (p) => `${JC_VL}/Wind_Increasing/Inc_${p}.wav`,
-  windDim:      (p) => `${JC_VL}/Wind_Diminishing/Dim_${p}.wav`,
-  windBecoming: (p) => `${JC_VL}/Wind_Becoming/Bec_${p}.wav`,
-  windShifting: (p) => `${JC_VL}/Wind_Shifting/Shift_${p}.wav`,
-  windCalm:     ()  => `${JC_VL}/Wind_Misc/W9900.wav`,
+  windDir1:     (p) => `${JC_VL}/Wind_Dir1/${p}_W.mp3`,
+  windAtSpeed:  (p) => `${JC_VL}/Wind_At_Speed/AT_${p}.mp3`,
+  windInc:      (p) => `${JC_VL}/Wind_Increasing/Inc_${p}.mp3`,
+  windDim:      (p) => `${JC_VL}/Wind_Diminishing/Dim_${p}.mp3`,
+  windBecoming: (p) => `${JC_VL}/Wind_Becoming/Bec_${p}.mp3`,
+  windShifting: (p) => `${JC_VL}/Wind_Shifting/Shift_${p}.mp3`,
+  windCalm:     ()  => `${JC_VL}/Wind_Misc/W9900.mp3`,
 
   // Precip — JC uses Wx_Phrases_POP and is missing 10%.
   precipProb: (p) => precipRelPath(p, `${JC_VL}/Wx_Phrases_POP`, /*excludeTen=*/ true),
 
   // Qualifiers (same shape as AJ).
-  qualifier: (p) => `${JC_VL}/Wx_Phrases_Qualifiers/${p}.wav`,
+  qualifier: (p) => `${JC_VL}/Wx_Phrases_Qualifiers/${p}.mp3`,
 
   // Rate-of-precipitation — JC only. Clips are R-prefixed (R8011, R8012,
   // R8021, R8022). Param is the numeric code without the prefix.
-  rateOp: (p) => `${JC_VL}/Wx_Phrases_RateOP/R${p}.wav`,
+  rateOp: (p) => `${JC_VL}/Wx_Phrases_RateOP/R${p}.mp3`,
 
-  // Accumulation — JC only. Param shape: "TYPE_CODE" → Wx_Phrases_Accumulation/{TYPE}_{CODE}.wav
-  accumulation: (p) => `${JC_VL}/Wx_Phrases_Accumulation/${p}.wav`,
+  // Accumulation — JC only. Param shape: "TYPE_CODE" → Wx_Phrases_Accumulation/{TYPE}_{CODE}.mp3
+  accumulation: (p) => `${JC_VL}/Wx_Phrases_Accumulation/${p}.mp3`,
 };
 
 // ─── Amy & Chandler & Silent ────────────────────────────────────────
@@ -392,7 +392,7 @@ const RESOLVERS_BY_NARRATOR: Record<NarratorId, NarratorResolvers> = {
 
 // ───────────────────────── Helpers ───────────────────────────────────
 
-/** Build a precip probability relPath. `P9{decile}1.wav` — e.g. 30% → P9031. */
+/** Build a precip probability relPath. `P9{decile}1.mp3` — e.g. 30% → P9031. */
 function precipRelPath(paramPct: string, dir: string, excludeTen: boolean): string | null {
   const pct = Number(paramPct);
   if (!Number.isInteger(pct)) return null;
@@ -400,7 +400,7 @@ function precipRelPath(paramPct: string, dir: string, excludeTen: boolean): stri
   if (rounded < 10 || rounded > 90) return null;
   if (excludeTen && rounded === 10) return null;
   const decile = String(rounded / 10).padStart(2, "0");
-  return `${dir}/P9${decile}1.wav`;
+  return `${dir}/P9${decile}1.mp3`;
 }
 
 /** Derive display text from an ID when the reference table has no entry. */

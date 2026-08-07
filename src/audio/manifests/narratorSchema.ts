@@ -77,81 +77,81 @@ export const NARRATORS: NarratorDef[] = [
     hasWind: true,
     sceneIntros: {
       current: [
-        { file: `${AJ_GENERAL_BASE}/Your Current Conditions.wav`, text: "Your current conditions" },
-        { file: `${AJ_GENERAL_BASE}/The Current Conditions for Your Area.wav`, text: "The current conditions for your area" },
-        { file: `${AJ_GENERAL_BASE}/Currently In Your Area.wav`, text: "Currently in your area" },
-        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_Curr_Cond/CC_DEFAULT1.wav`, text: "Our current conditions" },
-        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_Curr_Cond/CC_DEFAULT2.wav`, text: "The current conditions for our area" },
+        { file: `${AJ_GENERAL_BASE}/Your Current Conditions.mp3`, text: "Your current conditions" },
+        { file: `${AJ_GENERAL_BASE}/The Current Conditions for Your Area.mp3`, text: "The current conditions for your area" },
+        { file: `${AJ_GENERAL_BASE}/Currently In Your Area.mp3`, text: "Currently in your area" },
+        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_Curr_Cond/CC_DEFAULT1.mp3`, text: "Our current conditions" },
+        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_Curr_Cond/CC_DEFAULT2.mp3`, text: "The current conditions for our area" },
       ],
       radar: [
-        { file: `${AJ_GENERAL_BASE}/Your Local Doppler Radar.wav`, text: "Your local Doppler radar" },
-        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_Local_Radar/LRADAR_DEFAULT1.wav`, text: "Here's our local Doppler radar" },
-        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_Local_Radar/LRADAR_DEFAULT2.wav`, text: "Our local Doppler radar" },
-        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_Local_Radar/Heres your Local Doppler Radar.wav`, text: "Here's your local Doppler radar" },
+        { file: `${AJ_GENERAL_BASE}/Your Local Doppler Radar.mp3`, text: "Your local Doppler radar" },
+        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_Local_Radar/LRADAR_DEFAULT1.mp3`, text: "Here's our local Doppler radar" },
+        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_Local_Radar/LRADAR_DEFAULT2.mp3`, text: "Our local Doppler radar" },
+        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_Local_Radar/Heres your Local Doppler Radar.mp3`, text: "Here's your local Doppler radar" },
       ],
       extended: [
         // "Extended Forecast" phrasing — fits the 5-day WeatherStar-era
         // branding. "Your/Our extended forecast" reads naturally before
         // a 5-day rundown and was the TWC term through the early 2000s.
-        { file: `${AJ_GENERAL_BASE}/Your Extended Forecast.wav`, text: "Your extended forecast", eras: ["5-day"] },
-        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_Ext_Fcast/EXT_DEFAULT1.wav`, text: "Our extended forecast", eras: ["5-day"] },
+        { file: `${AJ_GENERAL_BASE}/Your Extended Forecast.mp3`, text: "Your extended forecast", eras: ["5-day"] },
+        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_Ext_Fcast/EXT_DEFAULT1.mp3`, text: "Our extended forecast", eras: ["5-day"] },
         // "7-Day Outlook" / "Week Ahead" phrasing — Weatherscan-era
         // branding for the full 7-day rundown.
-        { file: `${AJ_GENERAL_BASE}/Your 7-Day Outlook.wav`, text: "Your seven-day outlook", eras: ["7-day"] },
-        { file: `${AJ_GENERAL_BASE}/Heres your 7-Day Outlook.wav`, text: "Here's your seven-day outlook", eras: ["7-day"] },
-        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_7Day_Fcast/7DAY_DEFAULT1.wav`, text: "Here's our 7-day-out look", eras: ["7-day"] },
-        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_7Day_Fcast/7DAY_DEFAULT2.wav`, text: "Our 7-day Outlook", eras: ["7-day"] },
-        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_7Day_Fcast/7DAY_DEFAULT3.wav`, text: "Our week ahead", eras: ["7-day"] },
-        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_7Day_Fcast/7DAY_DEFAULT4.wav`, text: "The week ahead", eras: ["7-day"] },
-        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_Ext_Fcast/EXT_DEFAULT3.wav`, text: "The week ahead", eras: ["7-day"] },
+        { file: `${AJ_GENERAL_BASE}/Your 7-Day Outlook.mp3`, text: "Your seven-day outlook", eras: ["7-day"] },
+        { file: `${AJ_GENERAL_BASE}/Heres your 7-Day Outlook.mp3`, text: "Here's your seven-day outlook", eras: ["7-day"] },
+        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_7Day_Fcast/7DAY_DEFAULT1.mp3`, text: "Here's our 7-day-out look", eras: ["7-day"] },
+        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_7Day_Fcast/7DAY_DEFAULT2.mp3`, text: "Our 7-day Outlook", eras: ["7-day"] },
+        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_7Day_Fcast/7DAY_DEFAULT3.mp3`, text: "Our week ahead", eras: ["7-day"] },
+        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_7Day_Fcast/7DAY_DEFAULT4.mp3`, text: "The week ahead", eras: ["7-day"] },
+        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_Ext_Fcast/EXT_DEFAULT3.mp3`, text: "The week ahead", eras: ["7-day"] },
         // EXT_DEFAULT2 transcribed as "Hour week ahead" — almost
         // certainly "Your week ahead"; keeping as 7-day until verified.
-        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_Ext_Fcast/EXT_DEFAULT2.wav`, text: "Hour week ahead", eras: ["7-day"] },
+        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_Ext_Fcast/EXT_DEFAULT2.mp3`, text: "Hour week ahead", eras: ["7-day"] },
       ],
       hourly: [
-        { file: `${AJ_GENERAL_BASE}/Your Local Forecast.wav`, text: "Your local forecast" },
-        { file: `${AJ_GENERAL_BASE}/The Forecast for Your Area.wav`, text: "The forecast for your area" },
-        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_Daypart/DAYPART_DEFAULT1.wav`, text: "Our local forecast" },
-        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_Daypart/DAYPART_DEFAULT2.wav`, text: "The forecast for our area" },
-        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_Daypart/DAYPART_DEFAULT3.wav`, text: "Our Daily Planner" },
+        { file: `${AJ_GENERAL_BASE}/Your Local Forecast.mp3`, text: "Your local forecast" },
+        { file: `${AJ_GENERAL_BASE}/The Forecast for Your Area.mp3`, text: "The forecast for your area" },
+        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_Daypart/DAYPART_DEFAULT1.mp3`, text: "Our local forecast" },
+        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_Daypart/DAYPART_DEFAULT2.mp3`, text: "The forecast for our area" },
+        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_Daypart/DAYPART_DEFAULT3.mp3`, text: "Our Daily Planner" },
       ],
       alerts: [
-        { file: `${AJ_GENERAL_BASE}/Is in effect for Your Area.wav`, text: "Is in effect for your area" },
-        { file: `${AJ_GENERAL_BASE}/Has been issued for Your Area.wav`, text: "Has been issued for your area" },
+        { file: `${AJ_GENERAL_BASE}/Is in effect for Your Area.mp3`, text: "Is in effect for your area" },
+        { file: `${AJ_GENERAL_BASE}/Has been issued for Your Area.mp3`, text: "Has been issued for your area" },
       ],
       localForecast: [
-        { file: `${AJ_GENERAL_BASE}/Your Local Forecast.wav`, text: "Your local forecast" },
+        { file: `${AJ_GENERAL_BASE}/Your Local Forecast.mp3`, text: "Your local forecast" },
       ],
       observations: [
-        { file: `${AJ_GENERAL_BASE}/Your Local Observations.wav`, text: "Your local observations" },
-        { file: `${AJ_GENERAL_BASE}/Local Observations for Your Area.wav`, text: "Local observations for your area" },
-        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_Local_Obs/LOBS_DEFAULT1.wav`, text: "Our local observations" },
-        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_Local_Obs/LOBS_DEFAULT2.wav`, text: "Local observations for our area" },
+        { file: `${AJ_GENERAL_BASE}/Your Local Observations.mp3`, text: "Your local observations" },
+        { file: `${AJ_GENERAL_BASE}/Local Observations for Your Area.mp3`, text: "Local observations for your area" },
+        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_Local_Obs/LOBS_DEFAULT1.mp3`, text: "Our local observations" },
+        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_Local_Obs/LOBS_DEFAULT2.mp3`, text: "Local observations for our area" },
       ],
       weekAhead: [
-        { file: `${AJ_GENERAL_BASE}/Your Week Ahead.wav`, text: "You're a week ahead" },
+        { file: `${AJ_GENERAL_BASE}/Your Week Ahead.mp3`, text: "You're a week ahead" },
       ],
       // AJ has no dedicated "Your Weekend Forecast" clip; WEEK3 ("heading
       // into the weekend") is the only single-phrase weekend reference in
       // the library. Sounds natural as a scene opener before the Sat/Sun
       // rundown plays.
       weekend: [
-        { file: `${AJ_VOCALLOCAL_BASE}/Periods2/WEEK3.wav`, text: "Heading into the weekend" },
+        { file: `${AJ_VOCALLOCAL_BASE}/Periods2/WEEK3.mp3`, text: "Heading into the weekend" },
       ],
       dailyPlanner: [
-        { file: `${AJ_GENERAL_BASE}/Your Daily Planner.wav`, text: "Your Daily Planner" },
+        { file: `${AJ_GENERAL_BASE}/Your Daily Planner.mp3`, text: "Your Daily Planner" },
       ],
       // Reserved for future scenes (no call site yet):
       thirtySixHour: [
-        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_36_Hr_Fcast/36HR_DEFAULT1.wav`, text: "Your 36-hour forecast" },
-        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_36_Hr_Fcast/36HR_DEFAULT2.wav`, text: "Your forecast for the next 36 hours" },
+        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_36_Hr_Fcast/36HR_DEFAULT1.mp3`, text: "Your 36-hour forecast" },
+        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_36_Hr_Fcast/36HR_DEFAULT2.mp3`, text: "Your forecast for the next 36 hours" },
       ],
       traffic: [
-        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_Traffic_Flow/TRFLO_DEFAULT1.wav`, text: "Traffic flow for our area" },
-        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_Traffic_Flow/TRFLO_DEFAULT2.wav`, text: "The current average trip times for our area" },
-        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_Traffic_Overview/TRORV_DEFAULT1.wav`, text: "Traffic conditions around our area" },
-        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_Traffic_Overview/TRORV_DEFAULT2.wav`, text: "Traffic congestion for our area" },
-        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_Traffic_Report/TRREP_DEFAULT1.wav`, text: "Incidents and construction impacting our area" },
+        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_Traffic_Flow/TRFLO_DEFAULT1.mp3`, text: "Traffic flow for our area" },
+        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_Traffic_Flow/TRFLO_DEFAULT2.mp3`, text: "The current average trip times for our area" },
+        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_Traffic_Overview/TRORV_DEFAULT1.mp3`, text: "Traffic conditions around our area" },
+        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_Traffic_Overview/TRORV_DEFAULT2.mp3`, text: "Traffic congestion for our area" },
+        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_Traffic_Report/TRREP_DEFAULT1.mp3`, text: "Incidents and construction impacting our area" },
       ],
     },
   },
@@ -163,37 +163,37 @@ export const NARRATORS: NarratorDef[] = [
     hasWind: true,
     sceneIntros: {
       current: [
-        { file: `${JC_VOCALLOCAL_BASE}/Default_Phrases_Now/CC_INTRO1.wav`, text: "Currently, the temperature is.." },
-        { file: `${JC_VOCALLOCAL_BASE}/Default_Phrases_Now/CC_INTRO2.wav`, text: "Currently in our area" },
-        { file: `${JC_VOCALLOCAL_BASE}/Default_Phrases_Now/CC_INTRO3.wav`, text: "Currently in your area" },
-        { file: `${JC_VOCALLOCAL_BASE}/Default_Phrases_Now/CC_INTRO4.wav`, text: "Currently, it's.." },
-        { file: `${JC_VOCALLOCAL_BASE}/Default_Phrases_Now/CC_INTRO5.wav`, text: "Right now it's" },
+        { file: `${JC_VOCALLOCAL_BASE}/Default_Phrases_Now/CC_INTRO1.mp3`, text: "Currently, the temperature is.." },
+        { file: `${JC_VOCALLOCAL_BASE}/Default_Phrases_Now/CC_INTRO2.mp3`, text: "Currently in our area" },
+        { file: `${JC_VOCALLOCAL_BASE}/Default_Phrases_Now/CC_INTRO3.mp3`, text: "Currently in your area" },
+        { file: `${JC_VOCALLOCAL_BASE}/Default_Phrases_Now/CC_INTRO4.mp3`, text: "Currently, it's.." },
+        { file: `${JC_VOCALLOCAL_BASE}/Default_Phrases_Now/CC_INTRO5.mp3`, text: "Right now it's" },
       ],
       radar: [
-        { file: `${JC_VOCALLOCAL_BASE}/Default_Phrases_Local_Radar/RADAR_DEFAULT1.wav`, text: "Your local radar" },
-        { file: `${JC_VOCALLOCAL_BASE}/Default_Phrases_Local_Radar/RADAR_DEFAULT2.wav`, text: "Your local radar (alt)" },
+        { file: `${JC_VOCALLOCAL_BASE}/Default_Phrases_Local_Radar/RADAR_DEFAULT1.mp3`, text: "Your local radar" },
+        { file: `${JC_VOCALLOCAL_BASE}/Default_Phrases_Local_Radar/RADAR_DEFAULT2.mp3`, text: "Your local radar (alt)" },
       ],
       extended: [
         // JC's extended pool is entirely 7-day / week-ahead phrasing —
         // IntelliStar never ran a 5-day version. Tagged so 5-day themes
         // (WS4000, WS3000, WSJr) fall to TTS rather than hearing "seven
         // day outlook" over a 5-day rundown.
-        { file: `${JC_VOCALLOCAL_BASE}/Default_Phrases_7Day_Fcast/7DAY_DEFAULT1.wav`, text: "Here's our seven day outlook", eras: ["7-day"] },
-        { file: `${JC_VOCALLOCAL_BASE}/Default_Phrases_7Day_Fcast/7DAY_DEFAULT2.wav`, text: "Our seven-day outlook", eras: ["7-day"] },
-        { file: `${JC_VOCALLOCAL_BASE}/Default_Phrases_7Day_Fcast/7DAY_DEFAULT3.wav`, text: "Our week ahead", eras: ["7-day"] },
+        { file: `${JC_VOCALLOCAL_BASE}/Default_Phrases_7Day_Fcast/7DAY_DEFAULT1.mp3`, text: "Here's our seven day outlook", eras: ["7-day"] },
+        { file: `${JC_VOCALLOCAL_BASE}/Default_Phrases_7Day_Fcast/7DAY_DEFAULT2.mp3`, text: "Our seven-day outlook", eras: ["7-day"] },
+        { file: `${JC_VOCALLOCAL_BASE}/Default_Phrases_7Day_Fcast/7DAY_DEFAULT3.mp3`, text: "Our week ahead", eras: ["7-day"] },
       ],
       hourly: [
-        { file: `${JC_VOCALLOCAL_BASE}/Default_Phrases_Daypart/DAYPART_DEFAULT1.wav`, text: "Our local forecast" },
-        { file: `${JC_VOCALLOCAL_BASE}/Default_Phrases_Daypart/DAYPART_DEFAULT2.wav`, text: "The forecast for our area" },
-        { file: `${JC_VOCALLOCAL_BASE}/Default_Phrases_Daypart/DAYPART_DEFAULT3.wav`, text: "Our Daily Planner" },
+        { file: `${JC_VOCALLOCAL_BASE}/Default_Phrases_Daypart/DAYPART_DEFAULT1.mp3`, text: "Our local forecast" },
+        { file: `${JC_VOCALLOCAL_BASE}/Default_Phrases_Daypart/DAYPART_DEFAULT2.mp3`, text: "The forecast for our area" },
+        { file: `${JC_VOCALLOCAL_BASE}/Default_Phrases_Daypart/DAYPART_DEFAULT3.mp3`, text: "Our Daily Planner" },
       ],
       alerts: [
-        { file: `${JC_NARRATION}/Weatherscan severe/SEVERE_DEFAULT.wav`, text: "Severe weather alert" },
-        { file: `${JC_NARRATION}/Weatherscan severe/TORNADO_DEFAULT.wav`, text: "Tornado warning" },
-        { file: `${JC_NARRATION}/Weatherscan severe/FFLOOD_DEFAULT.wav`, text: "Flash flood warning" },
+        { file: `${JC_NARRATION}/Weatherscan severe/SEVERE_DEFAULT.mp3`, text: "Severe weather alert" },
+        { file: `${JC_NARRATION}/Weatherscan severe/TORNADO_DEFAULT.mp3`, text: "Tornado warning" },
+        { file: `${JC_NARRATION}/Weatherscan severe/FFLOOD_DEFAULT.mp3`, text: "Flash flood warning" },
       ],
       weekend: [
-        { file: `${JC_VOCALLOCAL_BASE}/Periods2/WEEKEND2.wav`, text: "This weekend" },
+        { file: `${JC_VOCALLOCAL_BASE}/Periods2/WEEKEND2.mp3`, text: "This weekend" },
       ],
     },
   },
@@ -211,13 +211,13 @@ export const NARRATORS: NarratorDef[] = [
     // with mismatched clips — they fall through to TTS.
     sceneIntros: {
       current: [
-        { file: `${AB_NARRATION}/Local-CurrentConditions.wav`, text: "Your current conditions" },
+        { file: `${AB_NARRATION}/Local-CurrentConditions.mp3`, text: "Your current conditions" },
       ],
       radar: [
-        { file: `${AB_NARRATION}/Local-LocalDoppler.wav`, text: "The local Doppler radar" },
+        { file: `${AB_NARRATION}/Local-LocalDoppler.mp3`, text: "The local Doppler radar" },
       ],
       // `extended` intentionally omitted — our Regional Forecast clip
-      // ("Local-RegionalForecastConditions.wav") is for the Weatherscan
+      // ("Local-RegionalForecastConditions.mp3") is for the Weatherscan
       // Regional Forecast scene (nearby-cities map), not the 7-Day
       // Outlook. Using it on Extended would mislabel the screen. Move
       // that clip here if/when a dedicated Regional scene is added.
@@ -225,24 +225,24 @@ export const NARRATORS: NarratorDef[] = [
         // Weatherscan's "Daypart Forecast" was the closest historical
         // analog of our hour-by-hour scene; Amy's DaypartForecast clip
         // fits as an opener.
-        { file: `${AB_NARRATION}/Local-DaypartForecast.wav`, text: "Your local forecast" },
+        { file: `${AB_NARRATION}/Local-DaypartForecast.mp3`, text: "Your local forecast" },
       ],
       localForecast: [
-        { file: `${AB_NARRATION}/Local-TextForecast.wav`, text: "Your local forecast" },
+        { file: `${AB_NARRATION}/Local-TextForecast.mp3`, text: "Your local forecast" },
       ],
       traffic: [
-        { file: `${AB_NARRATION}/Local-TrafficFlow.wav`, text: "Traffic flow" },
-        { file: `${AB_NARRATION}/Local-TrafficOverview.wav`, text: "Traffic conditions across your area" },
+        { file: `${AB_NARRATION}/Local-TrafficFlow.mp3`, text: "Traffic flow" },
+        { file: `${AB_NARRATION}/Local-TrafficOverview.mp3`, text: "Traffic conditions across your area" },
       ],
       airport: [
-        { file: `${AB_NARRATION}/Local-LocalAirportConditions.wav`, text: "Local airport delays" },
+        { file: `${AB_NARRATION}/Local-LocalAirportConditions.mp3`, text: "Local airport delays" },
       ],
       // Pollen report clip exists but the app has no allergy scene
       // yet. Kept as a placeholder for when an allergy scene is added
       // — until then, this entry is a no-op (scheduler never fires an
       // `allergy` scene).
       allergy: [
-        { file: `${AB_NARRATION}/Local-AllergyReport.wav`, text: "The pollen report for your area" },
+        { file: `${AB_NARRATION}/Local-AllergyReport.mp3`, text: "The pollen report for your area" },
       ],
     },
   },
@@ -323,7 +323,7 @@ export const NARRATORS: NarratorDef[] = [
 /** Build a single Chandler clip reference. */
 function ch(category: string, num: number, desc: string, text: string): NarratorClipDef {
   const n = String(num).padStart(2, "0");
-  return { file: `${CH_NARRATION}/${category}/${category}_${n}_${desc}.flac`, text };
+  return { file: `${CH_NARRATION}/${category}/${category}_${n}_${desc}.mp3`, text };
 }
 
 /** Build Chandler clips from explicit [number, desc, text] tuples. */

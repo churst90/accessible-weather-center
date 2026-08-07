@@ -3,7 +3,7 @@
  * to Jim Cantore's Wx_Phrases_Accumulation/ clips.
  *
  * The IntelliStar accumulation system uses A-series codes:
- *   A{type}{amount}{variant}.wav
+ *   A{type}{amount}{variant}.mp3
  *
  * Type ranges (first 1-2 digits after A):
  *   1xxx = Snow accumulations
@@ -356,7 +356,7 @@ export function getAccumulationClipByCode(code: string): AccumulationClip | null
   const entry = JC_ACCUM_MAP.get(code);
   if (!entry) return null;
   return {
-    src: `${JC_ACCUM_DIR}/${code}.wav`,
+    src: `${JC_ACCUM_DIR}/${code}.mp3`,
     text: entry.text,
     confidence: entry.confidence,
   };

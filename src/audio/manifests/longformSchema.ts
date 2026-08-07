@@ -11,7 +11,7 @@
  *    Transcriptions from assets/.../0Longform_Names.txt
  *
  * 2. **Numbered composites** (1,525 clips): Two-period condition pairs.
- *    Encoded as {CCSH_A}{CCSH_B}{timeVariant}{take}.wav. Transcribed via
+ *    Encoded as {CCSH_A}{CCSH_B}{timeVariant}{take}.mp3. Transcribed via
  *    Whisper and deduped to 549 unique phrases, merged into the same
  *    findLongformMatch pool below (AJ_COMPOSITE_CLIPS array).
  *
@@ -1775,7 +1775,7 @@ export function findLongformMatch(detailedForecast: string, narratorId: Narrator
     if (bestJcIdx >= 0 && bestJcScore > bestScore) {
       const [jcFilename, jcText] = JC_EXCLUSIVE_CLIPS[bestJcIdx];
       return {
-        src: `${JC_LF_DIR}/${jcFilename}.wav`,
+        src: `${JC_LF_DIR}/${jcFilename}.mp3`,
         text: jcText,
         confidence: "likely",
       };
@@ -1787,7 +1787,7 @@ export function findLongformMatch(detailedForecast: string, narratorId: Narrator
     if (!filename.startsWith("N")) return null;
     const jcFilename = filename.replace(/^N/, "H");
     return {
-      src: `${JC_LF_DIR}/${jcFilename}.wav`,
+      src: `${JC_LF_DIR}/${jcFilename}.mp3`,
       text,
       confidence: "likely",
     };
@@ -1810,7 +1810,7 @@ export function findLongformMatch(detailedForecast: string, narratorId: Narrator
   if (bestCompIdx >= 0 && bestCompScore > bestScore) {
     const [compFilename, compText] = AJ_COMPOSITE_CLIPS[bestCompIdx];
     return {
-      src: `${LF_DIR}/${compFilename}.wav`,
+      src: `${LF_DIR}/${compFilename}.mp3`,
       text: compText,
       confidence: "likely",
     };
@@ -1820,7 +1820,7 @@ export function findLongformMatch(detailedForecast: string, narratorId: Narrator
 
   const [filename, text] = LONGFORM_CLIPS[bestIdx];
   return {
-    src: `${LF_DIR}/${filename}.wav`,
+    src: `${LF_DIR}/${filename}.mp3`,
     text,
     confidence: "likely",
   };
@@ -1833,7 +1833,7 @@ export function getLongformClip(filename: string): ClipResolution | null {
   const entry = LONGFORM_CLIPS.find(([f]) => f === filename);
   if (!entry) return null;
   return {
-    src: `${LF_DIR}/${entry[0]}.wav`,
+    src: `${LF_DIR}/${entry[0]}.mp3`,
     text: entry[1],
     confidence: "likely",
   };

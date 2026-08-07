@@ -4,17 +4,17 @@
  * Two narrator systems:
  *
  * 1. JC (Jim Cantore): VTEC phenomenon+significance codes.
- *    Headline_Event_Phrases/{phenomenon}_{significance}.wav
- *    e.g. TO_W.wav = "Tornado Warning"
+ *    Headline_Event_Phrases/{phenomenon}_{significance}.mp3
+ *    e.g. TO_W.mp3 = "Tornado Warning"
  *
  * 2. AJ (Allan Jackson): NWS AWIPS product code + sequence numbers,
  *    split across grammatical-variant directories:
- *      Headline_Event/{code}.wav        — bare event name
- *      Headline_A_Event/{code}A.wav     — "A [event]"
- *      Headline_A_Event2/{code}A2.wav   — "A [event]" (variant 2)
- *      Headline_The_Event/{code}B.wav   — "The [event]"
- *      Headline_And_Event/{code}C.wav   — "and a [event]"
- *      Headline_Action/{letter}.wav     — action/status phrases
+ *      Headline_Event/{code}.mp3        — bare event name
+ *      Headline_A_Event/{code}A.mp3     — "A [event]"
+ *      Headline_A_Event2/{code}A2.mp3   — "A [event]" (variant 2)
+ *      Headline_The_Event/{code}B.mp3   — "The [event]"
+ *      Headline_And_Event/{code}C.mp3   — "and a [event]"
+ *      Headline_Action/{letter}.mp3     — action/status phrases
  *      Headline_Misc/                   — connectors
  *
  * The headline composer parses alert.event text, matches to VTEC codes
@@ -48,7 +48,7 @@ const JC_HEADLINE_DIR = `${JC_VOCALLOCAL_BASE}/Headline_Event_Phrases`;
  * Every clip in Jim Cantore's Headline_Event_Phrases/ directory, transcribed
  * from standard NWS VTEC phenomenon + significance codes.
  *
- * File naming: {phenomenon}_{significance}.wav
+ * File naming: {phenomenon}_{significance}.mp3
  * Significance: W = Warning, A = Watch, Y = Advisory
  */
 const JC_VTEC_HEADLINES: VtecEntry[] = [
@@ -161,7 +161,7 @@ export function getJcHeadlineClip(phenomenon: string, significance: string): Hea
   const entry = JC_VTEC_MAP.get(key);
   if (!entry) return null;
   return {
-    src: `${JC_HEADLINE_DIR}/${key}.wav`,
+    src: `${JC_HEADLINE_DIR}/${key}.mp3`,
     text: entry.text,
     confidence: entry.confidence,
   };
@@ -178,11 +178,11 @@ export function getJcHeadlineClip(phenomenon: string, significance: string): Hea
  * etc.) and a numeric sequence index. The system supports 5 grammatical
  * variants of each event name stored in separate directories:
  *
- *   Headline_Event/NPW005.wav      → "Wind Chill Warning"
- *   Headline_A_Event/NPW005A.wav   → "A Wind Chill Warning"
- *   Headline_A_Event2/NPW005A2.wav → "A Wind Chill Warning" (variant take)
- *   Headline_The_Event/NPW005B.wav → "The Wind Chill Warning"
- *   Headline_And_Event/NPW005C.wav → "and a Wind Chill Warning"
+ *   Headline_Event/NPW005.mp3      → "Wind Chill Warning"
+ *   Headline_A_Event/NPW005A.mp3   → "A Wind Chill Warning"
+ *   Headline_A_Event2/NPW005A2.mp3 → "A Wind Chill Warning" (variant take)
+ *   Headline_The_Event/NPW005B.mp3 → "The Wind Chill Warning"
+ *   Headline_And_Event/NPW005C.mp3 → "and a Wind Chill Warning"
  */
 
 interface AjHeadlineEntry {
@@ -625,7 +625,7 @@ for (const m of VTEC_TO_AJ) VTEC_TO_AJ_MAP.set(`${m.phenomenon}_${m.significance
 /**
  * Get a headline clip for an NWS alert event string.
  *
- * For JC: looks up the VTEC code and plays Headline_Event_Phrases/{code}.wav
+ * For JC: looks up the VTEC code and plays Headline_Event_Phrases/{code}.mp3
  * For AJ: looks up the AWIPS product code and composes from parts:
  *   "A" + [event name] + [action] → "A Winter Storm Warning has been issued"
  *
@@ -667,7 +667,7 @@ function getAjHeadlineClips(phenomenon: string, significance: string): HeadlineC
 
   // "A [event]" variant
   clips.push({
-    src: `${AJ_HL_BASE}/Headline_A_Event/${ajCode}A.wav`,
+    src: `${AJ_HL_BASE}/Headline_A_Event/${ajCode}A.mp3`,
     text: `A ${entry.text}`,
     confidence: entry.confidence,
   });
@@ -676,7 +676,7 @@ function getAjHeadlineClips(phenomenon: string, significance: string): HeadlineC
   const actionEntry = AJ_ACTION_MAP.get("B");
   if (actionEntry) {
     clips.push({
-      src: `${AJ_HL_BASE}/Headline_Action/B.wav`,
+      src: `${AJ_HL_BASE}/Headline_Action/B.mp3`,
       text: actionEntry.text,
       confidence: actionEntry.confidence,
     });
@@ -694,7 +694,7 @@ export function getAjEventClip(phenomenon: string, significance: string): Headli
   const entry = AJ_HEADLINE_MAP.get(ajCode);
   if (!entry) return null;
   return {
-    src: `${AJ_HL_BASE}/Headline_Event/${ajCode}.wav`,
+    src: `${AJ_HL_BASE}/Headline_Event/${ajCode}.mp3`,
     text: entry.text,
     confidence: entry.confidence,
   };
@@ -707,7 +707,7 @@ export function getAjActionClip(code: string): HeadlineClip | null {
   const entry = AJ_ACTION_MAP.get(code);
   if (!entry) return null;
   return {
-    src: `${AJ_HL_BASE}/Headline_Action/${code}.wav`,
+    src: `${AJ_HL_BASE}/Headline_Action/${code}.mp3`,
     text: entry.text,
     confidence: entry.confidence,
   };
@@ -720,7 +720,7 @@ export function getAjMiscClip(code: string): HeadlineClip | null {
   const entry = AJ_MISC_MAP.get(code);
   if (!entry) return null;
   return {
-    src: `${AJ_HL_BASE}/Headline_Misc/${code}.wav`,
+    src: `${AJ_HL_BASE}/Headline_Misc/${code}.mp3`,
     text: entry.text,
     confidence: entry.confidence,
   };
@@ -761,14 +761,14 @@ export function getMultiHeadlineClips(eventTexts: string[], narratorId: Narrator
       if (i === 0) {
         // First: "A [event]"
         clips.push({
-          src: `${AJ_HL_BASE}/Headline_A_Event/${ajCode}A.wav`,
+          src: `${AJ_HL_BASE}/Headline_A_Event/${ajCode}A.mp3`,
           text: `A ${entry.text}`,
           confidence: entry.confidence,
         });
       } else {
         // Subsequent: "and a [event]"
         clips.push({
-          src: `${AJ_HL_BASE}/Headline_And_Event/${ajCode}C.wav`,
+          src: `${AJ_HL_BASE}/Headline_And_Event/${ajCode}C.mp3`,
           text: `and a ${entry.text}`,
           confidence: entry.confidence,
         });
@@ -779,7 +779,7 @@ export function getMultiHeadlineClips(eventTexts: string[], narratorId: Narrator
     const action = AJ_ACTION_MAP.get("B");
     if (action && clips.length > 0) {
       clips.push({
-        src: `${AJ_HL_BASE}/Headline_Action/B.wav`,
+        src: `${AJ_HL_BASE}/Headline_Action/B.mp3`,
         text: action.text,
         confidence: action.confidence,
       });
@@ -792,12 +792,12 @@ export function getMultiHeadlineClips(eventTexts: string[], narratorId: Narrator
 }
 
 /**
- * JC's Headline_Phrases/024.wav — a standalone phrase, likely "24 hour".
+ * JC's Headline_Phrases/024.mp3 — a standalone phrase, likely "24 hour".
  * Included for completeness.
  */
 export function getJcHeadlinePhraseClip(): HeadlineClip {
   return {
-    src: `${JC_VOCALLOCAL_BASE}/Headline_Phrases/024.wav`,
+    src: `${JC_VOCALLOCAL_BASE}/Headline_Phrases/024.mp3`,
     text: "24 hour",
     confidence: "guess",
   };

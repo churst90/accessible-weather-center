@@ -1,4 +1,5 @@
 import type { AudioMixer } from "./AudioMixer";
+import { nwrStreamUrl } from "./nwrEndpoints";
 
 /**
  * NOAA Weather Radio live stream player.
@@ -26,7 +27,6 @@ import type { AudioMixer } from "./AudioMixer";
  * See docs/legacy-eras.md for the full legal note.
  */
 
-const STREAM_URL_BASE = "https://radio.weatherusa.net/NWR/";
 const MAX_RECONNECT_ATTEMPTS = 5;
 /** If the audio element hasn't fired `playing` within this window after
  *  attaching, treat it as a stall and trigger a reconnect. Guards against
@@ -142,7 +142,7 @@ export class NwrPlayer {
     const audio = new Audio();
     audio.crossOrigin = "anonymous";
     audio.preload = "auto";
-    audio.src = `${STREAM_URL_BASE}${encodeURIComponent(this.callSign)}.mp3`;
+    audio.src = nwrStreamUrl(this.callSign);
 
     // Wire into the radio bus. MediaElementAudioSourceNode is permanently
     // bound to its element — we can't reuse it across reconnects, so we

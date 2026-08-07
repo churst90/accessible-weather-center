@@ -16,8 +16,8 @@ const XL_CLOUDS_BASE = "/assets/backgrounds/weatherstarxl-clouds";
  *  MIT-licensed mewtek/OpenStar fan project. Authentic blue-sky + cumulus
  *  photography in the graphics style used by WSXL from 2005 onward. */
 const XL_CLOUDS = [
-  `${XL_CLOUDS_BASE}/Background-Normal.png`,
-  `${XL_CLOUDS_BASE}/Background-OutdoorActivity.png`,
+  `${XL_CLOUDS_BASE}/Background-Normal.webp`,
+  `${XL_CLOUDS_BASE}/Background-OutdoorActivity.webp`,
 ];
 
 /** Build an array of numbered background paths. */
@@ -25,17 +25,17 @@ function buildNumbered(base: string, count: number): string[] {
   const out: string[] = [];
   for (let i = 1; i <= count; i++) {
     const num = String(i).padStart(3, "0");
-    out.push(`${base}/generic_generic_${num}.png`);
+    out.push(`${base}/generic_generic_${num}.webp`);
   }
   return out;
 }
 
-/** IS2Jr filenames use a `generic_generic-blur_NNN.png` pattern. */
+/** IS2Jr filenames use a `generic_generic-blur_NNN.webp` pattern. */
 function buildI2JrNumbered(base: string, count: number): string[] {
   const out: string[] = [];
   for (let i = 1; i <= count; i++) {
     const num = String(i).padStart(3, "0");
-    out.push(`${base}/generic_generic-blur_${num}.png`);
+    out.push(`${base}/generic_generic-blur_${num}.webp`);
   }
   return out;
 }
@@ -43,13 +43,17 @@ function buildI2JrNumbered(base: string, count: number): string[] {
 const I1_BACKGROUNDS = buildNumbered(I1_BASE, 254);
 const I2_BACKGROUNDS = [
   ...buildNumbered(I2_BASE, 254),
-  ...buildI2JrNumbered(I2JR_BASE, 56),
+  // 28, not 56. The AMHQ folder holds 28 `-blur_NNN` files alongside 28
+  // non-blur `generic_generic_NNN` ones; counting the folder rather than the
+  // blur series meant paths 029-056 were generated for files that have never
+  // existed, so half of this pool 404'd. Found by scripts/check-asset-refs.mjs.
+  ...buildI2JrNumbered(I2JR_BASE, 28),
 ];
 
 /** Severe backgrounds for IntelliStar 2. */
 const I2_SEVERE = [
-  "/assets/backgrounds/intellistar2/Severe/LOT8_HD_EVENTgenericBG.png",
-  "/assets/backgrounds/intellistar2/Severe/LOT8_HD_SevereStormCentral.png",
+  "/assets/backgrounds/intellistar2/Severe/LOT8_HD_EVENTgenericBG.webp",
+  "/assets/backgrounds/intellistar2/Severe/LOT8_HD_SevereStormCentral.webp",
 ];
 
 const WS_BG_BASE = "/assets/themes/weatherscan/backgrounds";
@@ -65,11 +69,11 @@ const WS_BG_BASE = "/assets/themes/weatherscan/backgrounds";
  *  rotating fallback for any unmapped scene. */
 const WS_LOCAL_BASE = "/assets/themes/weatherscan/backgrounds/local-era/neighborhood";
 const WS_LOCAL_BACKGROUNDS = [
-  `${WS_LOCAL_BASE}/now.png`,
-  `${WS_LOCAL_BASE}/extended.png`,
-  `${WS_LOCAL_BASE}/almanac.png`,
-  `${WS_LOCAL_BASE}/nearby.png`,
-  `${WS_LOCAL_BASE}/36hr.png`,
+  `${WS_LOCAL_BASE}/now.webp`,
+  `${WS_LOCAL_BASE}/extended.webp`,
+  `${WS_LOCAL_BASE}/almanac.webp`,
+  `${WS_LOCAL_BASE}/nearby.webp`,
+  `${WS_LOCAL_BASE}/36hr.webp`,
 ];
 
 /** Weatherscan V1 (2003-2005) and V2 (2005-2022) both used city-skyline
@@ -78,42 +82,42 @@ const WS_LOCAL_BACKGROUNDS = [
  *  picked a nearby city per market; we rotate randomly for now (a future
  *  enhancement could match by user state/metro). */
 const WS_CITY_BACKGROUNDS = [
-  `${WS_BG_BASE}/city_bg.png`,
-  `${WS_BG_BASE}/core_city_bg.png`,
-  `${WS_BG_BASE}/atlanta_bg.png`,
-  `${WS_BG_BASE}/baltimore_bg.png`,
-  `${WS_BG_BASE}/boston_bg.png`,
-  `${WS_BG_BASE}/charlotte_bg.png`,
-  `${WS_BG_BASE}/chicago_bg.png`,
-  `${WS_BG_BASE}/cleveland_bg.png`,
-  `${WS_BG_BASE}/dallas_bg.png`,
-  `${WS_BG_BASE}/denver_bg.png`,
-  `${WS_BG_BASE}/detroit_bg.png`,
-  `${WS_BG_BASE}/ftworth_bg.png`,
-  `${WS_BG_BASE}/hartford_bg.png`,
-  `${WS_BG_BASE}/houston_bg.png`,
-  `${WS_BG_BASE}/indianapolis_bg.png`,
-  `${WS_BG_BASE}/los_angeles_bg.png`,
-  `${WS_BG_BASE}/miami_bg.png`,
-  `${WS_BG_BASE}/minneapolis_bg.png`,
-  `${WS_BG_BASE}/nashville_bg.png`,
-  `${WS_BG_BASE}/new_haven_bg.png`,
-  `${WS_BG_BASE}/new_york_bg.png`,
-  `${WS_BG_BASE}/north_carolina_bg.png`,
-  `${WS_BG_BASE}/oklahoma_city_bg.png`,
-  `${WS_BG_BASE}/orange_county_bg.png`,
-  `${WS_BG_BASE}/orlando_bg.png`,
-  `${WS_BG_BASE}/philadelphia_bg.png`,
-  `${WS_BG_BASE}/phoenix_bg.png`,
-  `${WS_BG_BASE}/pittsburgh_bg.png`,
-  `${WS_BG_BASE}/portland_bg.png`,
-  `${WS_BG_BASE}/sacramento_bg.png`,
-  `${WS_BG_BASE}/san_diego_bg.png`,
-  `${WS_BG_BASE}/san_francisco_bg.png`,
-  `${WS_BG_BASE}/seattle_bg.png`,
-  `${WS_BG_BASE}/stlouis_bg.png`,
-  `${WS_BG_BASE}/tampa_bg.png`,
-  `${WS_BG_BASE}/washington_dc_bg.png`,
+  `${WS_BG_BASE}/city_bg.webp`,
+  `${WS_BG_BASE}/core_city_bg.webp`,
+  `${WS_BG_BASE}/atlanta_bg.webp`,
+  `${WS_BG_BASE}/baltimore_bg.webp`,
+  `${WS_BG_BASE}/boston_bg.webp`,
+  `${WS_BG_BASE}/charlotte_bg.webp`,
+  `${WS_BG_BASE}/chicago_bg.webp`,
+  `${WS_BG_BASE}/cleveland_bg.webp`,
+  `${WS_BG_BASE}/dallas_bg.webp`,
+  `${WS_BG_BASE}/denver_bg.webp`,
+  `${WS_BG_BASE}/detroit_bg.webp`,
+  `${WS_BG_BASE}/ftworth_bg.webp`,
+  `${WS_BG_BASE}/hartford_bg.webp`,
+  `${WS_BG_BASE}/houston_bg.webp`,
+  `${WS_BG_BASE}/indianapolis_bg.webp`,
+  `${WS_BG_BASE}/los_angeles_bg.webp`,
+  `${WS_BG_BASE}/miami_bg.webp`,
+  `${WS_BG_BASE}/minneapolis_bg.webp`,
+  `${WS_BG_BASE}/nashville_bg.webp`,
+  `${WS_BG_BASE}/new_haven_bg.webp`,
+  `${WS_BG_BASE}/new_york_bg.webp`,
+  `${WS_BG_BASE}/north_carolina_bg.webp`,
+  `${WS_BG_BASE}/oklahoma_city_bg.webp`,
+  `${WS_BG_BASE}/orange_county_bg.webp`,
+  `${WS_BG_BASE}/orlando_bg.webp`,
+  `${WS_BG_BASE}/philadelphia_bg.webp`,
+  `${WS_BG_BASE}/phoenix_bg.webp`,
+  `${WS_BG_BASE}/pittsburgh_bg.webp`,
+  `${WS_BG_BASE}/portland_bg.webp`,
+  `${WS_BG_BASE}/sacramento_bg.webp`,
+  `${WS_BG_BASE}/san_diego_bg.webp`,
+  `${WS_BG_BASE}/san_francisco_bg.webp`,
+  `${WS_BG_BASE}/seattle_bg.webp`,
+  `${WS_BG_BASE}/stlouis_bg.webp`,
+  `${WS_BG_BASE}/tampa_bg.webp`,
+  `${WS_BG_BASE}/washington_dc_bg.webp`,
 ];
 
 /**
@@ -163,7 +167,7 @@ export function listBackgrounds(themeId: ThemeId): string[] {
 
 /**
  * Period-correct WeatherStar 4000 used a different background template per
- * scene type. The numbered BackGround*.png files in /assets/backgrounds/
+ * scene type. The numbered BackGround*.webp files in /assets/backgrounds/
  * are the renderer templates from the wesellis/FUN-WeatherStar-4000 fan
  * project. Mapping below is the best-guess assignment (verify visually
  * and tune as needed).
@@ -171,33 +175,33 @@ export function listBackgrounds(themeId: ThemeId): string[] {
 const WS4000_BG_BASE = "/assets/backgrounds";
 
 const WS4000_SCENE_BACKGROUNDS: Record<string, string> = {
-  current:        `${WS4000_BG_BASE}/BackGround1.png`,
-  localforecast:  `${WS4000_BG_BASE}/BackGround1_2.png`,
-  extended:       `${WS4000_BG_BASE}/BackGround2.png`,
-  hourly:         `${WS4000_BG_BASE}/BackGround3.png`,
-  almanac:        `${WS4000_BG_BASE}/BackGround3_1.png`,
-  travel:         `${WS4000_BG_BASE}/BackGround4.png`,
-  radar:          `${WS4000_BG_BASE}/BackGround5.png`,
-  temptrend:      `${WS4000_BG_BASE}/BackGround1_1_Chart.png`,
-  feelslike:      `${WS4000_BG_BASE}/BackGround1_1.png`,
-  overnight:      `${WS4000_BG_BASE}/BackGround1_3_1.png`,
-  weekend:        `${WS4000_BG_BASE}/BackGround2_1.png`,
-  precip:         `${WS4000_BG_BASE}/BackGround5_1.png`,
-  detailed:       `${WS4000_BG_BASE}/BackGround1_2_1.png`,
-  stormtracker:   `${WS4000_BG_BASE}/BackGround5_2.png`,
-  traffic:        `${WS4000_BG_BASE}/BackGround4_1.png`,
-  airport:        `${WS4000_BG_BASE}/BackGround4_2.png`,
-  alerts:         `${WS4000_BG_BASE}/BackGround6.png`,
+  current:        `${WS4000_BG_BASE}/BackGround1.webp`,
+  localforecast:  `${WS4000_BG_BASE}/BackGround1_2.webp`,
+  extended:       `${WS4000_BG_BASE}/BackGround2.webp`,
+  hourly:         `${WS4000_BG_BASE}/BackGround3.webp`,
+  almanac:        `${WS4000_BG_BASE}/BackGround3_1.webp`,
+  travel:         `${WS4000_BG_BASE}/BackGround4.webp`,
+  radar:          `${WS4000_BG_BASE}/BackGround5.webp`,
+  temptrend:      `${WS4000_BG_BASE}/BackGround1_1_Chart.webp`,
+  feelslike:      `${WS4000_BG_BASE}/BackGround1_1.webp`,
+  overnight:      `${WS4000_BG_BASE}/BackGround1_3_1.webp`,
+  weekend:        `${WS4000_BG_BASE}/BackGround2_1.webp`,
+  precip:         `${WS4000_BG_BASE}/BackGround5_1.webp`,
+  detailed:       `${WS4000_BG_BASE}/BackGround1_2_1.webp`,
+  stormtracker:   `${WS4000_BG_BASE}/BackGround5_2.webp`,
+  traffic:        `${WS4000_BG_BASE}/BackGround4_1.webp`,
+  airport:        `${WS4000_BG_BASE}/BackGround4_2.webp`,
+  alerts:         `${WS4000_BG_BASE}/BackGround6.webp`,
 };
 
 const WSJR_SCENE_BACKGROUNDS: Record<string, string> = {
-  current:        `${WS4000_BG_BASE}/BackGround2.png`,
-  localforecast:  `${WS4000_BG_BASE}/BackGround2_1.png`,
-  extended:       `${WS4000_BG_BASE}/BackGround2_2.png`,
-  hourly:         `${WS4000_BG_BASE}/BackGround3_2.png`,
-  almanac:        `${WS4000_BG_BASE}/BackGround3.png`,
-  travel:         `${WS4000_BG_BASE}/BackGround4.png`,
-  radar:          `${WS4000_BG_BASE}/BackGround5.png`,
+  current:        `${WS4000_BG_BASE}/BackGround2.webp`,
+  localforecast:  `${WS4000_BG_BASE}/BackGround2_1.webp`,
+  extended:       `${WS4000_BG_BASE}/BackGround2_2.webp`,
+  hourly:         `${WS4000_BG_BASE}/BackGround3_2.webp`,
+  almanac:        `${WS4000_BG_BASE}/BackGround3.webp`,
+  travel:         `${WS4000_BG_BASE}/BackGround4.webp`,
+  radar:          `${WS4000_BG_BASE}/BackGround5.webp`,
 };
 
 /** Weatherscan Local (1999-2003) per-scene backgrounds from the authentic
@@ -206,15 +210,15 @@ const WSJR_SCENE_BACKGROUNDS: Record<string, string> = {
  *  XL-era Weatherscan rotated backgrounds per scene. Radar uses the
  *  gray-skeleton template sourced from local.weatherscan.net. */
 const WS_LOCAL_SCENE_BACKGROUNDS: Record<string, string> = {
-  current:        `${WS_LOCAL_BASE}/now.png`,
-  localforecast:  `${WS_LOCAL_BASE}/now.png`,
-  extended:       `${WS_LOCAL_BASE}/extended.png`,
-  hourly:         `${WS_LOCAL_BASE}/36hr.png`,
-  almanac:        `${WS_LOCAL_BASE}/almanac.png`,
-  travel:         `${WS_LOCAL_BASE}/nearby.png`,
-  overnight:      `${WS_LOCAL_BASE}/now.png`,
-  weekend:        `${WS_LOCAL_BASE}/extended.png`,
-  radar:          "/assets/themes/weatherscan/backgrounds/local-era/local-doppler-skeleton.png",
+  current:        `${WS_LOCAL_BASE}/now.webp`,
+  localforecast:  `${WS_LOCAL_BASE}/now.webp`,
+  extended:       `${WS_LOCAL_BASE}/extended.webp`,
+  hourly:         `${WS_LOCAL_BASE}/36hr.webp`,
+  almanac:        `${WS_LOCAL_BASE}/almanac.webp`,
+  travel:         `${WS_LOCAL_BASE}/nearby.webp`,
+  overnight:      `${WS_LOCAL_BASE}/now.webp`,
+  weekend:        `${WS_LOCAL_BASE}/extended.webp`,
+  radar:          "/assets/themes/weatherscan/backgrounds/local-era/local-doppler-skeleton.webp",
 };
 
 /**

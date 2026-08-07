@@ -12,11 +12,11 @@
  *   - `verified`: true if a human confirmed the transcription matches audio
  *
  * Paths are relative to the narrator's root directory under
- * `assets/narration/<Narrator>/` (e.g. `VocalLocal/Periods2/MON.wav`).
+ * `assets/narration/<Narrator>/` (e.g. `VocalLocal/Periods2/MON.mp3`).
  *
  * Usage:
  *   import { getClipText, getNarratorClips } from "./clipReferenceTable";
- *   const entry = getClipText("allan-jackson", "VocalLocal/Periods2/MON.wav");
+ *   const entry = getClipText("allan-jackson", "VocalLocal/Periods2/MON.mp3");
  *   if (entry) console.log(entry.text); // "Monday."
  */
 
@@ -55,7 +55,7 @@ export const CLIP_REFERENCE_TABLE = rawTable as unknown as ClipReferenceTable;
  *
  * @param narratorId Which narrator library to query.
  * @param relPath Path relative to the narrator's root
- *                (e.g. `VocalLocal/Periods2/MON.wav`).
+ *                (e.g. `VocalLocal/Periods2/MON.mp3`).
  * @returns The entry, or null if this clip has no transcription yet.
  */
 export function getClipText(narratorId: NarratorId, relPath: string): ClipReferenceEntry | null {

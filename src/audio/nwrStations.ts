@@ -11,16 +11,25 @@
  *   1. `BUNDLED_STATIONS` — a curated snapshot of known-active mounts with
  *      city/state parsed from Icecast metadata. Used as the startup list
  *      and as a fallback when the live fetch fails.
- *   2. `fetchActiveNwrStations()` — IPC-backed call to the Electron main
- *      process, which fetches `/status-json.xsl`, parses it tolerantly
- *      (weatherUSA sometimes embeds malformed JSON), and returns the
- *      currently-streaming mount list. Use this to refresh the bundled
- *      list at runtime (e.g. when the user opens Settings).
+ *   2. `fetchActiveNwrStations()` — fetches `/status-json.xsl`, parses it
+ *      tolerantly (weatherUSA sometimes embeds malformed JSON), and returns
+ *      the currently-streaming mount list. Use this to refresh the bundled
+ *      list at runtime (e.g. when the user opens Settings). Routed through
+ *      Electron IPC on the desktop and through a same-origin reverse proxy
+ *      on the web — see nwrEndpoints.ts for why neither can call the host
+ *      directly from a browser context.
+ *
+ * Staleness is real, not theoretical: checked 2026-08-06, the bundled
+ * snapshot below listed 34 mounts of which 4 were dead (KEB98, KHB35_3,
+ * KIH42_2, WXK23) while 86 live mounts were missing from it. Prefer the
+ * live fetch wherever it is available.
  *
  * Stream URL pattern: https://radio.weatherusa.net/NWR/{callSign}.mp3
  * Status endpoint:    https://radio.weatherusa.net/status-json.xsl
  * weatherUSA listing: https://www.weatherusa.net/radio
  */
+
+import { isFileOrigin, nwrStatusUrl } from "./nwrEndpoints";
 
 export interface NwrStation {
   callSign: string;
@@ -167,19 +176,77 @@ export function updateLiveStations(fetched: NwrActiveStation[]): void {
   activeStations.push(...merged);
 }
 
-/** Attempt to pull the live mount list via Electron IPC. Returns null if
- *  IPC isn't available (e.g. in Vite browser preview) or if the fetch
- *  fails. On success, also updates {@link activeStations} in place. */
+/**
+ * Pull the live mount list. Two routes, same result shape:
+ *
+ *   - Electron: the main process fetches it over IPC. It has no CORS
+ *     restrictions, and this is the only route available to a packaged
+ *     build loading from `file://`.
+ *   - Browser: fetch it from the same-origin reverse proxy, which supplies
+ *     the `Access-Control-Allow-Origin` header the Icecast host does not.
+ *
+ * Returns null when neither route is available, which leaves the caller on
+ * the bundled snapshot. On success, updates {@link activeStations} in place.
+ */
 export async function fetchActiveNwrStations(): Promise<NwrFetchResult | null> {
   const bridge = (window as unknown as { awc?: { fetchActiveNwrStations?: () => Promise<NwrFetchResult> } }).awc;
-  if (!bridge?.fetchActiveNwrStations) return null;
+  if (bridge?.fetchActiveNwrStations) {
+    try {
+      const result = await bridge.fetchActiveNwrStations();
+      if (result.ok) updateLiveStations(result.stations);
+      return result;
+    } catch (err) {
+      return { ok: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  }
+  if (isFileOrigin()) return null; // no proxy reachable from file://
   try {
-    const result = await bridge.fetchActiveNwrStations();
+    const result = await fetchStatusViaProxy();
     if (result.ok) updateLiveStations(result.stations);
     return result;
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : String(err) };
   }
+}
+
+interface IcecastSource {
+  bitrate?: number;
+  server_name?: string;
+  server_description?: string;
+  listenurl?: string;
+}
+
+/**
+ * Browser-side twin of the `nwr:fetchActiveStations` IPC handler in
+ * electron/main.ts. Kept deliberately in step with it, including the
+ * malformed-JSON workaround: some entries embed `"title": - ,` with an
+ * unquoted dash, which would otherwise fail the whole parse.
+ */
+async function fetchStatusViaProxy(): Promise<NwrFetchResult> {
+  const res = await fetch(nwrStatusUrl());
+  if (!res.ok) return { ok: false, error: `HTTP ${res.status}` };
+  let text = await res.text();
+  text = text.replace(/"title":\s*-\s*,/g, '"title":null,');
+  text = text.replace(/"title":\s*-\s*}/g, '"title":null}');
+  const data = JSON.parse(text) as { icestats?: { source?: IcecastSource[] | IcecastSource } };
+  // Icecast returns a bare object rather than a one-element array when only
+  // a single mount is live.
+  const raw = data.icestats?.source;
+  const sources = Array.isArray(raw) ? raw : raw ? [raw] : [];
+  const stations = sources
+    .filter((s) => s.bitrate || s.server_name)
+    .map((s) => {
+      const m = s.listenurl?.match(/NWR\/(.+?)\.mp3/);
+      return m
+        ? {
+            callSign: m[1],
+            description: (s.server_description ?? "").trim(),
+            name: (s.server_name ?? "").trim()
+          }
+        : null;
+    })
+    .filter((v): v is NonNullable<typeof v> => v !== null);
+  return { ok: true, stations };
 }
 
 /**

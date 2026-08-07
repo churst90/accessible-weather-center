@@ -44,5 +44,9 @@ desktop.ini
 assets/*
 !assets/.gitkeep
 
+# Transcoder output (scripts/build-web-assets.mjs). Staging dir before it is
+# swapped in as `assets/`; also bulk media, also never committed.
+assets-web/
+
 # src/audio/data/ still tracked intentionally — manifests are code, not bulk.
 .test-dist/

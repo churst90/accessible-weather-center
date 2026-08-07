@@ -96,7 +96,7 @@ export const THEMES: ThemeDef[] = [
     // TWC flagship Local on the 8s ran on Trammell Starks' Music for
     // Local Forecast throughout this period — era-authentic pool.
     musicTags: ["trammell-starks"],
-    backgroundImage: "/assets/backgrounds/BackGround1.png",
+    backgroundImage: "/assets/backgrounds/BackGround1.webp",
     extendedStyle: "3-day",
     extendedTitle: "Extended Forecast",
     vars: {
@@ -175,7 +175,7 @@ export const THEMES: ThemeDef[] = [
     // at golden hour), sourced from the JesseWx2011 Weatherscan Local sim.
     // Real Weatherscan Local rotated scene-specific backgrounds via
     // getSceneBackground(), so this only shows when no per-scene map exists.
-    backgroundImage: "/assets/themes/weatherscan/backgrounds/local-era/neighborhood/now.png",
+    backgroundImage: "/assets/themes/weatherscan/backgrounds/local-era/neighborhood/now.webp",
     extendedStyle: "7-day",
     extendedTitle: "7-Day Outlook",
     vars: {
@@ -206,7 +206,7 @@ export const THEMES: ThemeDef[] = [
     defaultNarrator: "amy-bargeron",
     iconSet: "/assets/icons",
     musicTags: ["weatherscan-inhouse"],
-    backgroundImage: "/assets/themes/weatherscan/backgrounds/city_bg.png",
+    backgroundImage: "/assets/themes/weatherscan/backgrounds/city_bg.webp",
     extendedStyle: "7-day",
     extendedTitle: "7-Day Outlook",
     vars: {
@@ -240,7 +240,7 @@ export const THEMES: ThemeDef[] = [
     defaultNarrator: "amy-bargeron",
     iconSet: "/assets/icons",
     musicTags: ["weatherscan-inhouse"],
-    backgroundImage: "/assets/themes/weatherscan/backgrounds/city_bg.png",
+    backgroundImage: "/assets/themes/weatherscan/backgrounds/city_bg.webp",
     extendedStyle: "7-day",
     extendedTitle: "7-Day Outlook",
     vars: {
@@ -401,7 +401,7 @@ export const THEMES: ThemeDef[] = [
     // WS Jr (1993-2014) rode the TWC flagship Trammell Starks music pool
     // just like WS4000.
     musicTags: ["trammell-starks"],
-    backgroundImage: "/assets/backgrounds/BackGround2.png",
+    backgroundImage: "/assets/backgrounds/BackGround2.webp",
     extendedStyle: "5-day",
     extendedTitle: "Extended Forecast",
     vars: {

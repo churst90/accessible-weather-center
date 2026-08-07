@@ -62,10 +62,39 @@ export default defineConfig({
   },
   build: {
     outDir: "dist",
-    emptyOutDir: true
+    emptyOutDir: true,
+    // Bundle output goes to dist/static/, NOT the default dist/assets/.
+    //
+    // Two unrelated things would otherwise both be called "assets": the
+    // hashed JS/CSS/font bundle Vite emits, and the ~1.3 GB media library
+    // served from the site root at /assets/. On the web deploy the app is
+    // mounted at /app/, so the default would put the bundle at
+    // /app/assets/* right next to /assets/* — two different directories,
+    // one name, in the same nginx config. `static` keeps them legible.
+    //
+    // Note the split is real: files reachable from CSS (fonts, LDL.png) are
+    // fingerprinted INTO the bundle by Vite, while the `/assets/...` strings
+    // built at runtime in TypeScript pass through untouched and are served
+    // from the media library.
+    assetsDir: "static"
   },
   server: {
     port: 5173,
-    strictPort: true
+    strictPort: true,
+    proxy: {
+      // Dev-time twin of the nginx `/nwr/` block in
+      // deploy/nginx/weather.codyhurst.com.conf. radio.weatherusa.net sends
+      // no CORS headers, so neither the station directory nor the WebAudio
+      // stream can be loaded cross-origin from a browser. Proxying puts both
+      // on our own origin. Applies to `npm run dev` in a browser AND to
+      // dev-mode Electron, which loads from localhost:5173.
+      "/nwr": {
+        target: "https://radio.weatherusa.net",
+        changeOrigin: true,
+        // Live audio: don't let the dev server buffer the stream.
+        ws: false,
+        rewrite: (p) => p.replace(/^\/nwr/, "")
+      }
+    }
   }
 });

@@ -165,10 +165,10 @@ export function composeCurrentConditions(obs: Observation, placeName: string, na
  *
  * Example output:
  *   "Extended forecast for Greeneville."
- *   "Monday," [HIGH_82.wav] [CCEF3800.wav "with scattered thunderstorms"]
- *   "Monday Night," [LOW_64.wav] [CCSH7100.wav "Showers during the afternoon"]
+ *   "Monday," [HIGH_82.mp3] [CCEF3800.mp3 "with scattered thunderstorms"]
+ *   "Monday Night," [LOW_64.mp3] [CCSH7100.mp3 "Showers during the afternoon"]
  *   ...
- *   "and on Sunday," [HIGH_79.wav] [CCEF1100.wav "with showers"]
+ *   "and on Sunday," [HIGH_79.mp3] [CCEF1100.mp3 "with showers"]
  */
 export function composeExtendedForecast(periods: ForecastPeriod[], placeName: string, narrator: NarratorId = "allan-jackson", era?: "5-day" | "7-day", title?: string): PhraseScript {
   const script: PhraseScript = [];
@@ -416,7 +416,7 @@ export function composeAlerts(alerts: WeatherAlert[], placeName: string, narrato
   }
 
   // Authentic Weatherscan severe-alert opening: [N-beep warning tone] →
-  // [spoken warning]. AJ uses the NWS 4-beep (severe_weather_tone.wav)
+  // [spoken warning]. AJ uses the NWS 4-beep (severe_weather_tone.mp3)
   // followed by the short VocalLocal announcement; JC uses the matching
   // pair from his Crawl audio/ folder keyed to alert event type.
   const intro = getSevereAlertIntroClips(alerts, narrator);
@@ -470,7 +470,7 @@ export function composeAlerts(alerts: WeatherAlert[], placeName: string, narrato
  * slower-onset severe events (hurricane / blizzard / ice storm / tsunami
  * / earthquake). Tier 1 is the fallback "generic alert" beep.
  *
- * AJ uses the NWS four-beep tone (severe_weather_tone.wav) for all
+ * AJ uses the NWS four-beep tone (severe_weather_tone.mp3) for all
  * severe events and routes the spoken half through AJ_NAMED_MAP's
  * alert_tornado / alert_tstorm / alert_flood. Returns [] for alert sets
  * with no narrator-specific severe clip pair — caller falls through to
@@ -502,25 +502,25 @@ function getSevereAlertIntroClips(alerts: WeatherAlert[], narrator: NarratorId):
   }
 
   if (narrator === "jim-cantore") {
-    // JC: Crawl audio/{tier}_Beep.wav → Crawl audio/{tier}_{EVENT}.wav.
+    // JC: Crawl audio/{tier}_Beep.mp3 → Crawl audio/{tier}_{EVENT}.mp3.
     const JC_CRAWL = "/assets/narration/Jim Cantore/Crawl audio";
     const crawlClip = (file: string, text: string): ClipResolution => ({
       src: `${JC_CRAWL}/${file}`, text, confidence: "confirmed",
     });
 
-    if (hasTornado) return [crawlClip("4_Beep.wav", ""), crawlClip("4_TOW.wav", "A tornado warning has been issued for our area.")];
-    if (hasTstorm)  return [crawlClip("4_Beep.wav", ""), crawlClip("4_SVW.wav", "A severe thunderstorm warning has been issued for our area.")];
-    if (hasFlash)   return [crawlClip("4_Beep.wav", ""), crawlClip("4_FFW.wav", "A flash flood warning has been issued for our area.")];
-    if (hasFlood)   return [crawlClip("4_Beep.wav", ""), crawlClip("4_FAW.wav", "A flood warning has been issued for our area.")];
-    if (hasExtWind) return [crawlClip("4_Beep.wav", ""), crawlClip("4_EWW.wav", "An extreme wind warning has been issued for our area.")];
-    if (hasHurr)    return [crawlClip("2_Beep.wav", ""), crawlClip("2_HUW.wav", "A hurricane warning has been issued for our area.")];
-    if (hasBlizz)   return [crawlClip("2_Beep.wav", ""), crawlClip("2_BZW.wav", "A blizzard warning has been issued for our area.")];
-    if (hasIce)     return [crawlClip("2_Beep.wav", ""), crawlClip("2_ISW.wav", "An ice storm warning has been issued for our area.")];
-    if (hasTsunami) return [crawlClip("2_Beep.wav", ""), crawlClip("2_TSW.wav", "A tsunami warning is in effect.")];
-    if (hasQuake)   return [crawlClip("2_Beep.wav", ""), crawlClip("2_TEQW.wav", "An earthquake warning is in effect.")];
+    if (hasTornado) return [crawlClip("4_Beep.mp3", ""), crawlClip("4_TOW.mp3", "A tornado warning has been issued for our area.")];
+    if (hasTstorm)  return [crawlClip("4_Beep.mp3", ""), crawlClip("4_SVW.mp3", "A severe thunderstorm warning has been issued for our area.")];
+    if (hasFlash)   return [crawlClip("4_Beep.mp3", ""), crawlClip("4_FFW.mp3", "A flash flood warning has been issued for our area.")];
+    if (hasFlood)   return [crawlClip("4_Beep.mp3", ""), crawlClip("4_FAW.mp3", "A flood warning has been issued for our area.")];
+    if (hasExtWind) return [crawlClip("4_Beep.mp3", ""), crawlClip("4_EWW.mp3", "An extreme wind warning has been issued for our area.")];
+    if (hasHurr)    return [crawlClip("2_Beep.mp3", ""), crawlClip("2_HUW.mp3", "A hurricane warning has been issued for our area.")];
+    if (hasBlizz)   return [crawlClip("2_Beep.mp3", ""), crawlClip("2_BZW.mp3", "A blizzard warning has been issued for our area.")];
+    if (hasIce)     return [crawlClip("2_Beep.mp3", ""), crawlClip("2_ISW.mp3", "An ice storm warning has been issued for our area.")];
+    if (hasTsunami) return [crawlClip("2_Beep.mp3", ""), crawlClip("2_TSW.mp3", "A tsunami warning is in effect.")];
+    if (hasQuake)   return [crawlClip("2_Beep.mp3", ""), crawlClip("2_TEQW.mp3", "An earthquake warning is in effect.")];
     // Non-matched severe event — use tier-1 generic beep only.
     const anySevere = alerts.some((a) => a.severity === "Extreme" || a.severity === "Severe");
-    if (anySevere) return [crawlClip("1_Beep.wav", "")];
+    if (anySevere) return [crawlClip("1_Beep.mp3", "")];
     return [];
   }
 
@@ -1140,9 +1140,9 @@ function compass(deg: number): string {
 
 /**
  * Map an NWS period name to a VocalLocal period clip. The Periods2/
- * directory has clips like MON.wav, TUE.wav, TONIGHT1.wav, etc.
+ * directory has clips like MON.mp3, TUE.mp3, TONIGHT1.mp3, etc.
  *
- * When `isLast` is true, uses the *4.wav variant which says
+ * When `isLast` is true, uses the *4.mp3 variant which says
  * "and on Monday" instead of just "Monday" — for the final period
  * in the extended forecast to sound natural.
  *
@@ -1162,7 +1162,7 @@ function getPeriodClip(periodName: string, narratorId: NarratorId, isLast = fals
   if (isLast && (narratorId === "allan-jackson" || narratorId === "jim-cantore")) {
     const lastVariant = LAST_PERIOD_VARIANT[key];
     if (lastVariant) {
-      const src = clip.src.replace(/[^/]+\.wav$/, lastVariant.file);
+      const src = clip.src.replace(/[^/]+\.mp3$/, lastVariant.file);
       return { src, text: lastVariant.text, confidence: clip.confidence };
     }
   }
@@ -1178,20 +1178,20 @@ function getPeriodClip(periodName: string, narratorId: NarratorId, isLast = fals
  * same filenames under their respective Periods2 directories.
  */
 const LAST_PERIOD_VARIANT: Partial<Record<PeriodKey, { file: string; text: string }>> = {
-  MON: { file: "MON4.wav", text: "and on Monday." },
-  TUE: { file: "TUE4.wav", text: "and on Tuesday." },
-  WED: { file: "WED4.wav", text: "and on Wednesday." },
-  THU: { file: "THU4.wav", text: "and on Thursday." },
-  FRI: { file: "FRI4.wav", text: "and on Friday." },
-  SAT: { file: "SAT4.wav", text: "and on Saturday." },
-  SUN: { file: "SUN4.wav", text: "and on Sunday." },
-  MON_NIGHT: { file: "MON5.wav", text: "and Monday night." },
-  TUE_NIGHT: { file: "TUE5.wav", text: "and Tuesday night." },
-  WED_NIGHT: { file: "WED5.wav", text: "and Wednesday night." },
-  THU_NIGHT: { file: "THU5.wav", text: "and Thursday night." },
-  FRI_NIGHT: { file: "FRI5.wav", text: "and Friday night." },
-  SAT_NIGHT: { file: "SAT5.wav", text: "and Saturday night." },
-  SUN_NIGHT: { file: "SUN5.wav", text: "and Sunday night." },
+  MON: { file: "MON4.mp3", text: "and on Monday." },
+  TUE: { file: "TUE4.mp3", text: "and on Tuesday." },
+  WED: { file: "WED4.mp3", text: "and on Wednesday." },
+  THU: { file: "THU4.mp3", text: "and on Thursday." },
+  FRI: { file: "FRI4.mp3", text: "and on Friday." },
+  SAT: { file: "SAT4.mp3", text: "and on Saturday." },
+  SUN: { file: "SUN4.mp3", text: "and on Sunday." },
+  MON_NIGHT: { file: "MON5.mp3", text: "and Monday night." },
+  TUE_NIGHT: { file: "TUE5.mp3", text: "and Tuesday night." },
+  WED_NIGHT: { file: "WED5.mp3", text: "and Wednesday night." },
+  THU_NIGHT: { file: "THU5.mp3", text: "and Thursday night." },
+  FRI_NIGHT: { file: "FRI5.mp3", text: "and Friday night." },
+  SAT_NIGHT: { file: "SAT5.mp3", text: "and Saturday night." },
+  SUN_NIGHT: { file: "SUN5.mp3", text: "and Sunday night." },
 };
 
 /** Map a free-form NWS period name ("Monday Night", "Tuesday") to a
@@ -1435,10 +1435,10 @@ function getQualifierClips(detailedForecast: string, narratorId: NarratorId): Cl
 /**
  * Parse NWS detailed forecast text for wind direction/speed changes.
  * Returns clip segments for phrases like:
- *   "becoming northwest" → Wind_Becoming/Bec_NW.wav
- *   "increasing to 15 to 25 mph" → Wind_Increasing/Inc_15_25.wav
- *   "diminishing to 5 to 10 mph" → Wind_Diminishing/Dim_5_10.wav
- *   "shifting to southeast" → Wind_Shifting/Shift_SE.wav
+ *   "becoming northwest" → Wind_Becoming/Bec_NW.mp3
+ *   "increasing to 15 to 25 mph" → Wind_Increasing/Inc_15_25.mp3
+ *   "diminishing to 5 to 10 mph" → Wind_Diminishing/Dim_5_10.mp3
+ *   "shifting to southeast" → Wind_Shifting/Shift_SE.mp3
  */
 function parseWindChanges(detailedForecast: string, narratorId: NarratorId): PhraseSegment[] {
   const lib = getLibrary(narratorId);
@@ -1504,8 +1504,8 @@ function dirTextToCode(text: string): CompassDir | null {
 
 /**
  * Get a P9 precipitation probability clip. Both AJ and JC have these:
- *   AJ: VocalLocal/Wx_Phrases_Precip/P9{decile}1.wav
- *   JC: Vocal Local/Wx_Phrases_POP/P9{decile}1.wav
+ *   AJ: VocalLocal/Wx_Phrases_Precip/P9{decile}1.mp3
+ *   JC: Vocal Local/Wx_Phrases_POP/P9{decile}1.mp3
  *
  * P9011 = "10 percent chance of precipitation", P9021 = "20 percent", etc.
  * Rounds to the nearest 10%.

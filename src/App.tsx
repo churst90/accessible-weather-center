@@ -24,6 +24,7 @@ import { WeatherscanFrame } from "./ui/weatherscan/WeatherscanFrame";
 import { AnnouncementRegion } from "./ui/semantic/AnnouncementRegion";
 import { ErrorBoundary } from "./ui/semantic/ErrorBoundary";
 import { HelpDialog } from "./ui/semantic/HelpDialog";
+import { FirstRunSetup } from "./ui/semantic/FirstRunSetup";
 import { SceneUnavailable } from "./ui/scenes/SceneUnavailable";
 import { resolveSceneView } from "./ui/scenes/sceneRegistry";
 import { PlacesMode } from "./ui/mapnav/PlacesMode";
@@ -47,6 +48,11 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [placesList, setPlacesList] = useState(services.places.list());
+  // Fresh install / fresh browser profile: nothing is in storage, so the
+  // places list is a placeholder. Hold the scene cycle and every poller
+  // until the user picks a home — otherwise we'd fetch and announce weather
+  // for a location they never chose.
+  const [needsSetup, setNeedsSetup] = useState(() => services.places.isFirstRun());
   const [activeThemeId, setActiveThemeId] = useState<ThemeId>(services.settings.get().theme as ThemeId);
   const [ldlIconName, setLdlIconName] = useState<string | undefined>(undefined);
   const startedRef = useRef(false);
@@ -164,6 +170,7 @@ export default function App() {
   // independently of the scene cycle; both re-point on home change via the
   // places subscription above.
   useEffect(() => {
+    if (needsSetup) return;
     const home = services.places.home();
     if (home) {
       services.stormScanner.start(home);
@@ -173,7 +180,7 @@ export default function App() {
       services.stormScanner.stop();
       services.alertWatcher.stop();
     };
-  }, [services]);
+  }, [services, needsSetup]);
 
   // Tier 2 announcements: storm observations from radar (nowcasts).
   // Note this is SEPARATE from NWS alerts (Tier 1) polled below — both
@@ -208,6 +215,7 @@ export default function App() {
   // calls sequencer.stop() mid-mnemonic and cuts off the three-bell jingle.
   useEffect(() => {
     if (startedRef.current) return;
+    if (needsSetup) return;
     if (!mnemonicDone) return;
     startedRef.current = true;
     void services.announcer.announce(
@@ -217,7 +225,7 @@ export default function App() {
       "polite"
     );
     void services.scheduler.start();
-  }, [services, mnemonicDone]);
+  }, [services, mnemonicDone, needsSetup]);
 
   // On every scene change: stop any playing clips and unduck music,
   // then announce via NVDA and optionally play AJ clips.
@@ -632,6 +640,10 @@ export default function App() {
   // when the user has not picked one explicitly.
   useEffect(() => {
     if (!audioStarted) return;
+    // Don't fuzzy-match a call sign against the setup placeholder — that
+    // could tune the radio to an arbitrary transmitter before the user has
+    // told us where they are.
+    if (needsSetup) return;
     const off = services.settings.subscribe((s) => {
       services.mixer.setMusicLevel(s.musicVolume);
       services.mixer.setRadioLevel(s.nwrVolume);
@@ -658,7 +670,7 @@ export default function App() {
       off();
       services.nwr.disconnect();
     };
-  }, [services, audioStarted]);
+  }, [services, audioStarted, needsSetup]);
 
   // NWR stream status announcements — tell the user when a stream starts,
   // fails, or is retrying. The player emits status changes; we translate
@@ -749,6 +761,17 @@ export default function App() {
         router={services.router}
         open={helpOpen}
         onClose={() => setHelpOpen(false)}
+      />
+      <FirstRunSetup
+        open={needsSetup}
+        announcer={services.announcer}
+        onComplete={(place) => {
+          // completeFirstRun notifies subscribers, which re-points the
+          // scheduler, storm scanner and alert watcher at the new home.
+          // Clearing needsSetup then releases the start effects.
+          services.places.completeFirstRun(place);
+          setNeedsSetup(false);
+        }}
       />
     </AnnouncerContext.Provider>
   );

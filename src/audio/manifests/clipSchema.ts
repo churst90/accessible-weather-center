@@ -44,24 +44,24 @@ interface NamedClip {
 
 const NAMED_CLIPS: NamedClip[] = [
   // Intro clips — VocalLocal WAV
-  { file: `${VL_INTROS}/CC_INTRO1.wav`,                        intent: "current_intro",           text: "Currently, the temperature is",            confidence: "confirmed" },
-  { file: `${VL_INTROS}/CC_INTRO2.wav`,                        intent: "current_intro_alt",       text: "Currently, the temperature is (alt)",      confidence: "likely" },
+  { file: `${VL_INTROS}/CC_INTRO1.mp3`,                        intent: "current_intro",           text: "Currently, the temperature is",            confidence: "confirmed" },
+  { file: `${VL_INTROS}/CC_INTRO2.mp3`,                        intent: "current_intro_alt",       text: "Currently, the temperature is (alt)",      confidence: "likely" },
   // Signature / tones
   { file: `${SOUNDS_BASE}/TWC_Mnemonic.mp3`,                   intent: "mnemonic",                text: "Weatherscan musical signature",            confidence: "confirmed" },
   // NWS 4-beep pattern that precedes spoken warnings on Weatherscan's
   // orange severe-alert crawl. Played at the head of composeAlerts() for
   // AJ before the spoken warning clip; JC uses narrator-specific crawl
   // beeps instead (see composeAlerts).
-  { file: `${SOUNDS_BASE}/severe_weather_tone.wav`,            intent: "warning_beep",            text: "NWS four-beep warning tone",               confidence: "confirmed" },
+  { file: `${SOUNDS_BASE}/severe_weather_tone.mp3`,            intent: "warning_beep",            text: "NWS four-beep warning tone",               confidence: "confirmed" },
   // Severe weather alerts
-  { file: `${SEVERE_BASE}/tornado_warning.wav`,                intent: "alert_tornado",           text: "tornado warning alert",                    confidence: "confirmed" },
-  { file: `${SEVERE_BASE}/severe_thunderstorm_warning.wav`,    intent: "alert_tstorm",            text: "thunderstorm warning alert",               confidence: "confirmed" },
-  { file: `${SEVERE_BASE}/f_flood_warning.wav`,                intent: "alert_flood",             text: "flash flood warning alert",                confidence: "confirmed" },
+  { file: `${SEVERE_BASE}/tornado_warning.mp3`,                intent: "alert_tornado",           text: "tornado warning alert",                    confidence: "confirmed" },
+  { file: `${SEVERE_BASE}/severe_thunderstorm_warning.mp3`,    intent: "alert_tstorm",            text: "thunderstorm warning alert",               confidence: "confirmed" },
+  { file: `${SEVERE_BASE}/f_flood_warning.mp3`,                intent: "alert_flood",             text: "flash flood warning alert",                confidence: "confirmed" },
   // Number special cases — VocalLocal WAV
-  { file: `${VL_TEMPS}/Zero.wav`,                              intent: "number_zero_degrees",     text: "zero degrees",                             confidence: "likely" },
-  { file: `${VL_TEMPS}/Zero.wav`,                              intent: "number_zero",             text: "zero",                                     confidence: "likely" },
-  { file: `${VL_TEMPS}/Zeros.wav`,                             intent: "number_zero_plural",      text: "zero (alternate take)",                    confidence: "guess" },
-  { file: `${VL_TEMPS}/1s.wav`,                                intent: "number_one_singular",     text: "one (singular form, e.g. \"1 degree\")",   confidence: "likely" },
+  { file: `${VL_TEMPS}/Zero.mp3`,                              intent: "number_zero_degrees",     text: "zero degrees",                             confidence: "likely" },
+  { file: `${VL_TEMPS}/Zero.mp3`,                              intent: "number_zero",             text: "zero",                                     confidence: "likely" },
+  { file: `${VL_TEMPS}/Zeros.mp3`,                             intent: "number_zero_plural",      text: "zero (alternate take)",                    confidence: "guess" },
+  { file: `${VL_TEMPS}/1s.mp3`,                                intent: "number_one_singular",     text: "one (singular form, e.g. \"1 degree\")",   confidence: "likely" },
   // Named condition phrases — legacy dir (no VocalLocal equivalent)
   { file: `${CC_LEGACY}/CCDUST.mp3`,                           intent: "condition_dust",          text: "with dust",                                confidence: "likely" },
   { file: `${CC_LEGACY}/CCSAND.mp3`,                           intent: "condition_sand",          text: "with sand",                                confidence: "likely" },
@@ -105,7 +105,7 @@ export function getRateOpClip(detailedForecast: string): ClipResolution | null {
   for (const r of RATE_OP_PATTERNS) {
     if (r.pattern.test(detailedForecast)) {
       return {
-        src: `${JC_VL}/Wx_Phrases_RateOP/R${r.code}.wav`,
+        src: `${JC_VL}/Wx_Phrases_RateOP/R${r.code}.mp3`,
         text: r.text,
         confidence: "likely",
       };

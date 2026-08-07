@@ -16,14 +16,14 @@
  *   Wx_Phrases_Groups_Day3_4/     — 3-4 day range variants
  *   Wx_Phrases_Groups_Day4_5/     — 4-5 day range variants
  *
- * File naming: {DAY}_{CONDITION}{variant}.wav
+ * File naming: {DAY}_{CONDITION}{variant}.mp3
  *   DAY = MON, TUE, WED, THU, FRI, SAT, SUN
  *   CONDITION = FAIR, MCLOUDY, RAIN, TSTORM, WINTRY
  *   variant = 1 (Well_See), 2 (Look_For), 3 (Expect)
  *
  * For All_Days/Day3_4/Day4_5:
- *   {CONDITION}_{START}_{END}.wav
- *   e.g., RAIN_M_W.wav = "Rain Monday through Wednesday"
+ *   {CONDITION}_{START}_{END}.mp3
+ *   e.g., RAIN_M_W.mp3 = "Rain Monday through Wednesday"
  *
  * Allan Jackson only. No other narrator has group phrases.
  */
@@ -116,12 +116,12 @@ function extractDayName(periodName: string): DayName | null {
 
 /**
  * Well_See clips: "We'll see [condition] [day range]"
- * Naming: {DAY}_{CONDITION}1.wav
+ * Naming: {DAY}_{CONDITION}1.mp3
  * 35 clips total (7 days x 5 conditions)
  */
 function getWellSeeClip(day: DayName, category: WeatherCategory): GroupPhraseClip {
   return {
-    src: `${GROUP_BASE}/Wx_Phrases_Groups_Well_See/${day}_${category}1.wav`,
+    src: `${GROUP_BASE}/Wx_Phrases_Groups_Well_See/${day}_${category}1.mp3`,
     // Actual audio: "On Tuesday, we'll see a chance of thunderstorms."
     text: `On ${PERIOD_TO_DAY_LABEL[day]}, we'll see ${CATEGORY_LABELS[category]}`,
     confidence: "likely",
@@ -130,11 +130,11 @@ function getWellSeeClip(day: DayName, category: WeatherCategory): GroupPhraseCli
 
 /**
  * Look_For clips: "Look for [condition] on [day]"
- * Naming: {DAY}_{CONDITION}2.wav
+ * Naming: {DAY}_{CONDITION}2.mp3
  */
 function getLookForClip(day: DayName, category: WeatherCategory): GroupPhraseClip {
   return {
-    src: `${GROUP_BASE}/Wx_Phrases_Groups_Look_For/${day}_${category}2.wav`,
+    src: `${GROUP_BASE}/Wx_Phrases_Groups_Look_For/${day}_${category}2.mp3`,
     // Actual audio: "Look for a chance of thunderstorms on Tuesday."
     text: `Look for ${CATEGORY_LABELS[category]} on ${PERIOD_TO_DAY_LABEL[day]}`,
     confidence: "likely",
@@ -145,11 +145,11 @@ function getLookForClip(day: DayName, category: WeatherCategory): GroupPhraseCli
  * Expect clips: actual audio says "And on [day], expect [condition]."
  * The "And on" prefix makes them sound stringy as a scene opener, so they're
  * no longer used by getGroupPhraseClips — kept here for reference only.
- * Naming: {DAY}_{CONDITION}3.wav
+ * Naming: {DAY}_{CONDITION}3.mp3
  */
 function getExpectClip(day: DayName, category: WeatherCategory): GroupPhraseClip {
   return {
-    src: `${GROUP_BASE}/Wx_Phrases_Groups_Expect/${day}_${category}3.wav`,
+    src: `${GROUP_BASE}/Wx_Phrases_Groups_Expect/${day}_${category}3.mp3`,
     // Actual audio: "And on Tuesday, expect a chance of thunderstorms."
     text: `And on ${PERIOD_TO_DAY_LABEL[day]}, expect ${CATEGORY_LABELS[category]}`,
     confidence: "likely",
@@ -163,7 +163,7 @@ const PERIOD_TO_DAY_LABEL: Record<DayName, string> = {
 
 /**
  * All_Days clips: "[Condition] [day] through [day]"
- * Naming: {CONDITION}_{START}_{END}.wav
+ * Naming: {CONDITION}_{START}_{END}.mp3
  * 35 clips total (7 start-end combos x 5 conditions)
  *
  * Available day-range combos (from actual files):
@@ -189,7 +189,7 @@ const ALL_DAYS_RANGES: DayRangeCombo[] = [
 
 function getAllDaysClip(category: WeatherCategory, startCode: string, endCode: string, startLabel: string, endLabel: string): GroupPhraseClip {
   return {
-    src: `${GROUP_BASE}/Wx_Phrases_Groups_All_Days/${category}_${startCode}_${endCode}.wav`,
+    src: `${GROUP_BASE}/Wx_Phrases_Groups_All_Days/${category}_${startCode}_${endCode}.mp3`,
     text: `${CATEGORY_LABELS[category]} ${startLabel} through ${endLabel}`,
     confidence: "likely",
   };
@@ -212,7 +212,7 @@ const DAY3_4_RANGES: DayRangeCombo[] = [
 
 function getDay3_4Clip(category: WeatherCategory, startCode: string, endCode: string, startLabel: string, endLabel: string): GroupPhraseClip {
   return {
-    src: `${GROUP_BASE}/Wx_Phrases_Groups_Day3_4/${category}_${startCode}_${endCode}.wav`,
+    src: `${GROUP_BASE}/Wx_Phrases_Groups_Day3_4/${category}_${startCode}_${endCode}.mp3`,
     text: `${CATEGORY_LABELS[category]} ${startLabel} through ${endLabel}`,
     confidence: "likely",
   };
@@ -223,7 +223,7 @@ function getDay3_4Clip(category: WeatherCategory, startCode: string, endCode: st
  */
 function getDay4_5Clip(category: WeatherCategory, startCode: string, endCode: string, startLabel: string, endLabel: string): GroupPhraseClip {
   return {
-    src: `${GROUP_BASE}/Wx_Phrases_Groups_Day4_5/${category}_${startCode}_${endCode}.wav`,
+    src: `${GROUP_BASE}/Wx_Phrases_Groups_Day4_5/${category}_${startCode}_${endCode}.mp3`,
     text: `${CATEGORY_LABELS[category]} ${startLabel} through ${endLabel}`,
     confidence: "likely",
   };

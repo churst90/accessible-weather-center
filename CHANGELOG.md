@@ -2,6 +2,38 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased] — Phase 5: web prep
+
+Groundwork for `weather.codyhurst.com`. The app becomes location-agnostic, the asset library shrinks by 74%, and the two things a browser can't do that Electron could now route through a same-origin proxy.
+
+### Added
+
+#### First-run location setup
+- **`src/ui/semantic/FirstRunSetup.tsx`** — on a fresh install (or a browser profile that has never run the app), a required modal asks for a US ZIP code before anything else happens. Announced on the assertive channel, focus moved to the field, and the resolved city/state spoken back so a mistyped-but-valid ZIP is caught by ear. Unlike every other modal in the app it is not dismissable: Escape and backdrop clicks re-state the requirement, because there is no meaningful app state behind it.
+- **`PlacesStore.isFirstRun()` / `completeFirstRun()`** — first run is "nothing in storage". The seed list is deliberately *not* persisted at construction, so quitting mid-setup still presents the prompt next launch. `upsert()` during first run completes setup rather than appending, so the placeholder can't survive as a second, unusable "location".
+- App holds the scene cycle, the storm scanner, the alert watcher and the NWR call-sign autopick until setup completes — no weather is fetched or announced for a location the user never chose.
+- 8 unit tests (65 total).
+
+#### Asset transcoding pipeline
+- **`scripts/build-web-assets.mjs`** — builds a smaller, web-servable copy of `assets/`. Narration/SFX PCM → MP3 (LAME, 128 kbps mono / 192 kbps stereo, sample rate preserved); backgrounds → WebP, encoded both lossy and lossless with the smaller kept per file. Already-MP3 files are copied, never re-encoded. Resumable, idempotent, atomic writes, and a `--verify` mode that re-probes every output against its source.
+- **`scripts/check-asset-refs.mjs`** — resolves every `/assets/...` reference in `src/` (including `${CONST}` interpolation) and checks it exists. Nothing else in the build catches a bad asset path; a missing narration clip just silently never speaks.
+- **`docs/asset-pipeline.md`** — what was encoded, why those bitrates, and how to redo it.
+
+#### Deployment
+- **`deploy/nginx/weather.codyhurst.com.conf`** — vhost for landing page at `/`, app at `/app/`, media at `/assets/` (immutable caching, byte ranges), and the NWR proxy at `/nwr/`.
+- **`src/audio/nwrEndpoints.ts`** — chooses upstream vs. proxy per deployment target. `radio.weatherusa.net` sends no `Access-Control-Allow-Origin` on either the status document or the MP3 mounts (verified 2026-08-06), so a browser can neither list stations nor feed the stream into WebAudio. Packaged Electron (`file://`) keeps talking to the host directly; everything else goes through the same-origin proxy.
+- `fetchActiveNwrStations()` gained a browser route via that proxy, mirroring the Electron IPC handler including its malformed-JSON workaround. A matching `server.proxy` block in `vite.config.ts` makes `npm run dev` and dev-mode Electron behave like production.
+
+### Changed
+- **Assets are now the transcoded set.** 5244 MB → 1338 MB (74% smaller) across 13,650 files, zero encode failures, verified by duration/dimension/byte comparison against the originals. Originals moved untouched to `AWC-asset-archive/assets-original-2026-08-06/`. Source references updated to match: `.wav`/`.flac` → `.mp3` under `src/audio/` (260 refs), `.png` → `.webp` in `backgroundCatalog.ts` (82) and on `themes.ts` `backgroundImage` lines (5). Icons, logos and fonts were intentionally left in their original formats and are untouched.
+
+### Fixed
+- **No more hard-coded home location.** `defaultPlaces()` seeded Greeneville TN plus six East Tennessee favorites, so every new install — and every future web visitor — started in the author's hometown. It now returns a single neutral placeholder that the first-run flow replaces.
+- **Half the IntelliStar 2 Jr background pool 404'd.** `backgroundCatalog.ts` generated 56 numbered `-blur` paths from a folder that holds 28 of them (plus 28 non-blur files it never referenced). Found by the new asset-reference checker.
+
+### Known issues
+- `narration/Jim Cantore/Vocal Local/Default_Phrases_Local_Radar/RADAR_DEFAULT{1,2}` are referenced by `narratorSchema.ts` but that directory has never existed in the asset tree — those two clips have been silently dead since the initial commit. Needs either the source audio or removal of the entries.
+
 ## [0.12.0] — 2026-08-05
 
 Audit Phase 4: structural. No user-visible behavior changes intended — this release reshapes the code so the next round of features (era-authentic renderers, web deployment) has clean seams to build on.
