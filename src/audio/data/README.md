@@ -1,10 +1,17 @@
+> **Keys must match the SERVED filename, extension included.** The library
+> was re-encoded to MP3 in Phase 5 and every key here was remapped from
+> `.wav`/`.flac` to `.mp3` to match. If the two ever drift apart, `getClipText`
+> silently misses, every affected clip degrades to `confidence: "guess"`, and
+> the default `"likely"` threshold filters it out — the app goes quiet with no
+> error anywhere. `tests/clipReferenceTable.test.ts` guards this.
+
 # Clip Reference Table
 
 `clipReferenceTable.json` is the **source of truth for every narration clip** across all four narrator libraries (Allan Jackson, Jim Cantore, Amy Bargeron, Chandler).
 
 ## Why it exists
 
-Narrator libraries differ in file structure and naming conventions — `VocalLocal/` vs `Vocal Local/`, `Wind_Misc/` vs `Winds_Misc/`, `MON.wav` vs `Monday.wav`, etc. Without a central reference, any narration feature had to branch per narrator, and assumed clip contents (based on filenames) hid bugs like the `Wx_Phrases_Groups_Expect/TUE_TSTORM3.wav` clip saying *"And on Tuesday, expect a chance of thunderstorms"* rather than the filename-inferred *"Expect thunderstorms on Tuesday."*
+Narrator libraries differ in file structure and naming conventions — `VocalLocal/` vs `Vocal Local/`, `Wind_Misc/` vs `Winds_Misc/`, `MON.mp3` vs `Monday.mp3`, etc. Without a central reference, any narration feature had to branch per narrator, and assumed clip contents (based on filenames) hid bugs like the `Wx_Phrases_Groups_Expect/TUE_TSTORM3.mp3` clip saying *"And on Tuesday, expect a chance of thunderstorms"* rather than the filename-inferred *"Expect thunderstorms on Tuesday."*
 
 This table records the **actual transcription** of every clip, produced by running Whisper over the entire `assets/narration/` tree. Downstream narration code reads the transcription (not the filename) to decide how to use each clip.
 
@@ -25,7 +32,7 @@ This table records the **actual transcription** of every clip, produced by runni
   },
   "clips": {
     "allan-jackson": {
-      "VocalLocal/Periods2/MON.wav": {
+      "VocalLocal/Periods2/MON.mp3": {
         "text": "Monday.",
         "confidence": -0.15,
         "source": "whisper-small",
@@ -60,7 +67,7 @@ Paths are **relative to the narrator's root directory**:
 | `amy-bargeron` | `assets/narration/Amy Bargeron/` |
 | `chandler` | `assets/narration/Chandler/` |
 
-Example: the AJ clip living at `assets/narration/Alan Jackson/VocalLocal/Periods2/MON.wav` is stored under the key `"VocalLocal/Periods2/MON.wav"` in the `allan-jackson` map.
+Example: the AJ clip living at `assets/narration/Alan Jackson/VocalLocal/Periods2/MON.mp3` is stored under the key `"VocalLocal/Periods2/MON.mp3"` in the `allan-jackson` map.
 
 Forward slashes are used even on Windows, for cross-platform consistency.
 
@@ -92,7 +99,7 @@ Import from `src/audio/data/clipReferenceTable.ts`:
 import { getClipText, findClipsByText } from "./data/clipReferenceTable";
 
 // Look up a specific clip
-const entry = getClipText("allan-jackson", "VocalLocal/Periods2/MON.wav");
+const entry = getClipText("allan-jackson", "VocalLocal/Periods2/MON.mp3");
 console.log(entry?.text); // "Monday."
 
 // Find clips containing a phrase
@@ -113,7 +120,7 @@ Planned work building on this table:
 import { getLibrary, Sem } from "../manifests/semanticRegistry";
 
 const lib = getLibrary("allan-jackson");
-const clip = lib.resolve(Sem.temp(72));          // { src: ".../Temps_Specific/72.wav", text: "72 degrees", confidence: "likely" }
+const clip = lib.resolve(Sem.temp(72));          // { src: ".../Temps_Specific/72.mp3", text: "72 degrees", confidence: "likely" }
 const clip = lib.resolve(Sem.ccsh(1600));        // narrator-aware zero-padding handled
 const clip = lib.resolve(Sem.windAtSpeed("10_15"));
 const clip = lib.resolve(Sem.period("TUE_NIGHT")); // null for AJ (no bare weekday-night clips), clip for JC

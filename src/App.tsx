@@ -57,6 +57,10 @@ export default function App() {
   const [ldlIconName, setLdlIconName] = useState<string | undefined>(undefined);
   const startedRef = useRef(false);
   const audioStartedRef = useRef(false);
+  /** The audio-unlock routine, exposed so a known-good user gesture (the
+   *  first-run form submit) can trigger it directly rather than relying on
+   *  the window-level listeners having seen the keystroke. */
+  const unlockAudioRef = useRef<(() => void) | null>(null);
   const viewModeRef = useRef<ViewMode>(viewMode);
   viewModeRef.current = viewMode;
 
@@ -209,6 +213,24 @@ export default function App() {
   }, [services]);
 
   const [mnemonicDone, setMnemonicDone] = useState(false);
+
+  // Safety net: the scene loop must never be permanently blocked by audio.
+  //
+  // `mnemonicDone` exists only to stop the first scene change from cutting
+  // off the startup jingle, but it is set exclusively by the audio-unlock
+  // path. If audio never unlocks — autoplay policy, a gesture the window
+  // listeners didn't see, a clip that fails to load — the loop would sit on
+  // "Loading" forever with no way out but pressing Tab. Weather on screen
+  // matters more than a jingle, so release the gate after a bounded wait
+  // once setup is out of the way.
+  useEffect(() => {
+    if (mnemonicDone || needsSetup) return;
+    const t = setTimeout(() => {
+      console.warn("[startup] audio never unlocked; starting the scene loop anyway");
+      setMnemonicDone(true);
+    }, 8000);
+    return () => clearTimeout(t);
+  }, [mnemonicDone, needsSetup]);
 
   // Start the loop on mount — but hold until the startup mnemonic has
   // finished playing. Otherwise the scheduler's first scene-change effect
@@ -585,6 +607,15 @@ export default function App() {
       void (async () => {
         try {
           if (ctx.state === "suspended") await ctx.resume();
+          // Music must start AFTER the context is actually running. Starting
+          // it before the resume settles worked on Electron (autoplay is
+          // allowed, so the context was already running) and silently failed
+          // in browsers: the media element's play() lands on a suspended
+          // graph and produces nothing. The symptom was music that only
+          // began after toggling Ctrl+M twice, because by then a gesture had
+          // been processed and the context was live.
+          void services.music.start();
+
           const play = services.clips.play("mnemonic").catch((err) => {
             console.warn("[mnemonic] clip playback failed:", err);
           });
@@ -596,8 +627,8 @@ export default function App() {
           setMnemonicDone(true);
         }
       })();
-      void services.music.start();
     };
+    unlockAudioRef.current = start;
     // Attempt immediate start — works in Electron where autoplay is allowed.
     const ctx = services.mixer.ensureStarted();
     if (ctx.state === "running") {
@@ -766,6 +797,11 @@ export default function App() {
         open={needsSetup}
         announcer={services.announcer}
         onComplete={(place) => {
+          // Submitting this form is the most reliable user gesture the app
+          // will ever get, so unlock audio here rather than trusting that
+          // the window-level keydown/click listeners saw something while a
+          // modal owned the keyboard. Idempotent — no-ops if already run.
+          unlockAudioRef.current?.();
           // completeFirstRun notifies subscribers, which re-points the
           // scheduler, storm scanner and alert watcher at the new home.
           // Clearing needsSetup then releases the start effects.
