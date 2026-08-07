@@ -2,6 +2,16 @@
 
 Prioritized backlog. Ordered top to bottom within each section. Items marked `[x]` shipped in a prior release; `[ ]` is still open.
 
+## Narration period accuracy
+
+Source for the dates below: the IntelliStar timeline in `docs/reference/is1/handwiki/page.html`, September 2004 — *"36 Hour Forecast" is renamed "Local Forecast"… The hour-by-hour forecast, referred to as "Daily Planner" is now renamed the "Daypart Forecast"*.
+
+- [x] ~~"36 Hour Forecast" and "Daily Planner" clips were unreachable~~ — both are pre-Sept-2004 product names, for the Local Forecast and Hourly scenes respectively. Now selected per theme by `src/audio/manifests/sceneSegments.ts`; `npm run clips:explain` shows the chain.
+- [ ] **Chandler's clips are pre-rename but he narrates IntelliStar 2 (2013+).** His whole hour-by-hour pool says "the 36-hour forecast", which suggests the recordings date from the 2003–2004 IS1 window. Either re-source post-rename audio, reassign him to an earlier theme, or accept the anachronism. Enforcing the era rule on him today would leave IS2 with no hourly/local-forecast narration.
+- [ ] **Amy Bargeron has only `Local-DaypartForecast`** (the post-2004 name) but also narrates Weatherscan Local (1999–2003). Same class of problem, opposite direction.
+- [ ] **Verify `weatherscan-v1` (2003–2005) product era.** Currently assigned post-2004 because it runs on the IntelliStar platform the rename applied to and most of its life is after it — but it launched Feb 2003, before. Needs an aircheck to confirm which naming Weatherscan itself used.
+- [ ] **`weatherstarxl` has no dated label** in `themes.ts`, so its pre-2004 assignment is inferred from the XL predating the IntelliStar rollout rather than confirmed.
+
 ## Narration coverage
 
 - [x] ~~Scenes with no narrator audio~~ — was 7 (travel, almanac, detailed, feelslike, stormtracker, precip, temptrend); now 2. Fixed by case-insensitive scene-id lookup, a documented alias map for scenes that legitimately share an intro, and reconnecting Chandler's travel/regional clips which were wired under key names no scene id matched.

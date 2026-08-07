@@ -21,6 +21,8 @@
 
 export type NarratorId = "allan-jackson" | "jim-cantore" | "amy-bargeron" | "chandler" | "silent";
 
+import { eraIntroKeys } from "./sceneSegments";
+
 export interface NarratorDef {
   id: NarratorId;
   label: string;
@@ -120,7 +122,11 @@ export const NARRATORS: NarratorDef[] = [
         { file: `${AJ_GENERAL_BASE}/The Forecast for Your Area.mp3`, text: "The forecast for your area" },
         { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_Daypart/DAYPART_DEFAULT1.mp3`, text: "Our local forecast" },
         { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_Daypart/DAYPART_DEFAULT2.mp3`, text: "The forecast for our area" },
-        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_Daypart/DAYPART_DEFAULT3.mp3`, text: "Our Daily Planner" },
+        // DAYPART_DEFAULT3 ("Our Daily Planner") lives in `dailyPlanner`, not
+        // here: TWC renamed the hour-by-hour forecast from "Daily Planner" to
+        // "Daypart Forecast" in September 2004, so a post-2004 unit must not
+        // announce the older name. sceneSegments.ts routes pre-2004 themes to
+        // the dailyPlanner pool first.
       ],
       alerts: [
         { file: `${AJ_GENERAL_BASE}/Is in effect for Your Area.mp3`, text: "Is in effect for your area" },
@@ -145,10 +151,14 @@ export const NARRATORS: NarratorDef[] = [
       weekend: [
         { file: `${AJ_VOCALLOCAL_BASE}/Periods2/WEEK3.mp3`, text: "Heading into the weekend" },
       ],
+      // Pre-September-2004 name for the hour-by-hour forecast. Selected for
+      // themes whose hardware predates the rename — see sceneSegments.ts.
       dailyPlanner: [
         { file: `${AJ_GENERAL_BASE}/Your Daily Planner.mp3`, text: "Your Daily Planner" },
+        { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_Daypart/DAYPART_DEFAULT3.mp3`, text: "Our Daily Planner" },
       ],
-      // Reserved for future scenes (no call site yet):
+      // Pre-September-2004 name for the Local Forecast, which became a
+      // 48-hour product under the new name. Reached via sceneSegments.ts.
       thirtySixHour: [
         { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_36_Hr_Fcast/36HR_DEFAULT1.mp3`, text: "Your 36-hour forecast" },
         { file: `${AJ_VOCALLOCAL_BASE}/Default_Phrases_36_Hr_Fcast/36HR_DEFAULT2.mp3`, text: "Your forecast for the next 36 hours" },
@@ -194,6 +204,12 @@ export const NARRATORS: NarratorDef[] = [
       hourly: [
         { file: `${JC_VOCALLOCAL_BASE}/Default_Phrases_Daypart/DAYPART_DEFAULT1.mp3`, text: "Our local forecast" },
         { file: `${JC_VOCALLOCAL_BASE}/Default_Phrases_Daypart/DAYPART_DEFAULT2.mp3`, text: "The forecast for our area" },
+        // DAYPART_DEFAULT3 ("Our Daily Planner") moved to `dailyPlanner` —
+        // the name was retired in September 2004 and Jim Cantore narrates
+        // IntelliStar-era themes, which are all post-rename.
+      ],
+      // Pre-September-2004 name, kept for themes that predate the rename.
+      dailyPlanner: [
         { file: `${JC_VOCALLOCAL_BASE}/Default_Phrases_Daypart/DAYPART_DEFAULT3.mp3`, text: "Our Daily Planner" },
       ],
       alerts: [
@@ -416,7 +432,14 @@ function introsFor(narrator: NarratorDef, sceneId: string): NarratorClipDef[] | 
 
 export function pickSceneIntro(narratorId: NarratorId, sceneId: string, era?: "5-day" | "7-day"): NarratorClipDef | null {
   const narrator = getNarrator(narratorId);
-  const candidates = [sceneId, ...(SCENE_INTRO_ALIASES[sceneId.toLowerCase()] ?? [])];
+  // Era-correct product naming first: a WeatherStar 3000 should introduce the
+  // "36 Hour Forecast" and the "Daily Planner", not the names those products
+  // were given in September 2004. See sceneSegments.ts for the source.
+  const candidates = [
+    ...eraIntroKeys(sceneId),
+    sceneId,
+    ...(SCENE_INTRO_ALIASES[sceneId.toLowerCase()] ?? [])
+  ];
   for (const candidate of candidates) {
     const intros = introsFor(narrator, candidate);
     if (!intros || intros.length === 0) continue;

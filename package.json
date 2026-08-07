@@ -24,7 +24,8 @@
     "dist:mac": "npm run build && npx --yes electron-builder@25 --mac",
     "clips:sweep": "node scripts/sweep-clips.mjs",
     "clips:sweep:ci": "node scripts/sweep-clips.mjs --table-only",
-    "test:all": "npm test && npm run clips:sweep:ci"
+    "test:all": "npm test && npm run clips:sweep:ci",
+    "clips:explain": "node scripts/explain-narration.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",

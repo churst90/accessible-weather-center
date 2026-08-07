@@ -20,6 +20,7 @@ import { suggestCallSignForPlace, findStation } from "./audio/nwrStations";
 import { composeCurrentConditions, composeExtendedForecast, composeHourlyForecast, composeAlerts, composeRadar, composeLocalForecast, composeOvernightForecast, composeWeekendForecast, composeSceneIntro } from "./audio/PhraseComposer";
 
 import { setIconBase, setIconResolution, chooseIcon } from "./ui/weatherscan/WeatherIcon";
+import { setProductEra } from "./audio/manifests/sceneSegments";
 import { WeatherscanFrame } from "./ui/weatherscan/WeatherscanFrame";
 import { AnnouncementRegion } from "./ui/semantic/AnnouncementRegion";
 import { ErrorBoundary } from "./ui/semantic/ErrorBoundary";
@@ -144,6 +145,9 @@ export default function App() {
         applyTheme(theme);
         document.body.dataset.theme = themeId;
         setIconBase(theme.iconSet);
+        // Narration must use the product names this hardware actually used —
+        // "36 Hour Forecast" and "Daily Planner" before September 2004.
+        setProductEra(themeId);
         setIconResolution(theme.iconResolution ?? null);
         try { services.music.setMusicTags(theme.musicTags); } catch { /* ignore */ }
         // Stop any playing narration first — the old clips belong to the
