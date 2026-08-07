@@ -48,8 +48,55 @@ function serveAssetsPlugin(): Plugin {
   };
 }
 
+/**
+ * Warns loudly when a production build runs without the media library.
+ *
+ * This is not cosmetic. Vite resolves the `url("/assets/fonts/...")`
+ * references in weatherscan.css against the project root AT BUILD TIME: with
+ * the library present it fingerprints 26 font files into the bundle and
+ * rewrites the URLs to relative ones; with it absent it silently leaves the
+ * absolute URLs in place, they 404 at runtime, and every theme falls back to
+ * system fonts. No error, no warning, a build that looks fine and isn't.
+ *
+ * Building on a server fresh from `git clone` hits this every time, because
+ * `assets/` is gitignored. Build where the library lives — or use
+ * deploy/publish.sh, which builds locally and uploads both.
+ */
+function warnMissingAssetsPlugin(): Plugin {
+  return {
+    name: "warn-missing-assets",
+    apply: "build",
+    buildStart() {
+      const fontsDir = path.resolve(__dirname, "assets", "fonts");
+      let fontCount = 0;
+      try {
+        fontCount = fs.readdirSync(fontsDir).length;
+      } catch {
+        fontCount = 0;
+      }
+      if (fontCount === 0) {
+        this.warn(
+          "\n" +
+          "  ******************************************************************\n" +
+          "  *  assets/fonts is missing or empty.                             *\n" +
+          "  *                                                                *\n" +
+          "  *  Fonts will NOT be bundled. The built CSS will keep absolute    *\n" +
+          "  *  /assets/fonts/... URLs, which 404 unless the media library is  *\n" +
+          "  *  served from the same origin — every theme falls back to        *\n" +
+          "  *  system fonts.                                                  *\n" +
+          "  *                                                                *\n" +
+          "  *  Build on a machine that has assets/, or use:                   *\n" +
+          "  *      bash deploy/publish.sh --host user@host                    *\n" +
+          "  *  which builds locally and uploads the library too.              *\n" +
+          "  ******************************************************************\n"
+        );
+      }
+    }
+  };
+}
+
 export default defineConfig({
-  plugins: [react(), serveAssetsPlugin()],
+  plugins: [react(), serveAssetsPlugin(), warnMissingAssetsPlugin()],
   base: "./",
   resolve: {
     alias: {

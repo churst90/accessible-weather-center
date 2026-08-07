@@ -95,7 +95,17 @@ sudo DOMAIN=weather.example.com DEPLOY_USER=cody EMAIL=you@example.com \
 
 ## Publishing
 
-From your workstation, in a repo checkout:
+**Build on a machine that has the media library — not on the server.**
+
+Vite fingerprints the CSS-referenced fonts into the bundle *at build time*,
+reading them from `assets/`. Since `assets/` is gitignored, a `git clone` on
+the server followed by `npm run build` produces a bundle whose font URLs are
+still absolute `/assets/fonts/...` paths. Those 404, and every theme renders
+in system fonts — with no error anywhere in the build output. `publish.sh`
+now refuses to build in that state, and `vite build` prints a loud warning.
+
+The intended flow builds locally and uploads both halves. From your
+workstation, in a repo checkout:
 
 ```bash
 bash deploy/publish.sh --host cody@weather.codyhurst.com

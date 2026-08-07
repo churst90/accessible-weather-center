@@ -60,6 +60,27 @@ command -v rsync >/dev/null || die "rsync is not installed locally."
 
 cd "$REPO_DIR"
 
+# Checked before anything slow (an unreachable host takes ~2 min to time out),
+# because this is the failure that looks like success.
+#
+# Vite fingerprints the CSS-referenced fonts into the bundle AT BUILD TIME,
+# reading them from assets/. Build without the library and it silently leaves
+# absolute /assets/fonts/... URLs in the CSS; they 404 at runtime and every
+# theme renders in system fonts. The build reports no error. This is exactly
+# what happens when you `git clone` on a server and build there, because
+# assets/ is gitignored.
+if [ "$DO_BUILD" = "1" ] && [ "$DO_APP" = "1" ]; then
+    if [ ! -d assets/fonts ] || [ -z "$(ls -A assets/fonts 2>/dev/null)" ]; then
+        die "assets/fonts is missing or empty — refusing to build.
+
+       A build without the media library produces an app that renders in
+       system fonts no matter what is on the server.
+
+       Either build on a machine that has the library, or pass --no-build
+       and publish a dist/ that was built on one."
+    fi
+fi
+
 step "Target"
 info "host:    ${HOST}"
 info "webroot: ${WEBROOT}"
