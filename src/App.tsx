@@ -186,6 +186,40 @@ export default function App() {
     };
   }, [services, needsSetup]);
 
+  // Keep weather data fresh independently of the scene loop.
+  //
+  // WeatherService only fetches when something asks it to, and the only
+  // thing that asked was a scene entering. So a paused loop — or a loop that
+  // stalled for any reason — meant the app sat on hours-old conditions with
+  // no indication anything was wrong. For a weather application that is the
+  // worst kind of failure: confidently current-looking, actually stale.
+  //
+  // Alerts (AlertWatcher, 1 min) and radar (StormScanner, ~2 min) already
+  // poll on their own; this closes the gap for observations and forecasts.
+  // The TTLs inside WeatherService still apply, so this warms the cache
+  // rather than hammering the API — a refresh that lands inside the TTL is
+  // served from memory and costs nothing.
+  useEffect(() => {
+    if (needsSetup) return;
+    const REFRESH_MS = 5 * 60_000;
+    const refresh = () => {
+      const home = services.places.home();
+      if (!home) return;
+      void services.weather.getObservation(home).catch(() => { /* stale-while-error handles it */ });
+      void services.weather.getForecast(home).catch(() => { /* ditto */ });
+      void services.weather.getHourly(home).catch(() => { /* ditto */ });
+    };
+    refresh();
+    const id = setInterval(refresh, REFRESH_MS);
+    // Background tabs get their timers throttled; catch up on return.
+    const onVisible = () => { if (!document.hidden) refresh(); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [services, needsSetup]);
+
   // Tier 2 announcements: storm observations from radar (nowcasts).
   // Note this is SEPARATE from NWS alerts (Tier 1) polled below — both
   // routes can fire, with NWS always taking priority.
@@ -284,7 +318,7 @@ export default function App() {
       if (scene.id === "current") {
         const data = scene.data as CurrentConditionsData;
         if (data.observation) {
-          script = composeCurrentConditions(data.observation, data.place.name, narrator);
+          script = composeCurrentConditions(data.observation, data.place.name, narrator, data.place.coord);
           // Update the LDL section icon so it tracks the local condition.
           setLdlIconName(chooseIcon(data.observation.conditionText, true));
         }

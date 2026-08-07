@@ -113,39 +113,89 @@ export class PhraseSequencer {
     return this.playing;
   }
 
-  private async playClip(seg: PhraseSegment): Promise<void> {
-    if (!seg.clip) return;
+  /**
+   * The single audio element every clip plays through, and its single
+   * source node. Created once, on first use, and reused forever.
+   *
+   * This must NOT be per-clip. `createMediaElementSource()` permanently
+   * associates an element with the AudioContext — the context keeps a
+   * reference, and `disconnect()` only detaches the node from the graph, it
+   * does not release either object. Creating one per clip therefore leaks an
+   * element plus a decoded stream every single time. Narration runs several
+   * clips per scene and a scene every ~25 seconds, so an overnight session
+   * accumulated thousands of them; the observed symptom was Chrome sitting
+   * on 12 GB of RAM by morning.
+   *
+   * Reuse is safe here because playback is strictly serial by design — the
+   * generation counter guarantees only one clip is in flight at a time.
+   */
+  private voiceEl: HTMLAudioElement | null = null;
+  private voiceNode: MediaElementAudioSourceNode | null = null;
+
+  private ensureVoiceElement(): HTMLAudioElement {
+    if (this.voiceEl && this.voiceNode) return this.voiceEl;
     const ctx = this.mixer.context();
-    const audio = new Audio(seg.clip.src);
+    const audio = new Audio();
+    // Must be set before any src is assigned, and before the source node is
+    // created, or WebAudio refuses cross-origin media.
     audio.crossOrigin = "anonymous";
-    this.currentAudio = audio;
+    audio.preload = "auto";
     const node = ctx.createMediaElementSource(audio);
     node.connect(this.mixer.voiceBus());
+    this.voiceEl = audio;
+    this.voiceNode = node;
+    return audio;
+  }
+
+  private async playClip(seg: PhraseSegment): Promise<void> {
+    if (!seg.clip) return;
+    const audio = this.ensureVoiceElement();
+    // Generation is the identity now: with one shared element, comparing
+    // element references can no longer distinguish "my clip" from "the next
+    // clip", so a stale ended/error event must be recognised by generation.
+    const gen = this.generation;
+    this.currentAudio = audio;
+
+    audio.src = seg.clip.src;
     try {
       await audio.play();
       await new Promise<void>((resolve) => {
-        // Save the resolve function so stop() can unblock us.
         this.abortResolve = resolve;
         const settle = () => {
-          // Identity guards, not unconditional nulling: stop() resets a
-          // clip with load(), which fires its error event on a later task.
-          // By then a NEW clip may own these fields — a stale event that
-          // blindly nulled them left the new clip unstoppable (its audio
-          // kept playing over the next scene's narration).
+          audio.onended = null;
+          audio.onerror = null;
           if (this.abortResolve === resolve) this.abortResolve = null;
-          if (this.currentAudio === audio) this.currentAudio = null;
+          if (this.generation === gen && this.currentAudio === audio) {
+            this.currentAudio = null;
+          }
           resolve();
         };
         audio.onended = settle;
         audio.onerror = settle;
       });
     } catch {
-      // audio.play() rejected — this clip never registered abortResolve,
-      // so only release the element reference if it is still ours.
-      if (this.currentAudio === audio) this.currentAudio = null;
-    } finally {
-      try { node.disconnect(); } catch { /* ignore */ }
+      // play() rejected — no handlers were registered for this attempt.
+      audio.onended = null;
+      audio.onerror = null;
+      if (this.generation === gen && this.currentAudio === audio) {
+        this.currentAudio = null;
+      }
     }
+    // Deliberately no disconnect(): the node is permanent and shared. The
+    // element is left holding the finished clip's src, which is harmless —
+    // the next clip overwrites it, and stop() clears it.
+  }
+
+  /** Release the shared element and node. Call on teardown. */
+  dispose(): void {
+    this.stop();
+    try { this.voiceNode?.disconnect(); } catch { /* ignore */ }
+    if (this.voiceEl) {
+      this.voiceEl.removeAttribute("src");
+      try { this.voiceEl.load(); } catch { /* ignore */ }
+    }
+    this.voiceNode = null;
+    this.voiceEl = null;
   }
 }
 

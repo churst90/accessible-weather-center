@@ -113,12 +113,43 @@ export class MusicPlayer {
       this.element.onended = null;
       this.element.onerror = null;
       this.element.pause();
-      this.element.src = "";
+      this.element.removeAttribute("src");
+      try { this.element.load(); } catch { /* ignore */ }
     }
+    // NOTE: the source node is deliberately NOT disconnected or discarded —
+    // it is shared and permanent. See ensureElement().
+    this.currentTrack = null;
+  }
+
+  /**
+   * The one audio element and source node every track plays through.
+   *
+   * `createMediaElementSource()` permanently binds an element to the
+   * AudioContext; the context retains it and `disconnect()` does not release
+   * it. Creating a node per track therefore leaked an element and a decoded
+   * stream on every song change — small per track, unbounded over a night.
+   * Reuse is safe because only one track plays at a time.
+   */
+  private ensureElement(): HTMLAudioElement {
+    if (this.element && this.source) return this.element;
+    const ctx = this.mixer.context();
+    const audio = new Audio();
+    audio.crossOrigin = "anonymous";
+    audio.loop = false;
+    audio.preload = "auto";
+    const node = ctx.createMediaElementSource(audio);
+    node.connect(this.mixer.musicBus());
+    this.element = audio;
+    this.source = node;
+    return audio;
+  }
+
+  /** Release the shared element and node. Call on teardown. */
+  dispose(): void {
+    this.stop();
     try { this.source?.disconnect(); } catch { /* ignore */ }
     this.element = null;
     this.source = null;
-    this.currentTrack = null;
   }
 
   /** Skip to the next shuffled track manually. */
@@ -148,18 +179,10 @@ export class MusicPlayer {
     this.stop();
     // Claim this generation AFTER stop() has bumped it. Any other playTrack
     // or stop() that runs while we're awaiting play() will bump again and
-    // our `myGen` will no longer match — we'll tear down the orphaned audio.
+    // our `myGen` will no longer match, so we stand down.
     const myGen = ++this.generation;
-    const ctx = this.mixer.context();
-    const audio = new Audio(track.src);
-    audio.crossOrigin = "anonymous";
-    audio.loop = false;
-    const node = ctx.createMediaElementSource(audio);
-    node.connect(this.mixer.musicBus());
-    // Assign state BEFORE awaiting play() so a concurrent stop() can find
-    // and tear down this element rather than leaving it orphaned.
-    this.element = audio;
-    this.source = node;
+    const audio = this.ensureElement();
+    audio.src = track.src;
     this.currentTrack = track;
     audio.onended = () => {
       if (myGen !== this.generation) return;
@@ -172,17 +195,13 @@ export class MusicPlayer {
     try {
       await audio.play();
       if (myGen !== this.generation) {
-        // Superseded while we awaited. Tear down this orphan.
-        try { audio.pause(); } catch { /* ignore */ }
-        audio.src = "";
-        try { node.disconnect(); } catch { /* ignore */ }
+        // Superseded while awaiting. The shared element now belongs to a
+        // newer track, so touch nothing.
+        return;
       }
     } catch {
-      // Autoplay blocked or stop() invalidated us. Clean up if we're no
-      // longer the active generation.
-      if (myGen !== this.generation) {
-        try { node.disconnect(); } catch { /* ignore */ }
-      }
+      // Autoplay blocked, or stop() invalidated us mid-await. The shared
+      // element and node stay alive for the next attempt.
     }
   }
 }

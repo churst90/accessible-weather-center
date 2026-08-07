@@ -1,4 +1,4 @@
-import type { Observation, ForecastPeriod, HourlyForecastPoint, WeatherAlert } from "../core/types";
+import type { Observation, ForecastPeriod, HourlyForecastPoint, WeatherAlert, LatLon } from "../core/types";
 import {
   getNamedClip,
   getRateOpClip,
@@ -13,6 +13,7 @@ import {
 import { getMultiHeadlineClips } from "./manifests/headlineSchema";
 import { getAccumulationClips } from "./manifests/accumulationSchema";
 import { findLongformMatch } from "./manifests/longformSchema";
+import { getSunTimes } from "../core/weather/SunCalc";
 import { getLibrary, Sem, type CompassDir, type WindRange, type PeriodKey, type Weekday } from "./manifests/semanticRegistry";
 
 /**
@@ -55,7 +56,7 @@ function pickSceneIntroClip(narratorId: NarratorId, sceneId: string, era?: "5-da
  * Wind, humidity, pressure clips aren't in the library — those are appended
  * as a single TTS segment.
  */
-export function composeCurrentConditions(obs: Observation, placeName: string, narrator: NarratorId = "allan-jackson"): PhraseScript {
+export function composeCurrentConditions(obs: Observation, placeName: string, narrator: NarratorId = "allan-jackson", coord?: LatLon | null): PhraseScript {
   const script: PhraseScript = [];
   const def = getNarrator(narrator);
   const useClips = def.hasTemps && def.hasConditions;
@@ -90,8 +91,14 @@ export function composeCurrentConditions(obs: Observation, placeName: string, na
   }
 
   // Map NWS condition text to a CC code.
+  //
+  // The time hint matters: without it, an observation of "Sunny" or "Mostly
+  // Clear" after dark selected the sunny clip and Allan Jackson announced
+  // sunny skies at 11pm. Current conditions carry no period name, so derive
+  // day/night from real solar times at the observation's own coordinate
+  // rather than a fixed clock hour, which would be wrong by hours in summer.
   const isWindy = (obs.windSpeedMph ?? 0) >= 15;
-  const conditionCode = guessConditionCode(obs.conditionText, isWindy);
+  const conditionCode = guessConditionCode(obs.conditionText, isWindy, observationTimeHint(obs, coord));
   if (conditionCode != null) {
     script.push({
       clip: useClips ? getConditionClipForNarrator(conditionCode, narrator) : null,
@@ -284,6 +291,19 @@ function appendCcshOrCcFallback(
   useClips: boolean,
   narrator: NarratorId
 ): void {
+  // Night + clear sky: prefer the CC pool's "under clear skies." over the
+  // shortcast pool's time-neutral "fair.", and never let the sunny clips win.
+  if (timeHint === "night") {
+    const nightCode = nightSkyConditionCode(shortForecast, isWindy);
+    if (nightCode != null) {
+      script.push({
+        clip: useClips ? getConditionClipForNarrator(nightCode, narrator) : null,
+        fallbackText: describeCondition(shortForecast)
+      });
+      return;
+    }
+  }
+
   const ccshCode = guessCcshForecastCode(shortForecast, timeHint, isWindy);
   if (ccshCode != null) {
     script.push({
@@ -768,9 +788,20 @@ function describeCondition(text: string): string {
  * with windy conditions"). When the observation shows wind >= 15 mph, we pick
  * the windy variant if one exists.
  */
-export function guessConditionCode(text: string | null, isWindy: boolean): number | null {
+export function guessConditionCode(
+  text: string | null,
+  isWindy: boolean,
+  timeHint: TimeHint = null
+): number | null {
   if (!text) return null;
   const t = text.toLowerCase();
+
+  // Never narrate "sunny" after dark. NWS usually reports "Clear" at night,
+  // but not always — "Mostly Sunny" can linger in an observation near dusk,
+  // and the forecast fallback path routes night text through here too.
+  if (timeHint === "night" && /sunny|clear|fair/.test(t) && !/partly|mostly cloudy|overcast/.test(t)) {
+    return isWindy ? 3190 : 3100; // "under clear skies."
+  }
 
   // ── Thunderstorm family ──
   if (/thunderstorm/.test(t) && /hail/.test(t))              return 1730;
@@ -1109,9 +1140,29 @@ export function guessCcefForecastCode(text: string | null, timeHint: TimeHint, _
   if (/overcast|cloudy/.test(t) && !/partly|mostly/.test(t))  return 2600;
   if (/mostly cloudy/.test(t))                                return 2800;
   if (/partly cloudy/.test(t))                                return 3000;
-  if (/clear|sunny/.test(t))                                  return 3200;
+  // Clear/sunny: NOT at night. The Ext_Fcast pool has no "clear skies" clip —
+  // 3200 and 3400 both say "under sunny skies", so a night period forecast as
+  // "Mostly Clear" narrated as sunny at 11pm. Returning null here hands the
+  // period to the CC-family fallback, which does have 3100 "under clear
+  // skies." See appendCcshOrCcFallback / nightSkyConditionCode.
+  if (/clear|sunny/.test(t))                                  return timeHint === "night" ? null : 3200;
 
   return null;
+}
+
+/**
+ * Night-appropriate sky-condition code from the CC family.
+ *
+ * The extended-forecast clip pool only ever says "sunny", so clear night
+ * skies have to borrow from the current-conditions pool, which has both.
+ * Returns null when the text isn't a plain clear/sunny sky description.
+ */
+export function nightSkyConditionCode(text: string | null, isWindy: boolean): number | null {
+  if (!text) return null;
+  const t = text.toLowerCase();
+  if (/partly|mostly cloudy|overcast/.test(t)) return null;
+  if (!/clear|sunny|fair/.test(t)) return null;
+  return isWindy ? 3190 : 3100; // "under clear skies[ with windy conditions]."
 }
 
 /**
@@ -1120,6 +1171,30 @@ export function guessCcefForecastCode(text: string | null, timeHint: TimeHint, _
  * "Monday" (daytime) → "day"; etc.
  */
 export type TimeHint = "morning" | "afternoon" | "night" | "day" | null;
+
+/**
+ * Day or night for a current observation.
+ *
+ * Current conditions carry no NWS period name, so there is nothing to parse
+ * a time hint out of. With a coordinate we use real solar times; without
+ * one, fall back to a clock heuristic, which is crude but still beats
+ * assuming daytime and announcing sunny skies at midnight.
+ */
+export function observationTimeHint(obs: Observation, coord?: LatLon | null): TimeHint {
+  const at = obs.observedAt instanceof Date && !Number.isNaN(obs.observedAt.getTime())
+    ? obs.observedAt
+    : new Date();
+  if (coord) {
+    try {
+      const { sunrise, sunset } = getSunTimes(coord, at);
+      return at >= sunrise && at < sunset ? "day" : "night";
+    } catch {
+      // Fall through to the clock heuristic.
+    }
+  }
+  const hour = at.getHours();
+  return hour >= 7 && hour < 19 ? "day" : "night";
+}
 
 export function periodTimeHint(periodName: string, isDaytime: boolean): TimeHint {
   const n = periodName.toLowerCase();
