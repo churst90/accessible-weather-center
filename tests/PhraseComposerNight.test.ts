@@ -109,3 +109,52 @@ test("period names still drive the forecast time hint", () => {
   assert.equal(periodTimeHint("Monday Night", false), "night");
   assert.equal(periodTimeHint("This Afternoon", true), "afternoon");
 });
+
+// ───────────────────── scene intros lead every scene ─────────────────────
+
+import { composeCurrentConditions, composeHourlyForecast, composeExtendedForecast } from "../src/audio/PhraseComposer";
+import type { ForecastPeriod, HourlyForecastPoint } from "../src/core/types";
+
+const OBS: Observation = {
+  placeId: "x", observedAt: new Date("2026-08-07T18:00:00Z"), temperatureF: 72,
+  feelsLikeF: 73, dewpointF: 68, humidityPct: 88, windDirDeg: 135, windSpeedMph: 7,
+  windGustMph: null, pressureInHg: 30.1, visibilityMi: 10, conditionText: "Cloudy", conditionIcon: null
+};
+
+test("current conditions always opens with a spoken scene title", () => {
+  // This was a 30/70 coin flip: seven times in ten the scene opened straight
+  // onto "Currently, the temperature is" and then a number, with no
+  // announcement that the scene had changed at all.
+  for (let i = 0; i < 25; i++) {
+    const script = composeCurrentConditions(OBS, "Saint Louis", "allan-jackson");
+    assert.ok(script[0]?.clip, `run ${i}: first segment has no clip`);
+    assert.notEqual(
+      script[0].clip!.src.split("/").pop(),
+      "CC_INTRO1.mp3",
+      `run ${i}: opened on the lead-in instead of a scene title`
+    );
+  }
+});
+
+test("the lead-in still follows the title, so the sentence flows into the temperature", () => {
+  const script = composeCurrentConditions(OBS, "Saint Louis", "allan-jackson");
+  assert.equal(script[1]?.clip?.src.split("/").pop(), "CC_INTRO1.mp3");
+  assert.match(script[2]?.fallbackText ?? "", /72/);
+});
+
+test("hourly and extended forecasts open with their scene intro", () => {
+  const hours: HourlyForecastPoint[] = Array.from({ length: 4 }, (_, i) => ({
+    time: new Date(Date.now() + i * 3.6e6), temperatureF: 70 + i,
+    shortForecast: "Cloudy", precipProbability: 20, windSpeedMph: 7, windDirDeg: 135
+  })) as HourlyForecastPoint[];
+  const hourly = composeHourlyForecast(hours, "Saint Louis", "allan-jackson");
+  assert.ok(hourly[0]?.clip, "hourly forecast lost its intro");
+
+  const periods = [{
+    name: "Tonight", isDaytime: false, temperatureF: 71, shortForecast: "Chance Showers",
+    detailedForecast: "A chance of showers.", startTime: new Date(), endTime: new Date(),
+    windSpeedMph: 5, windDirDeg: 135, precipProbability: 40
+  }] as unknown as ForecastPeriod[];
+  const ext = composeExtendedForecast(periods, "Saint Louis", "allan-jackson", "5-day", "Extended Forecast");
+  assert.ok(ext[0]?.clip, "extended forecast lost its intro");
+});

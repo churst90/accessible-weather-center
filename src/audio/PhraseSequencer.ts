@@ -22,6 +22,10 @@ export class PhraseSequencer {
   /** Generation counter — bumped by stop() and play(). Only the current
    *  generation may continue playing or unduck. */
   private generation = 0;
+  /** Bumped per clip. The shared audio element delivers ended/error events
+   *  that may belong to a clip we've already moved past; the token is how a
+   *  handler knows the event is its own. */
+  private clipToken = 0;
 
   constructor(private readonly mixer: AudioMixer) {}
 
@@ -91,13 +95,20 @@ export class PhraseSequencer {
       this.abortResolve = null;
     }
     if (this.currentAudio) {
+      // Detach handlers BEFORE touching the element. The element is shared,
+      // so any error/abort this teardown provokes would otherwise be
+      // delivered to whatever clip starts next and settle it instantly.
+      this.currentAudio.onended = null;
+      this.currentAudio.onerror = null;
       this.currentAudio.pause();
-      this.currentAudio.removeAttribute("src");
-      // Force the media element to reset — triggers error/abort events
-      // in browsers where removeAttribute("src") alone doesn't.
-      try { this.currentAudio.load(); } catch { /* ignore */ }
+      // Deliberately no removeAttribute("src") + load() here. Both exist to
+      // force a reset, and both fire a spurious error on a later task — which
+      // was safe when every clip had its own element and is not now. Pausing
+      // stops the audio; the next clip overwrites src anyway.
       this.currentAudio = null;
     }
+    // Any in-flight clip's token is now stale, so its late events no-op.
+    this.clipToken++;
     if (this.playing) {
       this.playing = false;
       this.mixer.unduck();
@@ -150,37 +161,51 @@ export class PhraseSequencer {
   private async playClip(seg: PhraseSegment): Promise<void> {
     if (!seg.clip) return;
     const audio = this.ensureVoiceElement();
-    // Generation is the identity now: with one shared element, comparing
-    // element references can no longer distinguish "my clip" from "the next
-    // clip", so a stale ended/error event must be recognised by generation.
     const gen = this.generation;
+    const token = ++this.clipToken;
+    const src = seg.clip.src;
     this.currentAudio = audio;
 
-    audio.src = seg.clip.src;
-    try {
-      await audio.play();
-      await new Promise<void>((resolve) => {
-        this.abortResolve = resolve;
-        const settle = () => {
-          audio.onended = null;
-          audio.onerror = null;
-          if (this.abortResolve === resolve) this.abortResolve = null;
-          if (this.generation === gen && this.currentAudio === audio) {
-            this.currentAudio = null;
-          }
-          resolve();
-        };
-        audio.onended = settle;
-        audio.onerror = settle;
+    await new Promise<void>((resolve) => {
+      this.abortResolve = resolve;
+
+      // Guarded by a per-clip token, not just by generation.
+      //
+      // A media element fires `error`/`abort` on a LATER task when its src is
+      // replaced or reloaded. With one element per clip that stale event hit
+      // the old, discarded element harmlessly. Now the element is shared, so
+      // an event belonging to the PREVIOUS clip can arrive while the next one
+      // is starting — and settling on it would cut that clip off before a
+      // note played. The first segment of every scene is the narrator's
+      // intro, so the visible symptom is intros disappearing.
+      //
+      // The token makes each clip only answerable to its own events, and the
+      // src check rejects events fired for media we've already moved past.
+      let settled = false;
+      const settle = () => {
+        if (settled || token !== this.clipToken) return; // stale or done
+        settled = true;
+        audio.onended = null;
+        audio.onerror = null;
+        if (this.abortResolve === resolve) this.abortResolve = null;
+        if (this.generation === gen && this.currentAudio === audio) {
+          this.currentAudio = null;
+        }
+        resolve();
+      };
+
+      // Attached BEFORE play() so a short clip cannot finish in the gap
+      // between play() resolving and the handlers being wired up.
+      audio.onended = settle;
+      audio.onerror = settle;
+
+      audio.src = src;
+      audio.play().catch(() => {
+        // Autoplay refused, or stop() invalidated us mid-call. Release the
+        // loop rather than hanging on a clip that will never end.
+        settle();
       });
-    } catch {
-      // play() rejected — no handlers were registered for this attempt.
-      audio.onended = null;
-      audio.onerror = null;
-      if (this.generation === gen && this.currentAudio === audio) {
-        this.currentAudio = null;
-      }
-    }
+    });
     // Deliberately no disconnect(): the node is permanent and shared. The
     // element is left holding the finished clip's src, which is harmless —
     // the next clip overwrites it, and stop() clears it.

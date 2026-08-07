@@ -66,21 +66,32 @@ export function composeCurrentConditions(obs: Observation, placeName: string, na
   // rotation to a scene-intro variant for variety. JC and other narrators with
   // clips use their own CC_INTRO from sceneIntros. Narrators without clips use
   // their scene intro as a standalone label.
-  let introClip: ClipResolution | null = null;
-  if (useClips) {
-    if (narrator === "allan-jackson") {
-      introClip = Math.random() < 0.3
-        ? pickSceneIntroClip(narrator, "current") ?? getNamedClip("current_intro")
-        : getNamedClip("current_intro");
-    } else {
-      introClip = pickSceneIntroClip(narrator, "current");
-    }
-  } else {
-    introClip = pickSceneIntroClip(narrator, "current");
+  // Announce the scene, THEN lead into the reading.
+  //
+  // This used to be a 30/70 coin flip between a scene-title intro ("Your
+  // Current Conditions") and the bare lead-in clip ("Currently, the
+  // temperature is"), so seven times in ten the scene opened straight onto a
+  // number. Every other scene announces itself first, and the broadcast units
+  // did too, so current conditions now does the same: title first, lead-in
+  // second, both when they're available.
+  const sceneTitleClip = useClips ? pickSceneIntroClip(narrator, "current") : null;
+  const leadInClip = narrator === "allan-jackson" && useClips
+    ? getNamedClip("current_intro")
+    : null;
+
+  if (sceneTitleClip) {
+    script.push({
+      clip: sceneTitleClip,
+      fallbackText: `Current conditions for ${placeName}.`
+    });
   }
+  // Only emit the lead-in as its own segment when a title preceded it;
+  // otherwise it carries the whole intro and keeps the original phrasing.
   script.push({
-    clip: introClip,
-    fallbackText: `Currently in ${placeName}, the temperature is`
+    clip: leadInClip ?? (sceneTitleClip ? null : pickSceneIntroClip(narrator, "current")),
+    fallbackText: sceneTitleClip
+      ? "Currently, the temperature is"
+      : `Currently in ${placeName}, the temperature is`
   });
 
   if (obs.temperatureF != null) {
