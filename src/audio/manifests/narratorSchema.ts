@@ -365,13 +365,66 @@ export function getNarrator(id: NarratorId): NarratorDef {
  * "Extended Forecast" phrasing while Weatherscan-era themes (7-day)
  * hear "7-Day Outlook" / "Week Ahead" phrasing.
  */
+/**
+ * Scenes that legitimately borrow another scene's intro, in preference order.
+ *
+ * Nine of the seventeen scenes have no dedicated composer and fall through to
+ * a plain scene-intro clip. Seven of those had no intro defined for ANY
+ * narrator, so they announced nothing at all — the screen reader read them,
+ * but the narrator sat silent, which on a themed unit reads as the app having
+ * stalled. Several of them are simply another view of data a narrator already
+ * introduces, so borrowing is accurate rather than a fudge:
+ *
+ *   detailed     — the observation, in more detail. "Your Local Observations".
+ *   feelslike    — derived entirely from the current observation.
+ *   temptrend    — the observed temperature over time.
+ *   stormtracker — the radar-derived storm list. "Your Local Doppler Radar".
+ *
+ * Two entries here are not borrowing at all, but repairs: Chandler's Travel
+ * Cities clips ("forecast cities nationwide", 13 of them) were wired under
+ * `travelForecast`, and his regional-conditions clips under
+ * `regionalConditions` — key names no scene id has ever matched, so the audio
+ * existed and could never play. Same failure as `localForecast` vs the
+ * registry's `localforecast`: a silent miss, no error anywhere.
+ *
+ * Deliberately NOT aliased: `almanac`, `precip` and `airport` are distinct
+ * subjects, and no narrator has a phrase that honestly covers them (Amy has a
+ * real airport clip and is already wired for it directly). Those stay silent
+ * until real clips exist — `npm run clips:sweep` reports them so the gap is
+ * visible instead of being discovered by ear.
+ */
+const SCENE_INTRO_ALIASES: Record<string, readonly string[]> = {
+  detailed:     ["observations", "regionalConditions", "current"],
+  feelslike:    ["observations", "current"],
+  temptrend:    ["observations", "current"],
+  stormtracker: ["radar"],
+  travel:       ["travelForecast"]
+};
+
+/** Scene ids are compared case-insensitively. The scene registry uses
+ *  lowercase ids ("localforecast") while several intro keys are camelCase
+ *  ("localForecast"), and a mismatch fails silently — no clip, no error. */
+function introsFor(narrator: NarratorDef, sceneId: string): NarratorClipDef[] | undefined {
+  const direct = narrator.sceneIntros[sceneId];
+  if (direct?.length) return direct;
+  const wanted = sceneId.toLowerCase();
+  for (const [key, clips] of Object.entries(narrator.sceneIntros)) {
+    if (key.toLowerCase() === wanted && clips?.length) return clips;
+  }
+  return undefined;
+}
+
 export function pickSceneIntro(narratorId: NarratorId, sceneId: string, era?: "5-day" | "7-day"): NarratorClipDef | null {
   const narrator = getNarrator(narratorId);
-  const intros = narrator.sceneIntros[sceneId];
-  if (!intros || intros.length === 0) return null;
-  const pool = era
-    ? intros.filter((c) => !c.eras || c.eras.includes(era))
-    : intros;
-  if (pool.length === 0) return null;
-  return pool[Math.floor(Math.random() * pool.length)];
+  const candidates = [sceneId, ...(SCENE_INTRO_ALIASES[sceneId.toLowerCase()] ?? [])];
+  for (const candidate of candidates) {
+    const intros = introsFor(narrator, candidate);
+    if (!intros || intros.length === 0) continue;
+    const pool = era
+      ? intros.filter((c) => !c.eras || c.eras.includes(era))
+      : intros;
+    if (pool.length === 0) continue;
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+  return null;
 }

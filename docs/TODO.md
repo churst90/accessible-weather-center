@@ -2,6 +2,14 @@
 
 Prioritized backlog. Ordered top to bottom within each section. Items marked `[x]` shipped in a prior release; `[ ]` is still open.
 
+## Narration coverage
+
+- [x] ~~Scenes with no narrator audio~~ — was 7 (travel, almanac, detailed, feelslike, stormtracker, precip, temptrend); now 2. Fixed by case-insensitive scene-id lookup, a documented alias map for scenes that legitimately share an intro, and reconnecting Chandler's travel/regional clips which were wired under key names no scene id matched.
+- [ ] **Almanac narration.** No narrator has a phrase covering sunrise/sunset/moon phase. Needs real clips; pinned as KNOWN_SILENT in tests/narratorCoverage.test.ts.
+- [ ] **Precipitation Outlook narration.** Same — the Wx_Phrases_Precip pool is probability phrases ("a 40 percent chance"), not a scene intro.
+- [ ] **Airport Delays narration for Allan Jackson / Jim Cantore / Chandler.** Only Amy Bargeron has an airport clip, so the scene is silent on the WeatherStar and IntelliStar themes.
+- [ ] **Unused Allan Jackson intro keys** — `dailyPlanner` and `thirtySixHour` are defined but no scene id maps to them. Either wire a scene or drop them.
+
 ## Phase 5 — web + distribution (in progress)
 
 - [x] ~~First-run ZIP flow~~ — see Usability gaps.

@@ -196,3 +196,80 @@ test("named singleton clips all resolve", () => {
     assert.ok(clip!.src.endsWith(".mp3"), `named clip "${intent}" is not an .mp3 — served audio is all MP3`);
   }
 });
+
+// ───────────────────── scene narration coverage ─────────────────────
+
+import { pickSceneIntro } from "../src/audio/manifests/narratorSchema";
+
+/** Every scene in the rotation. Mirrors FLAVORS in src/bootstrap.ts. */
+const SCENE_IDS = [
+  "current", "localforecast", "radar", "extended", "hourly", "travel", "almanac",
+  "detailed", "feelslike", "stormtracker", "overnight", "weekend", "precip",
+  "temptrend", "traffic", "airport", "alerts"
+] as const;
+
+/** Scenes with a dedicated composer, which supplies its own intro. */
+const HAS_COMPOSER = new Set([
+  "current", "extended", "hourly", "radar", "alerts", "localforecast", "overnight", "weekend"
+]);
+
+/**
+ * Scenes no narrator can announce, because no clip in any library honestly
+ * covers the subject. They still work — the screen reader reads them — but
+ * the narrator stays quiet.
+ *
+ * This list is deliberately explicit so it can only shrink on purpose. A new
+ * scene added without narration fails this test rather than being discovered
+ * by ear months later, which is how the previous seven were found.
+ */
+const KNOWN_SILENT = new Set(["almanac", "precip"]);
+
+test("every scene is announced by at least one narrator", () => {
+  const silent: string[] = [];
+  for (const sceneId of SCENE_IDS) {
+    if (HAS_COMPOSER.has(sceneId)) continue;
+    const anyNarrator = CLIP_NARRATORS.some((n) => pickSceneIntro(n, sceneId) !== null);
+    if (!anyNarrator) silent.push(sceneId);
+  }
+  assert.deepEqual(
+    silent.sort(),
+    [...KNOWN_SILENT].sort(),
+    `scene narration coverage changed.\n  now silent: ${silent.join(", ") || "(none)"}\n` +
+      `  expected:   ${[...KNOWN_SILENT].join(", ")}\n` +
+      `If you added a scene, give it an intro or add it to KNOWN_SILENT deliberately.`
+  );
+});
+
+test("scene ids resolve regardless of case", () => {
+  // The registry uses lowercase ids ("localforecast") while several intro
+  // keys are camelCase ("localForecast"). A mismatch fails silently: no clip,
+  // no error, just a scene that never speaks.
+  for (const n of CLIP_NARRATORS) {
+    const lower = pickSceneIntro(n, "localforecast");
+    const camel = pickSceneIntro(n, "localForecast");
+    assert.equal(
+      lower !== null, camel !== null,
+      `${n}: "localforecast" and "localForecast" disagree — case handling regressed`
+    );
+  }
+});
+
+test("the default theme's narrator announces the opt-in scenes", () => {
+  // Allan Jackson is the default narrator on the WeatherStar themes, and
+  // these are the scenes a user turns on in Settings expecting them to behave
+  // like the built-in ones.
+  for (const sceneId of ["detailed", "feelslike", "temptrend", "stormtracker", "traffic"]) {
+    assert.ok(
+      pickSceneIntro("allan-jackson", sceneId),
+      `Allan Jackson cannot announce "${sceneId}" — it would play silently`
+    );
+  }
+});
+
+test("Chandler's travel and regional clips are reachable", () => {
+  // 13 travel clips and 8 regional-conditions clips were wired under key
+  // names ("travelForecast", "regionalConditions") that no scene id matched,
+  // so the audio existed and could never play.
+  assert.ok(pickSceneIntro("chandler", "travel"), "Chandler's travel clips are unreachable again");
+  assert.ok(pickSceneIntro("chandler", "detailed"), "Chandler's regional clips are unreachable again");
+});
