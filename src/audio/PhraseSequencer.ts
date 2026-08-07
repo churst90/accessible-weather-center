@@ -143,14 +143,21 @@ export class PhraseSequencer {
   private voiceEl: HTMLAudioElement | null = null;
   private voiceNode: MediaElementAudioSourceNode | null = null;
 
-  private ensureVoiceElement(): HTMLAudioElement {
+  private ensureVoiceElement(firstSrc: string): HTMLAudioElement {
     if (this.voiceEl && this.voiceNode) return this.voiceEl;
     const ctx = this.mixer.context();
     const audio = new Audio();
-    // Must be set before any src is assigned, and before the source node is
-    // created, or WebAudio refuses cross-origin media.
+    // crossOrigin must be set before any src is assigned, or WebAudio refuses
+    // the media once it is routed through a MediaElementAudioSourceNode.
     audio.crossOrigin = "anonymous";
     audio.preload = "auto";
+    // Give the element a real source BEFORE creating the source node.
+    // createMediaElementSource() inspects the element's current media to
+    // establish routing and cross-origin state; building the node against an
+    // element with no src has been observed to leave the first clip inaudible
+    // while every later clip plays, which is exactly the reported symptom
+    // (scene intros missing, radar — whose script is only the intro — silent).
+    audio.src = firstSrc;
     const node = ctx.createMediaElementSource(audio);
     node.connect(this.mixer.voiceBus());
     this.voiceEl = audio;
@@ -160,11 +167,13 @@ export class PhraseSequencer {
 
   private async playClip(seg: PhraseSegment): Promise<void> {
     if (!seg.clip) return;
-    const audio = this.ensureVoiceElement();
+    const audio = this.ensureVoiceElement(seg.clip.src);
     const gen = this.generation;
     const token = ++this.clipToken;
     const src = seg.clip.src;
     this.currentAudio = audio;
+    const startedAt = Date.now();
+    let reason = "none";
 
     await new Promise<void>((resolve) => {
       this.abortResolve = resolve;
@@ -182,9 +191,10 @@ export class PhraseSequencer {
       // The token makes each clip only answerable to its own events, and the
       // src check rejects events fired for media we've already moved past.
       let settled = false;
-      const settle = () => {
+      const settle = (why: string) => {
         if (settled || token !== this.clipToken) return; // stale or done
         settled = true;
+        reason = why;
         audio.onended = null;
         audio.onerror = null;
         if (this.abortResolve === resolve) this.abortResolve = null;
@@ -196,16 +206,32 @@ export class PhraseSequencer {
 
       // Attached BEFORE play() so a short clip cannot finish in the gap
       // between play() resolving and the handlers being wired up.
-      audio.onended = settle;
-      audio.onerror = settle;
+      audio.onended = () => settle("ended");
+      audio.onerror = () => settle("error");
 
-      audio.src = src;
-      audio.play().catch(() => {
+      // The element already holds this src when it was just constructed;
+      // reassigning would restart the load for nothing.
+      if (audio.src !== src && !String(audio.src).endsWith(src)) audio.src = src;
+      audio.play().catch((err) => {
         // Autoplay refused, or stop() invalidated us mid-call. Release the
         // loop rather than hanging on a clip that will never end.
-        settle();
+        if (narrationDebug()) console.warn("[narration] play() rejected", src, (err as Error)?.name ?? err);
+        settle("play-rejected");
       });
     });
+    // A clip that "finished" almost instantly did not actually play — it was
+    // settled by a stale event, a load failure, or a rejected play(). That is
+    // the failure mode behind every "the narrator went quiet" report, and it
+    // is otherwise completely silent, so say something.
+    const elapsed = Date.now() - startedAt;
+    if (reason !== "none" && elapsed < 150) {
+      console.warn(
+        `[narration] clip settled after ${elapsed}ms via "${reason}" — probably never played: ${src}`
+      );
+    } else if (narrationDebug()) {
+      console.info(`[narration] ${elapsed}ms ${reason} ${src}`);
+    }
+
     // Deliberately no disconnect(): the node is permanent and shared. The
     // element is left holding the finished clip's src, which is harmless —
     // the next clip overwrites it, and stop() clears it.
@@ -222,6 +248,24 @@ export class PhraseSequencer {
     this.voiceNode = null;
     this.voiceEl = null;
   }
+}
+
+/**
+ * Verbose narration logging, opt-in so normal use stays quiet. Enable with
+ * `localStorage.setItem("awc.debug.narration", "1")` then reload, or append
+ * `?debug=narration` to the URL.
+ */
+let debugFlag: boolean | null = null;
+function narrationDebug(): boolean {
+  if (debugFlag !== null) return debugFlag;
+  try {
+    debugFlag =
+      localStorage.getItem("awc.debug.narration") === "1" ||
+      (typeof location !== "undefined" && location.search.includes("debug=narration"));
+  } catch {
+    debugFlag = false;
+  }
+  return debugFlag;
 }
 
 function sleep(ms: number): Promise<void> {
