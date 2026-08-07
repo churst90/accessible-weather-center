@@ -26,6 +26,7 @@
 import type { ClipResolution } from "./clipSchema";
 import { AJ_VOCALLOCAL_BASE, JC_VOCALLOCAL_BASE } from "./narratorSchema";
 import type { NarratorId } from "./narratorSchema";
+import { getClipText } from "../data/clipReferenceTable";
 
 const LF_DIR = `${AJ_VOCALLOCAL_BASE}/Wx_Phrases_Longform`;
 const JC_LF_DIR = `${JC_VOCALLOCAL_BASE}/Wx_Phrases_Longform`;
@@ -1786,6 +1787,14 @@ export function findLongformMatch(detailedForecast: string, narratorId: Narrator
     const [filename, text] = LONGFORM_CLIPS[bestIdx];
     if (!filename.startsWith("N")) return null;
     const jcFilename = filename.replace(/^N/, "H");
+    const jcRel = `Vocal Local/Wx_Phrases_Longform/${jcFilename}.mp3`;
+    // The N→H mapping assumes Jim Cantore recorded an equivalent for every
+    // Allan Jackson N-series phrase. He did not. Without this check the
+    // matcher happily returned a path to a file that does not exist, and the
+    // segment played as silence instead of falling back to spoken text.
+    // Jim Cantore's reference table mirrors his library exactly, so a table
+    // miss is a reliable "no such clip".
+    if (!getClipText("jim-cantore", jcRel)) return null;
     return {
       src: `${JC_LF_DIR}/${jcFilename}.mp3`,
       text,

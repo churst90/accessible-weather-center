@@ -43,7 +43,7 @@ interface NamedClip {
 }
 
 const NAMED_CLIPS: NamedClip[] = [
-  // Intro clips — VocalLocal WAV
+  // Intro clips — VocalLocal
   { file: `${VL_INTROS}/CC_INTRO1.mp3`,                        intent: "current_intro",           text: "Currently, the temperature is",            confidence: "confirmed" },
   { file: `${VL_INTROS}/CC_INTRO2.mp3`,                        intent: "current_intro_alt",       text: "Currently, the temperature is (alt)",      confidence: "likely" },
   // Signature / tones
@@ -57,7 +57,7 @@ const NAMED_CLIPS: NamedClip[] = [
   { file: `${SEVERE_BASE}/tornado_warning.mp3`,                intent: "alert_tornado",           text: "tornado warning alert",                    confidence: "confirmed" },
   { file: `${SEVERE_BASE}/severe_thunderstorm_warning.mp3`,    intent: "alert_tstorm",            text: "thunderstorm warning alert",               confidence: "confirmed" },
   { file: `${SEVERE_BASE}/f_flood_warning.mp3`,                intent: "alert_flood",             text: "flash flood warning alert",                confidence: "confirmed" },
-  // Number special cases — VocalLocal WAV
+  // Number special cases — VocalLocal
   { file: `${VL_TEMPS}/Zero.mp3`,                              intent: "number_zero_degrees",     text: "zero degrees",                             confidence: "likely" },
   { file: `${VL_TEMPS}/Zero.mp3`,                              intent: "number_zero",             text: "zero",                                     confidence: "likely" },
   { file: `${VL_TEMPS}/Zeros.mp3`,                             intent: "number_zero_plural",      text: "zero (alternate take)",                    confidence: "guess" },

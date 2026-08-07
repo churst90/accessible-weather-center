@@ -21,7 +21,10 @@
     "dist": "npm run build && npx --yes electron-builder@25",
     "dist:linux": "npm run build && npx --yes electron-builder@25 --linux",
     "dist:win": "npm run build && npx --yes electron-builder@25 --win",
-    "dist:mac": "npm run build && npx --yes electron-builder@25 --mac"
+    "dist:mac": "npm run build && npx --yes electron-builder@25 --mac",
+    "clips:sweep": "node scripts/sweep-clips.mjs",
+    "clips:sweep:ci": "node scripts/sweep-clips.mjs --table-only",
+    "test:all": "npm test && npm run clips:sweep:ci"
   },
   "dependencies": {
     "react": "^18.3.1",

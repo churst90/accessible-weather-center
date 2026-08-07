@@ -67,10 +67,17 @@ export type WindRange =
   | "25_40" | "35_50" | "40_60" | "50_70" | "60_80" | "70_90" | "80_100"
   | "Over_100";
 
-/** Temperature range tokens used by AJ (e.g. `H80S`, `L30S`, `M50S`). */
+/**
+ * Temperature range tokens used by AJ (e.g. `H80S`, `L30S`, `M50S`).
+ *
+ * Decades start at 10 on purpose. There is no "0s" decade in the library —
+ * `H0S`/`L0S`/`M0S` have never existed as clips, because 0-9 is spoken as
+ * `SINGLE` ("single digits"). Including "0" in this union made three dead
+ * codes type-check and resolve to 404s; the sweep caught all nine.
+ */
 export type TempRangeCode =
   | "BELOW" | "WELL_BELOW" | "SINGLE"
-  | `${"H" | "L" | "M"}${"0" | "10" | "20" | "30" | "40" | "50" | "60" | "70" | "80" | "90" | "100"}S`;
+  | `${"H" | "L" | "M"}${"10" | "20" | "30" | "40" | "50" | "60" | "70" | "80" | "90" | "100"}S`;
 
 /** Named singleton intents the library exposes (non-enumerable one-offs). */
 export type NamedIntent =
@@ -498,8 +505,45 @@ function normalizeText(raw: string): string {
   return t;
 }
 
+/**
+ * Semantic IDs a narrator's resolver would happily build a path for, but
+ * whose clip does not exist in the library.
+ *
+ * These are genuine gaps in the source recordings, not mistakes: nobody
+ * recorded "winds increasing to below 5 mph" or "winds over 100 diminishing",
+ * and Jim Cantore's library has no zero-degree clip (Allan Jackson's does,
+ * as a special-cased `Zero.mp3`). Left unguarded, the resolver returns a path
+ * to a file that 404s — the composer treats it as a usable clip, so the
+ * fallback chain never runs and that part of the sentence is simply lost.
+ *
+ * Returning null instead lets the caller fall through to its alternative
+ * (a compound clip, a different family, or the spoken fallback text).
+ *
+ * Keep in step with `npm run clips:sweep`, which fails on any resolvable ID
+ * pointing at a missing file.
+ */
+const UNAVAILABLE: Partial<Record<NarratorId, ReadonlySet<string>>> = {
+  "allan-jackson": new Set([
+    "windInc:Below_5",
+    "windAndInc:Below_5",
+    "windSpeed:Over_100",
+    "windDim:Over_100",
+    "windAndDim:Over_100"
+  ]),
+  "jim-cantore": new Set([
+    "temp:0",
+    "tempHigh:0",
+    "tempLow:0",
+    "windInc:Below_5",
+    "windDim:Below_5",
+    "windInc:Over_100",
+    "windDim:Over_100"
+  ])
+};
+
 function resolveFor(narratorId: NarratorId, id: SemanticId): ClipResolution | null {
   const [category, param] = splitId(id);
+  if (UNAVAILABLE[narratorId]?.has(id as string)) return null;
   const resolver = RESOLVERS_BY_NARRATOR[narratorId]?.[category];
   if (!resolver) return null;
   const rel = resolver(param);

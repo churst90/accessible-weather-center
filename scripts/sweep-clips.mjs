@@ -45,6 +45,21 @@ const ONLY_NARRATOR = flag("narrator", null);
 const JSON_OUT = flag("json", null);
 const ASSETS = path.resolve(ROOT, flag("assets", "assets"));
 
+/**
+ * Without the media library (CI, or a fresh clone — `assets/` is gitignored)
+ * fall back to validating against the committed reference table instead of
+ * the filesystem. That still catches the failure mode that matters most:
+ * resolved paths drifting away from the names the library actually uses,
+ * which is exactly how the .wav -> .mp3 rename broke narration silently.
+ */
+const HAVE_ASSETS = fs.existsSync(path.join(ASSETS, "narration"));
+const TABLE_ONLY = has("table-only") || !HAVE_ASSETS;
+if (TABLE_ONLY) {
+  console.log(HAVE_ASSETS
+    ? "Running in --table-only mode: validating against the reference table."
+    : `No media library at ${ASSETS} — validating against the reference table only.`);
+}
+
 // The registry is TypeScript; bundle it to a temp ESM module so this script
 // can import it directly. Same approach as scripts/run-tests.mjs — esbuild is
 // already a Vite dependency, so no new packages.
@@ -55,7 +70,9 @@ await build({
     contents: `
       export { Sem, getLibrary } from "./src/audio/manifests/semanticRegistry";
       export { getNarratorClips } from "./src/audio/data/clipReferenceTable";
-      export { NARRATORS } from "./src/audio/manifests/narratorSchema";
+      export { NARRATORS, NARRATOR_ASSET_ROOTS, getNarrator } from "./src/audio/manifests/narratorSchema";
+      export { getNamedClip } from "./src/audio/manifests/clipSchema";
+      export { findLongformMatch } from "./src/audio/manifests/longformSchema";
     `,
     resolveDir: ROOT,
     sourcefile: "sweep-entry.ts",
@@ -69,7 +86,7 @@ await build({
   logLevel: "silent"
 });
 const reg = await import(pathToFileURL(path.join(outDir, "registry.mjs")).toString());
-const { Sem, getLibrary, getNarratorClips } = reg;
+const { Sem, getLibrary, getNarratorClips, NARRATORS, getNarrator, getNamedClip, findLongformMatch } = reg;
 
 // ───────────────────────── enumerable domains ─────────────────────────
 
@@ -86,7 +103,7 @@ const WIND_RANGES = [
 ];
 const TEMP_RANGES = [
   "BELOW", "WELL_BELOW", "SINGLE",
-  ...["H","L","M"].flatMap((p) => ["0","10","20","30","40","50","60","70","80","90","100"].map((n) => `${p}${n}S`))
+  ...["H","L","M"].flatMap((p) => ["10","20","30","40","50","60","70","80","90","100"].map((n) => `${p}${n}S`))
 ];
 const NAMED = [
   "current_intro", "current_intro_alt", "mnemonic", "warning_beep",
@@ -172,7 +189,17 @@ const ROOTS = {
 
 // ─────────────────────────── forward sweep ───────────────────────────
 
+/** Does this clip exist? Filesystem when we have it, reference table when we
+ *  don't. `relPath` is relative to assets/. */
+function clipExists(relPath, narratorId) {
+  if (!TABLE_ONLY) return fs.existsSync(path.join(ASSETS, relPath));
+  const root = `narration/${ROOTS[narratorId]}/`;
+  if (!relPath.startsWith(root)) return true; // outside the narrator tree
+  return Boolean(getNarratorClips(narratorId)[relPath.slice(root.length)]);
+}
+
 const report = { narrators: {}, generatedAt: new Date().toISOString() };
+const reachableExtra = new Set();
 let anyMissing = false;
 
 for (const narratorId of Object.keys(ROOTS)) {
@@ -194,8 +221,7 @@ for (const narratorId of Object.keys(ROOTS)) {
     if (!res) { fam[family].unsupported++; continue; }
 
     const rel = res.src.replace(/^\/assets\//, "");
-    const onDisk = path.join(ASSETS, rel);
-    if (!fs.existsSync(onDisk)) {
+    if (!clipExists(rel, narratorId)) {
       fam[family].missing++;
       missingFiles.push({ id: String(id), src: res.src });
       anyMissing = true;
@@ -225,7 +251,7 @@ for (const narratorId of Object.keys(ROOTS)) {
       }
     }
   };
-  walk(narratorDir);
+  if (!TABLE_ONLY) walk(narratorDir);
   const unreachable = owned.filter((f) => !reachable.has(f));
 
   // Group unreachable by directory — a whole directory unreached usually
@@ -248,6 +274,101 @@ for (const narratorId of Object.keys(ROOTS)) {
     guessSamples: guessLevel.slice(0, 20)
   };
 }
+
+// ──────────────── paths outside the semantic registry ────────────────
+//
+// Scene intros, the clipSchema named singletons, and the longform pool are
+// reached through their own resolvers, not through getLibrary(). Amy
+// Bargeron and Chandler have NO registry resolvers at all — they are
+// intro-only narrators — so without this section the sweep reported them as
+// supporting nothing and never checked a single one of their clips.
+
+const extra = { sceneIntros: {}, namedClips: {}, longform: {} };
+
+for (const narratorId of Object.keys(ROOTS)) {
+  if (ONLY_NARRATOR && narratorId !== ONLY_NARRATOR) continue;
+  const def = getNarrator(narratorId);
+  const root = `/assets/narration/${ROOTS[narratorId]}`;
+  let checked = 0;
+  const missing = [];
+  for (const [sceneId, clips] of Object.entries(def.sceneIntros ?? {})) {
+    for (const c of clips ?? []) {
+      checked++;
+      const src = c.file.startsWith("/assets/") ? c.file : `${root}/${c.file}`;
+      if (!clipExists(src.replace(/^\/assets\//, ""), narratorId)) {
+        missing.push({ scene: sceneId, src });
+        anyMissing = true;
+      }
+      reachableExtra.add(src.replace(/^\/assets\//, ""));
+    }
+  }
+  extra.sceneIntros[narratorId] = { checked, missing };
+}
+
+// clipSchema named singletons (shared across narrators).
+{
+  const NAMED_INTENTS = [
+    "current_intro", "current_intro_alt", "mnemonic", "warning_beep",
+    "alert_tornado", "alert_tstorm", "alert_flood"
+  ];
+  const missing = [];
+  let checked = 0;
+  for (const intent of NAMED_INTENTS) {
+    const clip = getNamedClip(intent);
+    if (!clip) continue;
+    checked++;
+    if (!TABLE_ONLY && !fs.existsSync(path.join(ASSETS, clip.src.replace(/^\/assets\//, "")))) {
+      missing.push({ intent, src: clip.src }); anyMissing = true;
+    }
+    reachableExtra.add(clip.src.replace(/^\/assets\//, ""));
+  }
+  extra.namedClips = { checked, missing };
+}
+
+// Longform pool — sample real NWS-style forecast text through the matcher.
+{
+  const SAMPLES = [
+    "A chance of showers and thunderstorms. Mostly cloudy, with a low around 71.",
+    "Mostly sunny, with a high near 89. Southeast wind around 5 mph.",
+    "Partly cloudy, with a low around 64. Chance of precipitation is 40%.",
+    "Snow likely, mainly before noon. Cloudy, with a high near 31.",
+    "Patchy fog before 9am. Otherwise, sunny, with a high near 75.",
+    "Scattered showers and thunderstorms after 2pm. Windy, with gusts to 30 mph.",
+    "Clear, with a low around 52.",
+    "Rain and snow showers likely. Cloudy, with a high near 38."
+  ];
+  for (const narratorId of ["allan-jackson", "jim-cantore"]) {
+    if (ONLY_NARRATOR && narratorId !== ONLY_NARRATOR) continue;
+    let matched = 0;
+    const missing = [];
+    for (const text of SAMPLES) {
+      const res = findLongformMatch(text, narratorId);
+      if (!res) continue;
+      matched++;
+      if (!clipExists(res.src.replace(/^\/assets\//, ""), narratorId)) {
+        missing.push({ text: text.slice(0, 40), src: res.src }); anyMissing = true;
+      }
+      reachableExtra.add(res.src.replace(/^\/assets\//, ""));
+    }
+    extra.longform[narratorId] = { samples: SAMPLES.length, matched, missing };
+  }
+}
+
+console.log(`\n${"=".repeat(78)}\nPaths outside the semantic registry\n${"=".repeat(78)}`);
+for (const [n, r] of Object.entries(extra.sceneIntros)) {
+  const mark = r.missing.length ? ` <-- ${r.missing.length} MISSING` : "";
+  console.log(`scene intros   ${n.padEnd(16)} ${String(r.checked).padStart(4)} clips${mark}`);
+  for (const m of r.missing.slice(0, VERBOSE ? 200 : 5)) console.log(`     ${m.scene}: ${m.src}`);
+}
+console.log(`named clips    ${String(extra.namedClips.checked).padStart(21)} clips` +
+  (extra.namedClips.missing.length ? ` <-- ${extra.namedClips.missing.length} MISSING` : ""));
+for (const m of extra.namedClips.missing) console.log(`     ${m.intent}: ${m.src}`);
+for (const [n, r] of Object.entries(extra.longform)) {
+  const mark = r.missing.length ? ` <-- ${r.missing.length} MISSING` : "";
+  console.log(`longform       ${n.padEnd(16)} ${String(r.matched).padStart(4)}/${r.samples} samples matched${mark}`);
+  for (const m of r.missing.slice(0, VERBOSE ? 200 : 5)) console.log(`     ${m.src}`);
+}
+report.extra = extra;
 
 // ─────────────────────────────── output ───────────────────────────────
 

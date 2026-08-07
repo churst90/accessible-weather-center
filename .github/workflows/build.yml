@@ -37,6 +37,12 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
+      # Narration audit. Runs in --table-only mode because the media library
+      # is gitignored and not present in CI; that still catches resolved clip
+      # paths drifting away from the names the library actually uses, which is
+      # how the .wav -> .mp3 rename silently broke most narration.
+      - run: npm run clips:sweep:ci
+      - run: node scripts/check-asset-refs.mjs || echo "asset refs need the media library; skipped"
 
   build:
     name: Build ${{ matrix.os }}

@@ -170,7 +170,7 @@ All ten confirmed silent-failure bugs from `docs/code-audit-2026-08.md` fixed, p
 - [ ] **Era-tuned CSS for `.ws-hero` / `.ws-feels` / `.ws-trend` / `.ws-almanac` / `.ws-travel` / `.ws-narrative`.**
 - [ ] **Per-scene backgrounds for non-WS4000 themes.** IS1 / IS2 / WSXL each used distinct scene-specific backdrops.
 - [ ] **Time-of-day scheduler.** Weight scene order by time of day per `docs/weatherscan-flavors.md`.
-- [ ] **Regional Forecast scene.** Amy's `Local-RegionalForecastConditions.wav` is waiting.
+- [ ] **Regional Forecast scene.** Amy's `Local-RegionalForecastConditions.mp3` is waiting.
 - [ ] **Full reduced-motion still coverage** via `stills/mv/` and `stills/wxl/`.
 - [ ] **Per-condition LDL icon refresh** — should also refresh on periodic poll.
 

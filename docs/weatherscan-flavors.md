@@ -83,7 +83,7 @@ The four scenes shipped in v0.1 (Current Conditions, Hourly Forecast, Extended F
 | Flavor | Data Source | Cost | Clips ready |
 |--------|-----------|------|-------------|
 | Air Quality / UV | EPA AirNow + UV APIs | Free (key for AirNow) | Amy: "The pollen report for your area" |
-| Regional Forecast | NWS API (already available) | Free | Amy (RegionalForecastConditions.wav held for this) + Chandler (32 rf/* clips) |
+| Regional Forecast | NWS API (already available) | Free | Amy (RegionalForecastConditions.mp3 held for this) + Chandler (32 rf/* clips) |
 | Regional Conditions | NWS nearby stations | Free | Chandler (8 rc/* clips) |
 | Pollen/Allergy | No reliable free API | **N/A** | Amy: clip ready (kept as placeholder), no data |
 
@@ -100,7 +100,7 @@ Each theme declares `extendedStyle: "5-day" | "7-day"` plus an `extendedTitle`. 
 | IntelliStar 1 | "Week Ahead" | 14 periods | Full 7-day pool (JC) |
 
 ### TODO for next session
-1. Wire up a Regional Forecast scene (NWS data + Amy `RegionalForecastConditions.wav` + Chandler's `rf/` pool).
+1. Wire up a Regional Forecast scene (NWS data + Amy `RegionalForecastConditions.mp3` + Chandler's `rf/` pool).
 2. Air Quality scene (EPA AirNow API, free with registration).
 3. Time-of-day weighted scheduler (heavier on Almanac at night, Travel Cities mid-morning, etc.).
 4. Clean up orphaned severe-clip `.wav` duplicates in the asset folder (see CHANGELOG v0.7 migration notes).

@@ -255,7 +255,7 @@ AlertTones (oscillators) ──────▶ voiceGain ───────�
 - `playAdvisory()` — 3-note rising chime
 - `playWarning()` — 4-note urgent pattern
 
-The bundled `severe_weather_tone.wav` is mapped to the `warning_beep` intent and plays on severe alert detection. Narrator-specific severe intros (AJ's 4-beep + spoken warning, JC's tier-based crawl beeps) route through `getSevereAlertIntroClips` in `PhraseComposer`.
+The bundled `severe_weather_tone.mp3` is mapped to the `warning_beep` intent and plays on severe alert detection. Narrator-specific severe intros (AJ's 4-beep + spoken warning, JC's tier-based crawl beeps) route through `getSevereAlertIntroClips` in `PhraseComposer`.
 
 ## Fan-sourced assets
 

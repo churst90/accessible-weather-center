@@ -6,7 +6,14 @@
  *   - allan-jackson: Full narration (scene intros + temp numbers + condition phrases)
  *   - jim-cantore:   Partial narration (scene intros + temps, fewer conditions)
  *   - amy-bargeron:  Scene intros only (Weatherscan era labels)
- *   - chandler:      Scene intros only (multiple variations per scene, FLAC)
+ *   - chandler:      Scene intros only (multiple variations per scene)
+ *
+ * All served audio is MP3. The source libraries arrived as a mix of WAV,
+ * FLAC and MP2; scripts/build-web-assets.mjs re-encodes everything to MP3 and
+ * clip paths here name the served file. Paths and clipReferenceTable.json
+ * keys must agree on the extension — when they drifted apart, every affected
+ * clip degraded to confidence "guess" and was silently dropped at playback.
+ * See docs/asset-pipeline.md.
  *
  * The PhraseComposer uses this to decide whether to emit a clip segment
  * or fall back to TTS for a given narrator × content combination.
@@ -169,10 +176,12 @@ export const NARRATORS: NarratorDef[] = [
         { file: `${JC_VOCALLOCAL_BASE}/Default_Phrases_Now/CC_INTRO4.mp3`, text: "Currently, it's.." },
         { file: `${JC_VOCALLOCAL_BASE}/Default_Phrases_Now/CC_INTRO5.mp3`, text: "Right now it's" },
       ],
-      radar: [
-        { file: `${JC_VOCALLOCAL_BASE}/Default_Phrases_Local_Radar/RADAR_DEFAULT1.mp3`, text: "Your local radar" },
-        { file: `${JC_VOCALLOCAL_BASE}/Default_Phrases_Local_Radar/RADAR_DEFAULT2.mp3`, text: "Your local radar (alt)" },
-      ],
+      // No radar intros. `Default_Phrases_Local_Radar/RADAR_DEFAULT{1,2}` were
+      // listed here from the initial commit, but that directory has never
+      // existed in Jim Cantore's library — the entries resolved to 404s and
+      // the radar scene played silence instead of falling back to spoken
+      // text. Removed rather than faked; add real clips if they surface.
+      // Caught by `npm run clips:sweep`.
       extended: [
         // JC's extended pool is entirely 7-day / week-ahead phrasing —
         // IntelliStar never ran a 5-day version. Tagged so 5-day themes
