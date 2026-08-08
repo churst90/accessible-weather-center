@@ -136,10 +136,19 @@ test("current conditions always opens with a spoken scene title", () => {
   }
 });
 
-test("the lead-in still follows the title, so the sentence flows into the temperature", () => {
-  const script = composeCurrentConditions(OBS, "Saint Louis", "allan-jackson");
-  assert.equal(script[1]?.clip?.src.split("/").pop(), "CC_INTRO1.mp3");
-  assert.match(script[2]?.fallbackText ?? "", /72/);
+test("a scene-title intro is followed by the lead-in, then the temperature", () => {
+  // Two valid shapes, depending on which clip the pool hands back:
+  //   title  -> "Currently, the temperature is" -> 72 degrees
+  //   lead-in title                             -> 72 degrees
+  let sawTitleShape = false;
+  for (let i = 0; i < 60 && !sawTitleShape; i++) {
+    const script = composeCurrentConditions(OBS, "Saint Louis", "allan-jackson");
+    if (/^currently/i.test(script[0]?.clip?.text ?? "")) continue;
+    sawTitleShape = true;
+    assert.equal(script[1]?.clip?.src.split("/").pop(), "CC_INTRO1.mp3");
+    assert.match(script[2]?.fallbackText ?? "", /72/);
+  }
+  assert.ok(sawTitleShape, "expected a scene-title intro at least once in 60 tries");
 });
 
 test("hourly and extended forecasts open with their scene intro", () => {
@@ -157,4 +166,40 @@ test("hourly and extended forecasts open with their scene intro", () => {
   }] as unknown as ForecastPeriod[];
   const ext = composeExtendedForecast(periods, "Saint Louis", "allan-jackson", "5-day", "Extended Forecast");
   assert.ok(ext[0]?.clip, "extended forecast lost its intro");
+});
+
+test("the intro never says 'currently' twice", () => {
+  // The `current` pool mixes scene titles ("Your Current Conditions") with
+  // clips that are already lead-ins ("Currently In Your Area"). Appending the
+  // "Currently, the temperature is" lead-in to the latter produced
+  // "Currently in your area... currently, the temperature is... 90 degrees".
+  for (let i = 0; i < 40; i++) {
+    const script = composeCurrentConditions(OBS, "Saint Louis", "allan-jackson");
+    const spoken = script
+      .filter((s) => s.clip)
+      .map((s) => s.clip!.text.toLowerCase())
+      .join(" ");
+    const currentlyCount = (spoken.match(/\bcurrently\b/g) ?? []).length;
+    assert.ok(
+      currentlyCount <= 1,
+      `run ${i}: "currently" appears ${currentlyCount} times — "${spoken.slice(0, 80)}"`
+    );
+  }
+});
+
+test("a lead-in title carries straight into the temperature", () => {
+  // "Currently In Your Area" + "90 degrees" is the whole sentence; there
+  // should be no orphaned lead-in segment between them.
+  let sawLeadInTitle = false;
+  for (let i = 0; i < 60 && !sawLeadInTitle; i++) {
+    const script = composeCurrentConditions(OBS, "Saint Louis", "allan-jackson");
+    if (!/^currently/i.test(script[0]?.clip?.text ?? "")) continue;
+    sawLeadInTitle = true;
+    assert.match(
+      script[1]?.fallbackText ?? "",
+      /72/,
+      "a lead-in title should be followed directly by the temperature"
+    );
+  }
+  assert.ok(sawLeadInTitle, "expected to draw a lead-in style title at least once in 60 tries");
 });

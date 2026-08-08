@@ -75,7 +75,18 @@ export function composeCurrentConditions(obs: Observation, placeName: string, na
   // did too, so current conditions now does the same: title first, lead-in
   // second, both when they're available.
   const sceneTitleClip = useClips ? pickSceneIntroClip(narrator, "current") : null;
-  const leadInClip = narrator === "allan-jackson" && useClips
+
+  // The `current` pool mixes two kinds of clip, and they compose differently:
+  //
+  //   scene titles  "Your Current Conditions", "Our current conditions"
+  //   lead-ins      "Currently In Your Area"
+  //
+  // A title wants the "Currently, the temperature is" lead-in after it. A clip
+  // that is ALREADY a lead-in does not — pairing them produced "Currently in
+  // your area... currently, the temperature is... 90 degrees", saying
+  // "currently" twice before the reading ever starts.
+  const titleIsLeadIn = /^currently\b/i.test(sceneTitleClip?.text ?? "");
+  const leadInClip = narrator === "allan-jackson" && useClips && !titleIsLeadIn
     ? getNamedClip("current_intro")
     : null;
 
@@ -85,14 +96,17 @@ export function composeCurrentConditions(obs: Observation, placeName: string, na
       fallbackText: `Current conditions for ${placeName}.`
     });
   }
-  // Only emit the lead-in as its own segment when a title preceded it;
-  // otherwise it carries the whole intro and keeps the original phrasing.
-  script.push({
-    clip: leadInClip ?? (sceneTitleClip ? null : pickSceneIntroClip(narrator, "current")),
-    fallbackText: sceneTitleClip
-      ? "Currently, the temperature is"
-      : `Currently in ${placeName}, the temperature is`
-  });
+  // Skip the lead-in entirely when the title already served as one — the
+  // screen reader would otherwise read the doubled "currently" too, not just
+  // the narrator.
+  if (!titleIsLeadIn) {
+    script.push({
+      clip: leadInClip ?? (sceneTitleClip ? null : pickSceneIntroClip(narrator, "current")),
+      fallbackText: sceneTitleClip
+        ? "Currently, the temperature is"
+        : `Currently in ${placeName}, the temperature is`
+    });
+  }
 
   if (obs.temperatureF != null) {
     script.push({
