@@ -114,6 +114,12 @@ test("period names still drive the forecast time hint", () => {
 
 import { composeCurrentConditions, composeHourlyForecast, composeExtendedForecast } from "../src/audio/PhraseComposer";
 import type { ForecastPeriod, HourlyForecastPoint } from "../src/core/types";
+import { setClipReferenceTable } from "../src/audio/data/clipReferenceTable";
+import fullTable from "../src/audio/data/clipReferenceTable.json";
+
+// The runtime loads a compact index over the network; tests install the
+// full table directly so transcription text is available for assertions.
+setClipReferenceTable(fullTable as never);
 
 const OBS: Observation = {
   placeId: "x", observedAt: new Date("2026-08-07T18:00:00Z"), temperatureF: 72,

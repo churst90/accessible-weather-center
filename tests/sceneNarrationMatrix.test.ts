@@ -8,6 +8,12 @@ import {
 import { setProductEra } from "../src/audio/manifests/sceneSegments";
 import type { NarratorId } from "../src/audio/manifests/narratorSchema";
 import type { Observation, ForecastPeriod, HourlyForecastPoint } from "../src/core/types";
+import { setClipReferenceTable } from "../src/audio/data/clipReferenceTable";
+import fullTable from "../src/audio/data/clipReferenceTable.json";
+
+// The runtime loads a compact index over the network; tests install the
+// full table directly so transcription text is available for assertions.
+setClipReferenceTable(fullTable as never);
 
 /**
  * Narration coverage for every scene x every narrator.

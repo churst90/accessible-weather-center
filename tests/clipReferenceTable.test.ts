@@ -2,6 +2,12 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Sem, getLibrary } from "../src/audio/manifests/semanticRegistry";
 import { getNarratorClips } from "../src/audio/data/clipReferenceTable";
+import { setClipReferenceTable } from "../src/audio/data/clipReferenceTable";
+import fullTable from "../src/audio/data/clipReferenceTable.json";
+
+// The runtime loads a compact index over the network; tests install the
+// full table directly so transcription text is available for assertions.
+setClipReferenceTable(fullTable as never);
 
 /**
  * Guards the clip-resolution chain end to end.

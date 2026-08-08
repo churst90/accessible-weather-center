@@ -27,6 +27,8 @@ import { ErrorBoundary } from "./ui/semantic/ErrorBoundary";
 import { HelpDialog } from "./ui/semantic/HelpDialog";
 import { FirstRunSetup } from "./ui/semantic/FirstRunSetup";
 import { SceneUnavailable } from "./ui/scenes/SceneUnavailable";
+import { ProductUnavailable } from "./ui/scenes/ProductUnavailable";
+import { getDevice, productAvailability, absentNote, type ProductId } from "./devices";
 import { resolveSceneView } from "./ui/scenes/sceneRegistry";
 import { PlacesMode } from "./ui/mapnav/PlacesMode";
 import { MapNavView } from "./ui/mapnav/MapNavView";
@@ -903,6 +905,19 @@ function SceneStage({
       />
     );
   }
+  // The selected machine may not have had this product at all — switching
+  // from a 4000 to a 3000 while on the radar screen, for instance. Say so in
+  // that unit's own typography rather than rendering a screen it never had.
+  if (productAvailability(themeId, scene.id as ProductId) === "absent") {
+    return (
+      <ProductUnavailable
+        title={scene.title}
+        deviceLabel={getDevice(themeId).label}
+        reason={absentNote(themeId, scene.id as ProductId)}
+      />
+    );
+  }
+
   const render = resolveSceneView(themeId, scene.id);
   if (!render) return <p>{scene.title}</p>;
   return render({ data: scene.data, rainviewer, alerts });

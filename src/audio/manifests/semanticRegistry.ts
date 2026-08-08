@@ -34,7 +34,7 @@ import {
   type NarratorId,
   NARRATOR_ASSET_ROOTS,
 } from "./narratorSchema";
-import { getClipText } from "../data/clipReferenceTable";
+import { getClipText, isClipIndexLoaded } from "../data/clipReferenceTable";
 
 // ───────────────────────── Semantic IDs ──────────────────────────────
 
@@ -558,10 +558,17 @@ function resolveFor(narratorId: NarratorId, id: SemanticId): ClipResolution | nu
   let text: string;
   let confidence: ClipConfidence;
   if (ref?.verified) {
-    text = normalizeText(ref.text);
+    text = normalizeText(ref.text) || deriveText(category, param);
     confidence = "confirmed";
   } else if (ref) {
     text = normalizeText(ref.text) || deriveText(category, param);
+    confidence = "likely";
+  } else if (!isClipIndexLoaded()) {
+    // The index is metadata, not permission. Without it we know nothing
+    // about verification — but "unknown" must not mean "drop the clip", or a
+    // slow or failed index load silences the entire narration at the default
+    // threshold. Degrade to playable.
+    text = deriveText(category, param);
     confidence = "likely";
   } else {
     text = deriveText(category, param);

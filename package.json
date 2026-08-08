@@ -8,7 +8,7 @@
     "dev": "vite",
     "build:electron": "tsc -p tsconfig.electron.json",
     "dev:electron": "npm run build:electron && cross-env NODE_ENV=development electron .",
-    "build": "tsc -b && vite build && npm run build:electron",
+    "build": "npm run build:clipindex && tsc -b && vite build && npm run build:electron",
     "start": "npm run build && electron .",
     "typecheck": "tsc -b --noEmit && tsc -p tsconfig.electron.json --noEmit",
     "test": "node scripts/run-tests.mjs",
@@ -26,7 +26,8 @@
     "clips:sweep:ci": "node scripts/sweep-clips.mjs --table-only",
     "test:all": "npm test && npm run clips:sweep:ci",
     "clips:explain": "node scripts/explain-narration.mjs",
-    "device:report": "node scripts/device-report.mjs"
+    "device:report": "node scripts/device-report.mjs",
+    "build:clipindex": "node scripts/build-clip-index.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",

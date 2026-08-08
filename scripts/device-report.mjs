@@ -29,7 +29,7 @@ await build({
       export { DEVICES, getDevice, deviceSceneOrder } from "./src/devices";
       export { pickSceneIntro, NARRATORS, getNarrator } from "./src/audio/manifests/narratorSchema";
       export { setProductEra, segmentLabel } from "./src/audio/manifests/sceneSegments";
-      export { getNarratorClips } from "./src/audio/data/clipReferenceTable";
+      export { getNarratorClips, setClipReferenceTable } from "./src/audio/data/clipReferenceTable";
     `,
     resolveDir: ROOT, sourcefile: "report.ts", loader: "ts"
   },
@@ -37,6 +37,13 @@ await build({
   outfile: path.join(outDir, "m.mjs"), logLevel: "silent"
 });
 const m = await import(pathToFileURL(path.join(outDir, "m.mjs")).toString());
+
+// Tooling wants the transcription text, so install the FULL table rather than
+// the compact runtime index the app fetches.
+{
+  const full = JSON.parse(fs.readFileSync(path.join(ROOT, "src/audio/data/clipReferenceTable.json"), "utf8"));
+  m.setClipReferenceTable(full);
+}
 
 const NARRATORS = m.NARRATORS.filter((n) => n.id !== "silent");
 const stamp = new Date().toISOString().slice(0, 10);

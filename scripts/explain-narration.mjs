@@ -39,6 +39,7 @@ await build({
   stdin: {
     contents: `
       export { pickSceneIntro, NARRATORS } from "./src/audio/manifests/narratorSchema";
+      export { setClipReferenceTable } from "./src/audio/data/clipReferenceTable";
       export { setProductEra, getProductEra, segmentLabel, eraIntroKeys, THEME_PRODUCT_ERA }
         from "./src/audio/manifests/sceneSegments";
       export { THEMES } from "./src/core/settings/themes";
@@ -51,6 +52,13 @@ await build({
   outfile: path.join(outDir, "m.mjs"), logLevel: "silent"
 });
 const m = await import(pathToFileURL(path.join(outDir, "m.mjs")).toString());
+
+// Tooling wants the transcription text, so install the FULL table rather than
+// the compact runtime index the app fetches.
+{
+  const full = JSON.parse(fs.readFileSync(path.join(ROOT, "src/audio/data/clipReferenceTable.json"), "utf8"));
+  m.setClipReferenceTable(full);
+}
 
 const SCENES = [
   "current", "localforecast", "radar", "extended", "hourly", "travel", "almanac",

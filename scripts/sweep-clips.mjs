@@ -69,7 +69,7 @@ await build({
   stdin: {
     contents: `
       export { Sem, getLibrary } from "./src/audio/manifests/semanticRegistry";
-      export { getNarratorClips } from "./src/audio/data/clipReferenceTable";
+      export { getNarratorClips, setClipReferenceTable } from "./src/audio/data/clipReferenceTable";
       export { NARRATORS, NARRATOR_ASSET_ROOTS, getNarrator } from "./src/audio/manifests/narratorSchema";
       export { getNamedClip } from "./src/audio/manifests/clipSchema";
       export { findLongformMatch } from "./src/audio/manifests/longformSchema";
@@ -87,6 +87,13 @@ await build({
 });
 const reg = await import(pathToFileURL(path.join(outDir, "registry.mjs")).toString());
 const { Sem, getLibrary, getNarratorClips, NARRATORS, getNarrator, getNamedClip, findLongformMatch } = reg;
+
+// Tooling wants the transcription text, so install the FULL table rather than
+// the compact runtime index the app fetches.
+{
+  const full = JSON.parse(fs.readFileSync(path.join(ROOT, "src/audio/data/clipReferenceTable.json"), "utf8"));
+  reg.setClipReferenceTable(full);
+}
 
 // ───────────────────────── enumerable domains ─────────────────────────
 

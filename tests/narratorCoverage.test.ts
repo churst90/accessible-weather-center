@@ -200,6 +200,12 @@ test("named singleton clips all resolve", () => {
 // ───────────────────── scene narration coverage ─────────────────────
 
 import { pickSceneIntro } from "../src/audio/manifests/narratorSchema";
+import { setClipReferenceTable } from "../src/audio/data/clipReferenceTable";
+import fullTable from "../src/audio/data/clipReferenceTable.json";
+
+// The runtime loads a compact index over the network; tests install the
+// full table directly so transcription text is available for assertions.
+setClipReferenceTable(fullTable as never);
 
 /** Every scene in the rotation. Mirrors FLAVORS in src/bootstrap.ts. */
 const SCENE_IDS = [

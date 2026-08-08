@@ -7,6 +7,12 @@ import {
 import { isEraStrict } from "../src/audio/manifests/sceneSegments";
 import { THEMES } from "../src/core/settings/themes";
 import type { NarratorId } from "../src/audio/manifests/narratorSchema";
+import { setClipReferenceTable } from "../src/audio/data/clipReferenceTable";
+import fullTable from "../src/audio/data/clipReferenceTable.json";
+
+// The runtime loads a compact index over the network; tests install the
+// full table directly so transcription text is available for assertions.
+setClipReferenceTable(fullTable as never);
 
 /**
  * Period accuracy for the September 2004 TWC product rename.
