@@ -29,6 +29,8 @@
  * selected by the separate `eras` tag on each clip.
  */
 
+import { DEVICES } from "../../devices/registry";
+
 /**
  * Which side of the September 2004 rename a theme's hardware sits on.
  *
@@ -37,6 +39,7 @@
  * at call time.
  */
 export type ProductEra = "pre-2004" | "post-2004";
+
 
 /**
  * Per-theme product era.
@@ -52,19 +55,9 @@ export type ProductEra = "pre-2004" | "post-2004";
  *     product set and never received the later products, so it keeps the
  *     older naming.
  */
-export const THEME_PRODUCT_ERA: Record<string, ProductEra> = {
-  ws3000:             "pre-2004",
-  wsjr:               "pre-2004",
-  "ws4000-v1":        "pre-2004",
-  "weatherscan-local": "pre-2004",
-  weatherstarxl:      "pre-2004",
-
-  "ws4000-v2":        "post-2004",
-  "weatherscan-v1":   "post-2004",
-  "weatherscan-v2":   "post-2004",
-  intellistar1:       "post-2004",
-  intellistar2:       "post-2004"
-};
+export const THEME_PRODUCT_ERA: Record<string, ProductEra> = Object.fromEntries(
+  DEVICES.map((d) => [d.id, d.era])
+);
 
 /** What a given unit called a given screen. Used for narration selection and
  *  by `npm run clips:explain` so the choice is inspectable. */

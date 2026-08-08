@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { GRID_STEP_PRESETS_MI, type SettingsStore, type Settings } from "../../core/settings/SettingsStore";
-import { THEMES, getTheme, THEME_CORE_SCENES, VALUE_ADD_SCENES, type ThemeId } from "../../core/settings/themes";
+import { THEMES, getTheme, type ThemeId } from "../../core/settings/themes";
+import { getDevice, absentNote, type ProductId } from "../../devices";
 import { NARRATORS } from "../../audio/manifests/narratorSchema";
 import { BUNDLED_STATIONS, fetchActiveNwrStations, type NwrStation } from "../../audio/nwrStations";
 import { ModalDialog } from "../semantic/ModalDialog";
@@ -240,10 +241,24 @@ export function SettingsPanel({ store, open, onClose, flavors }: Props) {
           {/* Core loop — scenes authentic to the current theme's era */}
           {(() => {
             const themeId = settings.theme as ThemeId;
-            const coreIds = THEME_CORE_SCENES[themeId] ?? THEME_CORE_SCENES["weatherscan-v1"];
+            const device = getDevice(themeId);
             const flavorMap = new Map(flavors.map((f) => [f.id, f]));
-            const coreScenes = coreIds.map((id) => flavorMap.get(id)).filter(Boolean) as { id: string; title: string }[];
-            const valueAddScenes = VALUE_ADD_SCENES.map((id) => flavorMap.get(id)).filter(Boolean) as { id: string; title: string }[];
+            // Core loop, optional packages and never-existed products all come
+            // from the device profile, so Settings shows what THIS machine
+            // could actually do. A WeatherStar 3000 offers no radar checkbox.
+            const coreScenes = device.rundown
+              .filter((id) => id !== "alerts")
+              .map((id) => flavorMap.get(id))
+              .filter(Boolean) as { id: string; title: string }[];
+            const optionalIds = (Object.keys(device.products) as ProductId[])
+              .filter((id) => device.products[id]?.availability === "optional")
+              .filter((id) => !device.rundown.includes(id));
+            const valueAddScenes = optionalIds
+              .map((id) => flavorMap.get(id))
+              .filter(Boolean) as { id: string; title: string }[];
+            const absentScenes = (Object.keys(device.products) as ProductId[])
+              .filter((id) => device.products[id]?.availability === "absent")
+              .map((id) => ({ id, title: flavorMap.get(id)?.title ?? id, note: absentNote(themeId, id) }));
             // Alerts is always available but separate
             const alertsFlavor = flavorMap.get("alerts");
             return (
@@ -295,6 +310,25 @@ export function SettingsPanel({ store, open, onClose, flavors }: Props) {
                       />{" "}
                       {alertsFlavor.title}
                     </label>
+                  </>
+                )}
+
+                {absentScenes.length > 0 && (
+                  <>
+                    <div style={{ marginTop: 12, marginBottom: 4, fontWeight: "bold", color: "var(--ws-text-dim)" }}>
+                      Not available on this unit
+                    </div>
+                    {/* Listed rather than hidden: part of the point of an
+                        emulator is knowing what the hardware could not do.
+                        Read by screen readers as a plain list, not controls. */}
+                    <ul style={{ margin: "0 0 4px 0", paddingLeft: 20, color: "var(--ws-text-dim)" }}>
+                      {absentScenes.map((f) => (
+                        <li key={f.id} style={{ marginBottom: 2 }}>
+                          {f.title}
+                          {f.note ? <span> — {f.note}</span> : null}
+                        </li>
+                      ))}
+                    </ul>
                   </>
                 )}
               </>

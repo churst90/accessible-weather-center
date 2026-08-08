@@ -25,7 +25,8 @@
     "clips:sweep": "node scripts/sweep-clips.mjs",
     "clips:sweep:ci": "node scripts/sweep-clips.mjs --table-only",
     "test:all": "npm test && npm run clips:sweep:ci",
-    "clips:explain": "node scripts/explain-narration.mjs"
+    "clips:explain": "node scripts/explain-narration.mjs",
+    "device:report": "node scripts/device-report.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",

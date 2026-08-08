@@ -205,6 +205,11 @@ src/
 │   ├── mapnav/                # Places / Alerts / Storms / Grid Explorer sub-modes
 │   └── settings/              # Settings panel
 ├── platform/desktop/          # Electron-specific bridges
+├── devices/                   # ONE PROFILE PER EMULATED MACHINE
+│   ├── types.ts               # the Device contract
+│   ├── registry.ts            # the list (cycle-free)
+│   └── profiles/<id>.ts       # what each unit was: era, voice, rundown,
+│                              #   product names, capabilities, gaps
 ├── bootstrap.ts               # buildServices() — constructs and wires everything
 ├── App.tsx                    # Service wiring / UI only
 └── main.tsx                   # React entry

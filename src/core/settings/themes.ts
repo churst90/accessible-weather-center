@@ -25,6 +25,7 @@
  * theme (no TWC hardware unit was ever "high contrast").
  */
 
+import { deviceSceneOrder } from "../../devices";
 import type { NarratorId } from "../../audio/manifests/narratorSchema";
 import { pickBackground } from "./backgroundCatalog";
 
@@ -432,80 +433,21 @@ export function getTheme(id: ThemeId): ThemeDef {
 /* ------------------------------------------------------------------ */
 
 /**
- * Core scenes for each theme — the scenes that played in the authentic loop
- * for that WeatherStar model, in the order they appeared on-air.
- * Value-add scenes are everything NOT listed here (hidden by default).
- */
-export const THEME_CORE_SCENES: Record<ThemeId, readonly string[]> = {
-  /* Weatherscan Local (1999-2003): the original XL-era loop — current,
-     local forecast text, radar, extended, hourly (daypart), travel, almanac.
-     Pre-Weatherscan Plus so no activity scenes. */
-  "weatherscan-local": ["current", "localforecast", "radar", "extended", "hourly", "travel", "almanac"],
-
-  /* Weatherscan V1 (2003-2005): IntelliStar-era loop. Same core set with
-     the same ordering; activity packs (golf/ski/beach/health/garden) rode
-     as Weatherscan Plus value-adds rather than base loop. */
-  "weatherscan-v1": ["current", "localforecast", "radar", "extended", "hourly", "travel", "almanac"],
-
-  /* Weatherscan V2 (2005-2022): L-bar era. Shown-at-once persistent left
-     column kept the current conditions and radar visible throughout; the
-     main panel rotated through forecast/almanac/travel. */
-  "weatherscan-v2": ["current", "localforecast", "radar", "extended", "hourly", "travel", "almanac"],
-
-  /* WeatherStar 3000 (1988-1990): pre-radar-local era. Current, then
-     local forecast, extended (5-day), almanac, travel. No hourly, no
-     local radar — the 3000 couldn't render radar on the box. */
-  ws3000: ["current", "localforecast", "extended", "almanac", "travel"],
-
-  /* WeatherStar 4000 v1 (~2001-2004): simpler loop, radar after extended */
-  "ws4000-v1": ["current", "localforecast", "extended", "radar", "almanac", "travel"],
-
-  /* WeatherStar 4000 v2 (~2005-2009): same scene loop on refreshed chrome */
-  "ws4000-v2": ["current", "localforecast", "extended", "radar", "almanac", "travel"],
-
-  /* WeatherStar Jr (1993-2014): per research (docs/legacy-eras.md), WSJr
-     is a WS3000 in WS4000 font — not a WS4000 variant. No on-unit radar.
-     Scene loop mirrors WS3000, not WS4000. */
-  wsjr: ["current", "localforecast", "extended", "almanac", "travel"],
-
-  /* WeatherStar XL (1998-2014): radar right after conditions, 7-day extended, daypart */
-  weatherstarxl: ["current", "radar", "localforecast", "extended", "hourly", "travel", "almanac"],
-
-  /* IntelliStar 1 (2003-2013): hourly up front, forecast before radar */
-  intellistar1: ["current", "hourly", "extended", "localforecast", "radar", "travel", "almanac"],
-
-  /* IntelliStar 2 / 2 Jr HD (2013+): HD-era modern layout. Both IS2 and
-     IS2 Jr shared the same scene progression — the Jr only differed in
-     hardware scale, not in scene lineup. */
-  intellistar2: ["current", "hourly", "extended", "localforecast", "radar", "travel", "almanac"],
-};
-
-/** All value-add scene ids (not part of any era's core loop). */
-export const VALUE_ADD_SCENES: readonly string[] = [
-  "detailed", "feelslike", "stormtracker", "overnight", "weekend", "precip", "temptrend", "traffic", "airport"
-];
-
-/**
- * Per-theme value-add scene exclusions. IntelliStar 2 HD / IS2 Jr never
- * showed a standalone Airport Delays scene — airport data ran in the
- * Lower Display Line (LDL) crawl during national programming instead.
- * See the LDL crawl component wired into WeatherscanFrame for IS2 themes.
- */
-const THEME_EXCLUDED_SCENES: Partial<Record<ThemeId, readonly string[]>> = {
-  intellistar2: ["airport"],
-};
-
-/**
  * Build the full scene order for a given theme: core scenes in authentic
  * order, then value-add scenes (minus any excluded for this theme), then
  * alerts at the very end (it interrupts rather than cycling, but needs to
  * be in the list for jumpToId).
  */
 export function getSceneOrder(themeId: ThemeId): string[] {
-  const core = THEME_CORE_SCENES[themeId] ?? THEME_CORE_SCENES["weatherscan-v1"];
-  const excluded = new Set(THEME_EXCLUDED_SCENES[themeId] ?? []);
-  const valueAdd = VALUE_ADD_SCENES.filter((id) => !excluded.has(id));
-  return [...core, ...valueAdd, "alerts"];
+  // Delegates to the device profile. The rundown, which products were
+  // optional packages, and which the hardware never had at all are all
+  // machine facts and live in src/devices/profiles/<id>.ts.
+  //
+  // The returned list is every product the machine COULD show; the
+  // scheduler's enabled-predicate then applies the user's Settings choices.
+  // Products marked `absent` are excluded here and can never be enabled —
+  // a WeatherStar 3000 with a radar screen is not a WeatherStar 3000.
+  return deviceSceneOrder(themeId);
 }
 
 /**

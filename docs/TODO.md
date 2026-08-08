@@ -2,6 +2,18 @@
 
 Prioritized backlog. Ordered top to bottom within each section. Items marked `[x]` shipped in a prior release; `[ ]` is still open.
 
+## Device profiles (emulator architecture)
+
+Each machine now declares itself in `src/devices/profiles/<id>.ts`: era, voice, music, extended day count, capabilities, base rundown, per-product naming and availability, and outstanding art/audio gaps. The kernel reads from there and never branches on a theme id of its own accord. `npm run device:report` regenerates `docs/clip-wishlist.md` and `docs/asset-gaps.md` from the profiles.
+
+- [x] ~~Device type + all ten profiles~~ — replaces `THEME_CORE_SCENES`, `THEME_EXCLUDED_SCENES`, `VALUE_ADD_SCENES` and the hand-maintained era table.
+- [x] ~~`absent` products~~ — a WeatherStar 3000 no longer offers a radar checkbox; Settings lists what the unit could not do and why.
+- [ ] **Move per-device visuals into the profile.** Background pools, CSS vars and the scene-view overrides still live in `themes.ts` / `backgroundCatalog.ts` / `sceneRegistry.tsx`. Mechanical follow-on now the contract exists.
+- [ ] **Code-split by device.** The bundle is 1,769 KB of which 1,366 KB is `clipReferenceTable.json`. Move the table out of the JS bundle (fetch it, or prune the transcription text at build) and lazy-load per-device renderers — plausibly a 5-8x smaller initial download.
+- [ ] **Optional-package scenes still need building:** Air Quality (IS1), School Day Weather and Outdoor Activity Forecast (Sept 2004+), and the Weatherscan Plus activity packs (golf, ski, beach, garden, health). Declared as optional where the hardware had them; no renderers yet.
+- [ ] **Loading / "not available" screens in period fonts.** Settings lists absent products, but a scene-level notice in each unit's own typography is not built.
+- [ ] **Local sponsor slot.** `sponsorSlot` capability is declared for the Weatherscan and IntelliStar profiles; nothing consumes it yet. See the discussion note in the commit for options.
+
 ## Narration period accuracy
 
 Source for the dates below: the IntelliStar timeline in `docs/reference/is1/handwiki/page.html`, September 2004 — *"36 Hour Forecast" is renamed "Local Forecast"… The hour-by-hour forecast, referred to as "Daily Planner" is now renamed the "Daypart Forecast"*.
