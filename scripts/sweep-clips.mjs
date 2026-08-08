@@ -252,6 +252,9 @@ for (const narratorId of Object.keys(ROOTS)) {
     }
   };
   if (!TABLE_ONLY) walk(narratorDir);
+  // reachableExtra is filled by the extra-path audit further down (scene
+  // intros, named clips, longform), so the final subtraction happens there.
+  // Doing it here counted every intro clip as unreachable.
   const unreachable = owned.filter((f) => !reachable.has(f));
 
   // Group unreachable by directory — a whole directory unreached usually
@@ -268,6 +271,7 @@ for (const narratorId of Object.keys(ROOTS)) {
     reachableClips: reachable.size,
     unreachableClips: unreachable.length,
     unreachableByDir: byDir,
+    unreachableList: unreachable,
     tableKeys: Object.keys(table).length,
     missingFiles,
     guessLevel: guessLevel.length,
@@ -352,6 +356,21 @@ for (const narratorId of Object.keys(ROOTS)) {
     }
     extra.longform[narratorId] = { samples: SAMPLES.length, matched, missing };
   }
+}
+
+// Now that the extra paths have been walked, drop anything they reach from
+// each narrator's unreachable list and recompute the per-directory rollup.
+for (const [narratorId, r] of Object.entries(report.narrators)) {
+  const stillUnreached = (r.unreachableList ?? []).filter((f) => !reachableExtra.has(f));
+  r.unreachableClips = stillUnreached.length;
+  r.reachableClips = r.ownedClips - stillUnreached.length;
+  const byDir = {};
+  for (const f of stillUnreached) {
+    const d = path.dirname(f).replace(`narration/${ROOTS[narratorId]}/`, "");
+    byDir[d] = (byDir[d] ?? 0) + 1;
+  }
+  r.unreachableByDir = byDir;
+  delete r.unreachableList;
 }
 
 console.log(`\n${"=".repeat(78)}\nPaths outside the semantic registry\n${"=".repeat(78)}`);

@@ -14,6 +14,26 @@ Source for the dates below: the IntelliStar timeline in `docs/reference/is1/hand
 
 ## Narration coverage
 
+Full audit of all four narrators against all seventeen scenes is complete and pinned by `tests/sceneNarrationMatrix.test.ts`. Run `npm run clips:explain` for the live matrix. Remaining gaps are missing *recordings*, not missing wiring:
+
+| Scene | Narrators that can announce it | Missing because |
+|---|---|---|
+| almanac | none | no narrator has sunrise/sunset/moon phrasing |
+| precip | none | the Wx_Phrases_Precip pool is probability phrases, not an intro |
+| airport | Amy only | only she recorded "local airport delays" |
+| travel | Chandler only | only he recorded "forecast cities nationwide" |
+| traffic | Allan Jackson, Amy | Jim Cantore and Chandler have no traffic clips |
+| weekend | Allan Jackson, Jim Cantore | Amy and Chandler have no weekend phrasing |
+| radar, stormtracker | all but Jim Cantore | he has no `Default_Phrases_Local_Radar` directory at all |
+| extended | all but Amy | she has no extended phrasing; Jim Cantore's is 7-day only, by design — IntelliStar never ran a 5-day |
+
+- [ ] **Source almanac and precipitation-outlook intros.** The only two scenes silent for every narrator.
+- [ ] **Source a Jim Cantore radar intro.** He is the IntelliStar 1 default, so Local Radar and Storm Tracker are silent on that theme.
+- [ ] **Regional Forecast scene.** Chandler has 32 `rf/` clips and Amy has `Local-RegionalForecastConditions`; both are unreachable until the scene exists.
+- [ ] **Allergy/pollen scene.** Amy's `Local-AllergyReport` is her one genuinely unused clip.
+- [ ] **Chandler has 104 of 202 clips unused** — extra variants inside categories that are already wired. Widening the pools would add variety; not a correctness issue.
+
+
 - [x] ~~Scenes with no narrator audio~~ — was 7 (travel, almanac, detailed, feelslike, stormtracker, precip, temptrend); now 2. Fixed by case-insensitive scene-id lookup, a documented alias map for scenes that legitimately share an intro, and reconnecting Chandler's travel/regional clips which were wired under key names no scene id matched.
 - [ ] **Almanac narration.** No narrator has a phrase covering sunrise/sunset/moon phase. Needs real clips; pinned as KNOWN_SILENT in tests/narratorCoverage.test.ts.
 - [ ] **Precipitation Outlook narration.** Same — the Wx_Phrases_Precip pool is probability phrases ("a 40 percent chance"), not a scene intro.

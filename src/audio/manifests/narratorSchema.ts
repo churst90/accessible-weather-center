@@ -204,6 +204,7 @@ export const NARRATORS: NarratorDef[] = [
       hourly: [
         { file: `${JC_VOCALLOCAL_BASE}/Default_Phrases_Daypart/DAYPART_DEFAULT1.mp3`, text: "Our local forecast" },
         { file: `${JC_VOCALLOCAL_BASE}/Default_Phrases_Daypart/DAYPART_DEFAULT2.mp3`, text: "The forecast for our area" },
+        { file: `${JC_VOCALLOCAL_BASE}/Default_Phrases_Daypart/DAYPART_DEFAULT4.mp3`, text: "The forecast for your area" },
         // DAYPART_DEFAULT3 ("Our Daily Planner") moved to `dailyPlanner` —
         // the name was retired in September 2004 and Jim Cantore narrates
         // IntelliStar-era themes, which are all post-rename.
@@ -211,6 +212,14 @@ export const NARRATORS: NarratorDef[] = [
       // Pre-September-2004 name, kept for themes that predate the rename.
       dailyPlanner: [
         { file: `${JC_VOCALLOCAL_BASE}/Default_Phrases_Daypart/DAYPART_DEFAULT3.mp3`, text: "Our Daily Planner" },
+        { file: `${JC_VOCALLOCAL_BASE}/Default_Phrases_Daypart/DAYPART_DEFAULT5.mp3`, text: "Your daily planner" },
+      ],
+      // DAYPART_DEFAULT6 says "your local forecast" outright — the Local
+      // Forecast scene had no Jim Cantore intro at all until this was wired,
+      // even though the clip was sitting in the library.
+      localForecast: [
+        { file: `${JC_VOCALLOCAL_BASE}/Default_Phrases_Daypart/DAYPART_DEFAULT6.mp3`, text: "Your local forecast" },
+        { file: `${JC_VOCALLOCAL_BASE}/Headline_Phrases/024.mp3`, text: "Your local forecast" },
       ],
       alerts: [
         { file: `${JC_NARRATION}/Weatherscan severe/SEVERE_DEFAULT.mp3`, text: "Severe weather alert" },
