@@ -41,6 +41,8 @@ export const WEATHERSCAN_LOCAL: Device = {
     iconSet: "/assets/icons",
     backgroundImage: "/assets/themes/weatherscan/backgrounds/local-era/neighborhood/now.webp",
     extendedTitle: "7-Day Outlook",
+    backgroundPool: "ws-local-neighborhood",
+    sceneBackgroundSet: "weatherscan-local",
     vars: {
       "--ws-bg-deep":       "#040915",
       "--ws-bg-mid":        "#0a1838",

@@ -49,6 +49,7 @@ export const INTELLISTAR1: Device = {
     iconResolution: 42,
     backgroundImage: "",
     extendedTitle: "Week Ahead",
+    backgroundPool: "is1-city-gradients",
     vars: {
       "--ws-bg-deep":       "#001030",
       "--ws-bg-mid":        "#002060",

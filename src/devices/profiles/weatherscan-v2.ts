@@ -42,6 +42,7 @@ export const WEATHERSCAN_V2: Device = {
     iconSet: "/assets/icons",
     backgroundImage: "/assets/themes/weatherscan/backgrounds/city_bg.webp",
     extendedTitle: "7-Day Outlook",
+    backgroundPool: "ws-city-skylines",
     vars: {
       "--ws-bg-deep":       "#020a1c",
       "--ws-bg-mid":        "#071638",

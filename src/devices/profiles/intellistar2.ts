@@ -56,6 +56,8 @@ export const INTELLISTAR2: Device = {
     iconResolution: 68,
     backgroundImage: "",
     extendedTitle: "7-Day Outlook",
+    backgroundPool: "is2-generics",
+    severePool: "is2-severe",
     vars: {
       "--ws-bg-deep":       "#000714",
       "--ws-bg-mid":        "#001e46",

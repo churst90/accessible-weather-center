@@ -41,6 +41,7 @@ export const WS4000_V1: Device = {
     iconSet: "/assets/icons",
     backgroundImage: "/assets/backgrounds/BackGround1.webp",
     extendedTitle: "Extended Forecast",
+    sceneBackgroundSet: "ws4000-v1",
     vars: {
       "--ws-bg-deep":       "#050d28",
       "--ws-bg-mid":        "#0a1f4a",

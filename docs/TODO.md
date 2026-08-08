@@ -8,8 +8,9 @@ Each machine now declares itself in `src/devices/profiles/<id>.ts`: era, voice, 
 
 - [x] ~~Device type + all ten profiles~~ — replaces `THEME_CORE_SCENES`, `THEME_EXCLUDED_SCENES`, `VALUE_ADD_SCENES` and the hand-maintained era table.
 - [x] ~~`absent` products~~ — a WeatherStar 3000 no longer offers a radar checkbox; Settings lists what the unit could not do and why.
-- [ ] **Move per-device visuals into the profile.** Background pools, CSS vars and the scene-view overrides still live in `themes.ts` / `backgroundCatalog.ts` / `sceneRegistry.tsx`. Mechanical follow-on now the contract exists.
-- [ ] **Code-split by device.** The bundle is 1,769 KB of which 1,366 KB is `clipReferenceTable.json`. Move the table out of the JS bundle (fetch it, or prune the transcription text at build) and lazy-load per-device renderers — plausibly a 5-8x smaller initial download.
+- [x] ~~Move per-device visuals into the profile~~ — palette, typefaces, icon set, branding and background pools now live on the device. `themes.ts` is a derivation (457 → 165 lines); `backgroundCatalog.ts` has no `themeId ===` branches left. Only `sceneRegistry.tsx` THEME_VIEWS remains outside, deliberately: it maps to React components, which belong in the presentation layer.
+- [x] ~~Move the clip table out of the JS bundle~~ — fetched as a compact index; bundle 1,769 → 525 KB.
+- [ ] **Code-split by device.** Now unblocked: lazy-load per-device renderers and background catalogs. Estimated another 30-40% off the initial load.
 - [ ] **Optional-package scenes still need building:** Air Quality (IS1), School Day Weather and Outdoor Activity Forecast (Sept 2004+), and the Weatherscan Plus activity packs (golf, ski, beach, garden, health). Declared as optional where the hardware had them; no renderers yet.
 - [ ] **Loading / "not available" screens in period fonts.** Settings lists absent products, but a scene-level notice in each unit's own typography is not built.
 - [ ] **Local sponsor slot.** `sponsorSlot` capability is declared for the Weatherscan and IntelliStar profiles; nothing consumes it yet. See the discussion note in the commit for options.

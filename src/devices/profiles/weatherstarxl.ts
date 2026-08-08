@@ -39,6 +39,7 @@ export const WEATHERSTAR_XL: Device = {
     iconResolution: 42,
     backgroundImage: "",
     extendedTitle: "Extended Forecast",
+    backgroundPool: "xl-clouds",
     vars: {
       "--ws-bg-deep":       "#000000",
       "--ws-bg-mid":        "#0a1930",

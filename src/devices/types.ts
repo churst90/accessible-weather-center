@@ -90,6 +90,18 @@ export interface DeviceVisuals {
   extendedTitle: string;
   /** CSS custom properties applied to :root when this machine is selected. */
   vars: Record<string, string>;
+  /**
+   * Named rotating background pool, resolved by backgroundCatalog. A name
+   * rather than the array itself: the pools are large generated lists (254
+   * city gradients for IntelliStar) that belong with the catalog, while the
+   * CHOICE of pool is a fact about the machine and belongs here.
+   * Omitted for units that use a fixed background or a CSS gradient.
+   */
+  backgroundPool?: string;
+  /** Named severe-weather pool, where the unit swapped art during alerts. */
+  severePool?: string;
+  /** Named per-scene background set, for units that varied art by product. */
+  sceneBackgroundSet?: string;
 }
 
 export interface Device {

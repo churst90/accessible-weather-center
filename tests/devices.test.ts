@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { DEVICES, getDevice, deviceSceneOrder, absentProducts, absentNote } from "../src/devices";
 import { THEMES, getSceneOrder } from "../src/core/settings/themes";
+import { pickBackground, listBackgrounds, getSceneBackground } from "../src/core/settings/backgroundCatalog";
 import { THEME_PRODUCT_ERA } from "../src/audio/manifests/sceneSegments";
 
 /**
@@ -169,5 +170,65 @@ test("machines without graphical icons still declare an icon set", () => {
   // resolve against for the LDL and any fallback rendering.
   for (const d of DEVICES.filter((x) => !x.capabilities.icons)) {
     assert.ok(d.visuals.iconSet, `${d.id} has no icon set to fall back on`);
+  }
+});
+
+test("background pools resolve from the device profile", () => {
+  // backgroundCatalog used to branch on themeId in three separate functions.
+  // The machine now declares which pool it uses and the catalog just honours
+  // it — these assertions are what keep that from creeping back.
+  for (const d of DEVICES) {
+    const list = listBackgrounds(d.id as never);
+    if (d.visuals.backgroundPool) {
+      assert.ok(list.length > 0, `${d.id} names pool "${d.visuals.backgroundPool}" but it resolved empty`);
+      for (const src of list) {
+        assert.ok(src.startsWith("/assets/"), `${d.id} pool entry is not an asset path: ${src}`);
+      }
+    } else {
+      assert.deepEqual(list, [], `${d.id} has no pool but listBackgrounds returned entries`);
+    }
+  }
+});
+
+test("pickBackground stays inside the machine's own pool", () => {
+  for (const d of DEVICES) {
+    const allowed = new Set(listBackgrounds(d.id as never));
+    for (let i = 0; i < 30; i++) {
+      const pick = pickBackground(d.id as never);
+      if (!d.visuals.backgroundPool) {
+        assert.equal(pick, "", `${d.id} has no pool but produced "${pick}"`);
+      } else {
+        assert.ok(allowed.has(pick), `${d.id} picked "${pick}", which is not in its pool`);
+      }
+    }
+  }
+});
+
+test("only IntelliStar 2 swaps art for severe weather", () => {
+  // The LOT8 severe background set is an IS2 behaviour; every other machine
+  // should render its normal background during an alert.
+  for (const d of DEVICES) {
+    const severe = pickBackground(d.id as never, true);
+    if (d.id === "intellistar2") {
+      assert.match(severe, /Severe/, "IS2 should draw from the LOT8 severe pool");
+    } else if (d.visuals.backgroundPool) {
+      assert.ok(
+        listBackgrounds(d.id as never).includes(severe),
+        `${d.id} produced an off-pool background under severe: ${severe}`
+      );
+    }
+  }
+});
+
+test("per-scene background sets only exist where the machine varied art", () => {
+  const WITH_SETS = ["ws4000-v1", "wsjr", "weatherscan-local"];
+  for (const d of DEVICES) {
+    const bg = getSceneBackground(d.id as never, "current");
+    if (WITH_SETS.includes(d.id)) {
+      assert.ok(bg, `${d.id} should have per-scene art for "current"`);
+      assert.ok(bg!.startsWith("/assets/"));
+    } else {
+      assert.equal(bg, null, `${d.id} should defer to CSS / a single background`);
+    }
   }
 });

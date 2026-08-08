@@ -40,6 +40,7 @@ export const WSJR: Device = {
     iconSet: "/assets/icons",
     backgroundImage: "/assets/backgrounds/BackGround2.webp",
     extendedTitle: "Extended Forecast",
+    sceneBackgroundSet: "wsjr",
     vars: {
       "--ws-bg-deep":       "#060e26",
       "--ws-bg-mid":        "#0c1f4c",

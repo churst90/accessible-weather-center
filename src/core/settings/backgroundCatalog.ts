@@ -6,6 +6,7 @@
  */
 
 import type { ThemeId } from "./themes";
+import { getDevice } from "../../devices";
 
 const I1_BASE = "/assets/backgrounds/intellistar1/clean";
 const I2_BASE = "/assets/backgrounds/intellistar2/Generic";
@@ -121,44 +122,39 @@ const WS_CITY_BACKGROUNDS = [
 ];
 
 /**
- * Pick a random background for the given theme.
- * Returns empty string for themes that use CSS gradients instead.
+ * Named background pools. The device profile says which one a machine uses;
+ * this is the lookup, not a decision. Previously each of these functions
+ * branched on themeId, which is the pattern the device layer exists to
+ * remove — the machine should declare what it is, and the kernel should
+ * simply honour it.
  */
-export function pickBackground(themeId: ThemeId, severe = false): string {
-  // WeatherStar XL: authentic cloud wallpaper (post-2005 graphics package).
-  if (themeId === "weatherstarxl") {
-    return XL_CLOUDS[Math.floor(Math.random() * XL_CLOUDS.length)];
-  }
-  // IntelliStar 1: rotating city gradient backgrounds.
-  if (themeId === "intellistar1") {
-    return I1_BACKGROUNDS[Math.floor(Math.random() * I1_BACKGROUNDS.length)];
-  }
-  if (themeId === "intellistar2") {
-    if (severe) {
-      return I2_SEVERE[Math.floor(Math.random() * I2_SEVERE.length)];
-    }
-    return I2_BACKGROUNDS[Math.floor(Math.random() * I2_BACKGROUNDS.length)];
-  }
-  if (themeId === "weatherscan-local") {
-    return WS_LOCAL_BACKGROUNDS[Math.floor(Math.random() * WS_LOCAL_BACKGROUNDS.length)];
-  }
-  if (themeId === "weatherscan-v1" || themeId === "weatherscan-v2") {
-    return WS_CITY_BACKGROUNDS[Math.floor(Math.random() * WS_CITY_BACKGROUNDS.length)];
-  }
-  // Other themes use a fixed background (set in ThemeDef.backgroundImage)
-  return "";
-}
+const POOLS: Record<string, readonly string[]> = {
+  "xl-clouds": XL_CLOUDS,
+  "is1-city-gradients": I1_BACKGROUNDS,
+  "is2-generics": I2_BACKGROUNDS,
+  "is2-severe": I2_SEVERE,
+  "ws-local-neighborhood": WS_LOCAL_BACKGROUNDS,
+  "ws-city-skylines": WS_CITY_BACKGROUNDS,
+};
+
+const pickFrom = (pool: readonly string[]): string =>
+  pool.length ? pool[Math.floor(Math.random() * pool.length)] : "";
 
 /**
- * Get all available backgrounds for a theme (for a future gallery/picker).
+ * Pick a background for the machine's rotating pool.
+ * Returns "" for units with a fixed background or a CSS gradient.
  */
+export function pickBackground(themeId: ThemeId, severe = false): string {
+  const { backgroundPool, severePool } = getDevice(themeId).visuals;
+  if (severe && severePool) return pickFrom(POOLS[severePool] ?? []);
+  if (!backgroundPool) return "";
+  return pickFrom(POOLS[backgroundPool] ?? []);
+}
+
+/** Every background available to a machine (gallery / picker use). */
 export function listBackgrounds(themeId: ThemeId): string[] {
-  if (themeId === "weatherstarxl") return [...XL_CLOUDS];
-  if (themeId === "intellistar1") return [...I1_BACKGROUNDS];
-  if (themeId === "intellistar2") return [...I2_BACKGROUNDS];
-  if (themeId === "weatherscan-local") return [...WS_LOCAL_BACKGROUNDS];
-  if (themeId === "weatherscan-v1" || themeId === "weatherscan-v2") return [...WS_CITY_BACKGROUNDS];
-  return [];
+  const { backgroundPool } = getDevice(themeId).visuals;
+  return backgroundPool ? [...(POOLS[backgroundPool] ?? [])] : [];
 }
 
 /* ------------------------------------------------------------------ */
@@ -225,13 +221,22 @@ const WS_LOCAL_SCENE_BACKGROUNDS: Record<string, string> = {
  * Get the per-scene background for a theme, or null if the theme uses a
  * single fixed background (or rotating pool) instead of per-scene variants.
  */
+/** Named per-scene background sets, keyed the same way as POOLS. */
+const SCENE_SETS: Record<string, Record<string, string>> = {
+  "ws4000-v1": WS4000_SCENE_BACKGROUNDS,
+  wsjr: WSJR_SCENE_BACKGROUNDS,
+  "weatherscan-local": WS_LOCAL_SCENE_BACKGROUNDS,
+};
+
+/**
+ * Per-scene background for machines that varied their art by product.
+ *
+ * WS4000 v2 deliberately has no set: it paints an orange-to-purple gradient
+ * with a floating content pane entirely in CSS, so returning null lets the
+ * theme's stylesheet drive it.
+ */
 export function getSceneBackground(themeId: ThemeId, sceneId: string): string | null {
-  // WS4000 v1 (2001-2004) uses the per-scene solid-blue + radar-map art.
-  // WS4000 v2 (2005-2009) renders an orange-to-purple gradient with a
-  // floating content pane — painted entirely in CSS — so we return null
-  // and let the theme's CSS rules drive the background.
-  if (themeId === "ws4000-v1") return WS4000_SCENE_BACKGROUNDS[sceneId] ?? null;
-  if (themeId === "wsjr")   return WSJR_SCENE_BACKGROUNDS[sceneId] ?? null;
-  if (themeId === "weatherscan-local") return WS_LOCAL_SCENE_BACKGROUNDS[sceneId] ?? null;
-  return null;
+  const setName = getDevice(themeId).visuals.sceneBackgroundSet;
+  if (!setName) return null;
+  return SCENE_SETS[setName]?.[sceneId] ?? null;
 }
