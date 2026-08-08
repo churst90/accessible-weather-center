@@ -38,6 +38,25 @@ export const WEATHERSCAN_V2: Device = {
     detailed:      { availability: "optional" },
     feelslike:     { availability: "optional" }
   },
+  visuals: {
+    iconSet: "/assets/icons",
+    backgroundImage: "/assets/themes/weatherscan/backgrounds/city_bg.webp",
+    extendedTitle: "7-Day Outlook",
+    vars: {
+      "--ws-bg-deep":       "#020a1c",
+      "--ws-bg-mid":        "#071638",
+      "--ws-bg-top":        "#0d246a",
+      "--ws-accent":        "#00b4e8",
+      "--ws-accent-warm":   "#ffd24d",
+      "--ws-text":          "#ffffff",
+      "--ws-text-dim":      "#8aa0c0",
+      "--ws-led":           "#ffffff",
+      "--ws-alert":         "#ff3333",
+      "--ws-font-display":  '"Interstate", "Frutiger", "Helvetica Neue", "Arial", sans-serif',
+      "--ws-font-led":      '"Interstate", "InterstateMono", "Courier New", monospace',
+      "--ws-font-small":    '"Frutiger", "Interstate", "Arial", sans-serif',
+    }
+  },
   gaps: [
     "THE L-BAR IS NOT BUILT. Persistent left column (logo / observations / radar) plus bottom horizontal strip — the defining layout of the era.",
     "Needs a full-frame still showing the L-bar to lay out faithfully.",

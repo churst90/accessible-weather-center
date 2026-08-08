@@ -76,8 +76,8 @@ test("only the WeatherStar 4000 v2 has the persistent footer bar", () => {
 
 test("extended day counts match the hardware", () => {
   const expected: Record<string, 3 | 5 | 7> = {
-    ws3000: 3, wsjr: 3, "ws4000-v1": 3, "ws4000-v2": 5,
-    weatherstarxl: 7, "weatherscan-local": 5, "weatherscan-v1": 7,
+    ws3000: 3, wsjr: 3, "ws4000-v1": 3, "ws4000-v2": 3,
+    weatherstarxl: 7, "weatherscan-local": 7, "weatherscan-v1": 7,
     "weatherscan-v2": 7, intellistar1: 7, intellistar2: 7
   };
   for (const d of DEVICES) {
@@ -131,5 +131,43 @@ test("every machine records its outstanding work, or explicitly has none", () =>
   // Keeps docs/asset-gaps.md honest — it is generated from this field.
   for (const d of DEVICES) {
     assert.ok(Array.isArray(d.gaps ?? []), `${d.id} gaps should be an array when present`);
+  }
+});
+
+test("visuals live on the device and reach the theme unchanged", () => {
+  // themes.ts is now only an adapter over the profiles. If a value stops
+  // flowing through, the app silently renders in fallback fonts and colours —
+  // which is exactly the failure mode that had every WS4000 theme in Arial
+  // for months before the Star4000 path typo was found.
+  for (const d of DEVICES) {
+    const theme = THEMES.find((t) => t.id === d.id)!;
+    assert.equal(theme.iconSet, d.visuals.iconSet, `${d.id} iconSet`);
+    assert.equal(theme.backgroundImage, d.visuals.backgroundImage, `${d.id} background`);
+    assert.equal(theme.extendedTitle, d.visuals.extendedTitle, `${d.id} extended title`);
+    assert.equal(theme.defaultNarrator, d.voice, `${d.id} narrator`);
+    assert.deepEqual(theme.vars, d.visuals.vars, `${d.id} CSS vars`);
+    assert.equal(theme.extendedStyle, `${d.extendedDays}-day`, `${d.id} extended style`);
+  }
+});
+
+test("every machine defines a complete visual identity", () => {
+  const REQUIRED = [
+    "--ws-bg-deep", "--ws-bg-mid", "--ws-bg-top", "--ws-accent",
+    "--ws-text", "--ws-alert", "--ws-font-display", "--ws-font-led", "--ws-font-small"
+  ];
+  for (const d of DEVICES) {
+    for (const key of REQUIRED) {
+      const v = d.visuals.vars[key];
+      assert.ok(v && v.length > 0, `${d.id} is missing ${key} — it would fall back to browser defaults`);
+    }
+    assert.ok(d.visuals.iconSet.startsWith("/assets/"), `${d.id} iconSet should be an asset path`);
+  }
+});
+
+test("machines without graphical icons still declare an icon set", () => {
+  // The 3000 and Jr were text-only, but WeatherIcon still needs a base to
+  // resolve against for the LDL and any fallback rendering.
+  for (const d of DEVICES.filter((x) => !x.capabilities.icons)) {
+    assert.ok(d.visuals.iconSet, `${d.id} has no icon set to fall back on`);
   }
 });

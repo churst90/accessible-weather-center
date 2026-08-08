@@ -19,6 +19,8 @@ export const WSJR: Device = {
   era: "pre-2004",
   voice: "allan-jackson",
   musicTags: ["trammell-starks"],
+  // 3-day. The old themes table said 5-day; docs/legacy-eras.md is explicit:
+  // "Not 5 columns — WS3000 never had a 5-day Extended." Corrected here.
   extendedDays: 3,
   capabilities: { ldl: false, footer: false, icons: false, radar: false, narration: true, sponsorSlot: false },
   rundown: ["current", "localforecast", "extended", "almanac", "travel"],
@@ -33,6 +35,25 @@ export const WSJR: Device = {
     hourly:        { availability: "absent", absentNote: "Inherited the 3000 product set, which had no hourly." },
     stormtracker:  { availability: "absent", absentNote: "Requires radar, which this unit lacked." },
     weekend:       { availability: "absent", absentNote: "No weekend product." }
+  },
+  visuals: {
+    iconSet: "/assets/icons",
+    backgroundImage: "/assets/backgrounds/BackGround2.webp",
+    extendedTitle: "Extended Forecast",
+    vars: {
+      "--ws-bg-deep":       "#060e26",
+      "--ws-bg-mid":        "#0c1f4c",
+      "--ws-bg-top":        "#1a3680",
+      "--ws-accent":        "#4fb8e0",
+      "--ws-accent-warm":   "#ffc448",
+      "--ws-text":          "#ffffff",
+      "--ws-text-dim":      "#a8bcd8",
+      "--ws-led":           "#ffc448",
+      "--ws-alert":         "#ff4848",
+      "--ws-font-display":  '"StarJR", "Star4000", "Star4000 Extended", "Lato", "Helvetica Neue", "Arial", sans-serif',
+      "--ws-font-led":      '"StarJR Large", "StarJR", "Courier New", monospace',
+      "--ws-font-small":    '"StarJR Small", "StarJR", "Arial", sans-serif',
+    }
   },
   gaps: [
     "Shares the unbuilt WS3000 text-page renderer stack.",

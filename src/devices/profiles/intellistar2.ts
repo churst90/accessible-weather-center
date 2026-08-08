@@ -51,6 +51,26 @@ export const INTELLISTAR2: Device = {
     temptrend:     { availability: "optional" },
     stormtracker:  { availability: "optional" }
   },
+  visuals: {
+    iconSet: "/assets/icons/large",
+    iconResolution: 68,
+    backgroundImage: "",
+    extendedTitle: "7-Day Outlook",
+    vars: {
+      "--ws-bg-deep":       "#000714",
+      "--ws-bg-mid":        "#001e46",
+      "--ws-bg-top":        "#003a7a",
+      "--ws-accent":        "#3fa9ff",
+      "--ws-accent-warm":   "#ffc832",
+      "--ws-text":          "#ffffff",
+      "--ws-text-dim":      "#a6bbd0",
+      "--ws-led":           "#ffc832",
+      "--ws-alert":         "#ff4040",
+      "--ws-font-display":  '"Frutiger", "Interstate", "Helvetica Neue", "Arial", sans-serif',
+      "--ws-font-led":      '"Interstate", "Frutiger", "Helvetica Neue", "Courier New", monospace',
+      "--ws-font-small":    '"Frutiger", "Interstate", "Helvetica Neue", "Arial", sans-serif',
+    }
+  },
   gaps: [
     "LOT8s windowed frame is not built — radar should render inside it, not full-bleed.",
     "Severe treatment should default to a single-line crawl over the LDL (red box left, yellow watches, orange statements); full-bleed red is the tornado-emergency tier only.",

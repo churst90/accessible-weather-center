@@ -23,7 +23,11 @@ export const WS4000_V2: Device = {
   era: "post-2004",
   voice: "allan-jackson",
   musicTags: ["trammell-starks"],
-  extendedDays: 5,
+  // 3-day, not 5. The WeatherStar 4000 Extended became a 3-day graphical
+  // format in the February 1991 redesign and stayed that way; v2 is the same
+  // hardware with new chrome. (Narration still uses the 5-day phrase pool —
+  // see the reconciliation note in docs/legacy-eras.md.)
+  extendedDays: 3,
   capabilities: { ldl: false, footer: true, icons: true, radar: true, narration: true, sponsorSlot: false },
   rundown: ["current", "localforecast", "extended", "radar", "almanac", "travel"],
   products: {
@@ -38,6 +42,28 @@ export const WS4000_V2: Device = {
     detailed:      { availability: "optional" },
     feelslike:     { availability: "optional" },
     airport:       { availability: "absent", absentNote: "Airport delays were not a WeatherStar 4000 product." }
+  },
+  visuals: {
+    iconSet: "/assets/icons",
+    backgroundImage: "",
+    extendedTitle: "Extended Forecast",
+    vars: {
+      // Orange-to-purple gradient stops (darker deep, warmer top). The
+      // actual gradient is painted in CSS; these vars give fallback
+      // solid colors for any component that reads them directly.
+      "--ws-bg-deep":       "#2a0a3c",
+      "--ws-bg-mid":        "#5c2a3c",
+      "--ws-bg-top":        "#c85a1c",
+      "--ws-accent":        "#7ae0ff",
+      "--ws-accent-warm":   "#ff9933",
+      "--ws-text":          "#ffffff",
+      "--ws-text-dim":      "#d8bcc8",
+      "--ws-led":           "#ffd24d",
+      "--ws-alert":         "#ff5050",
+      "--ws-font-display":  '"Star4000", "Star4000 Extended", "Lato", "Helvetica Neue", "Arial", sans-serif',
+      "--ws-font-led":      '"Star4000 Large", "Star4000", "Courier New", monospace',
+      "--ws-font-small":    '"Star4000 Small", "Star4000", "Arial", sans-serif',
+    }
   },
   gaps: [
     "Always-on footer bar component is not built — this is the defining v2 chrome element.",

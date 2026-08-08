@@ -42,6 +42,25 @@ export const WEATHERSCAN_V1: Device = {
     detailed:      { availability: "optional" },
     feelslike:     { availability: "optional" }
   },
+  visuals: {
+    iconSet: "/assets/icons",
+    backgroundImage: "/assets/themes/weatherscan/backgrounds/city_bg.webp",
+    extendedTitle: "7-Day Outlook",
+    vars: {
+      "--ws-bg-deep":       "#020818",
+      "--ws-bg-mid":        "#061233",
+      "--ws-bg-top":        "#0c1f5a",
+      "--ws-accent":        "#00c8ff",
+      "--ws-accent-warm":   "#ffcc33",
+      "--ws-text":          "#ffffff",
+      "--ws-text-dim":      "#8899bb",
+      "--ws-led":           "#ffffff",
+      "--ws-alert":         "#ff3333",
+      "--ws-font-display":  '"Frutiger", "Lato", "Helvetica Neue", sans-serif',
+      "--ws-font-led":      '"Frutiger", "Courier New", monospace',
+      "--ws-font-small":    '"Frutiger", "Arial", sans-serif',
+    }
+  },
   gaps: [
     "Colour-coded arc-side segment curves (yellow/orange/blue/green/teal/purple) are not implemented.",
     "Activity packs from Weatherscan Plus — golf, ski, beach, garden, health — have no scenes or art.",

@@ -44,6 +44,26 @@ export const INTELLISTAR1: Device = {
     feelslike:     { availability: "optional" },
     stormtracker:  { availability: "optional" }
   },
+  visuals: {
+    iconSet: "/assets/icons/large",
+    iconResolution: 42,
+    backgroundImage: "",
+    extendedTitle: "Week Ahead",
+    vars: {
+      "--ws-bg-deep":       "#001030",
+      "--ws-bg-mid":        "#002060",
+      "--ws-bg-top":        "#003399",
+      "--ws-accent":        "#33aaff",
+      "--ws-accent-warm":   "#ffcc00",
+      "--ws-text":          "#ffffff",
+      "--ws-text-dim":      "#aabbdd",
+      "--ws-led":           "#ffcc00",
+      "--ws-alert":         "#ff4444",
+      "--ws-font-display":  '"Interstate", "Helvetica Neue", "Arial", sans-serif',
+      "--ws-font-led":      '"Interstate", "InterstateMono", "Helvetica Neue", "Courier New", monospace',
+      "--ws-font-small":    '"Helvetica Neue", "Interstate", "Helvetica", "Arial", sans-serif',
+    }
+  },
   gaps: [
     "Jim Cantore has NO radar intro clip — Local Doppler and Storm Tracker are silent on this theme.",
     "Air Quality product (colour-coded index, metro markets) has no scene.",

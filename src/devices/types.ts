@@ -72,6 +72,26 @@ export interface DeviceCapabilities {
   sponsorSlot: boolean;
 }
 
+/**
+ * Everything about how a machine looks.
+ *
+ * Lives with the machine rather than in a parallel themes table, so a unit's
+ * palette, typeface stack, icon set and forecast branding are all readable in
+ * one place alongside its products and capabilities.
+ */
+export interface DeviceVisuals {
+  /** Icon pool root. The 3000 and Jr point at legacy text-era sets. */
+  iconSet: string;
+  /** HD WEBP icon resolution where the era had one. */
+  iconResolution?: 28 | 42 | 68;
+  /** Theme-level background, or "" when the unit uses a rotating pool. */
+  backgroundImage: string;
+  /** What this unit called its multi-day forecast on screen. */
+  extendedTitle: string;
+  /** CSS custom properties applied to :root when this machine is selected. */
+  vars: Record<string, string>;
+}
+
 export interface Device {
   id: string;
   label: string;
@@ -86,6 +106,7 @@ export interface Device {
   /** Multi-day forecast day count as this unit displayed it. */
   extendedDays: 3 | 5 | 7;
   capabilities: DeviceCapabilities;
+  visuals: DeviceVisuals;
   /** Base rotation, in the order this unit ran it. */
   rundown: readonly ProductId[];
   /** Per-product availability and naming. Products not listed default to

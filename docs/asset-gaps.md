@@ -71,7 +71,7 @@ current rendering and a faithful one.
 - **Years:** 2005-2009
 - **Voice:** allan-jackson
 - **Product era:** post-2004
-- **Extended forecast:** 5-day
+- **Extended forecast:** 3-day
 - **Capabilities:** footer, icons, radar, narration
 - **Rotation (10):** current → localforecast → extended → radar → almanac → travel → hourly → detailed → feelslike → alerts
 - **Optional packages:** `hourly`, `detailed`, `feelslike`
@@ -103,7 +103,7 @@ current rendering and a faithful one.
 - **Years:** 1999-2003
 - **Voice:** allan-jackson
 - **Product era:** pre-2004
-- **Extended forecast:** 5-day
+- **Extended forecast:** 7-day
 - **Capabilities:** ldl, icons, radar, narration, sponsorSlot
 - **Rotation (9):** current → localforecast → radar → extended → hourly → travel → almanac → traffic → alerts
 - **Optional packages:** `traffic`
@@ -112,6 +112,7 @@ current rendering and a faithful one.
 
 - Only the 'neighborhood' regional background pack is sourced. Forest, ocean, mountain and southwest packs are missing.
 - UDL (upper display line) strip is not rendered — only the LDL exists.
+- Extended day count unconfirmed: kept at 7-day to match the XL hardware and the '7-Day Outlook' branding, but docs/weatherscan-eras.md lists a 5-day forecast in the core set.
 
 ## Weatherscan V1 (2003-2005)
 

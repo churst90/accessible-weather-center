@@ -38,6 +38,25 @@ export const WS3000: Device = {
     airport:       { availability: "absent", absentNote: "Airport delays were not a 3000 product." },
     traffic:       { availability: "absent", absentNote: "Traffic was not a 3000 product." }
   },
+  visuals: {
+    iconSet: "/assets/icons/legacy/1990-regional",
+    backgroundImage: "",
+    extendedTitle: "Extended Forecast",
+    vars: {
+      "--ws-bg-deep":       "#060028",
+      "--ws-bg-mid":        "#1a0858",
+      "--ws-bg-top":        "#2e1a90",
+      "--ws-accent":        "#e8ecff",
+      "--ws-accent-warm":   "#ffc840",
+      "--ws-text":          "#f4f6ff",
+      "--ws-text-dim":      "#b0b4cc",
+      "--ws-led":           "#ffc840",
+      "--ws-alert":         "#ff4040",
+      "--ws-font-display":  '"Star3000", "Star3000 Large", "Courier New", monospace',
+      "--ws-font-led":      '"Star3000 Large", "Star3000", "Courier New", monospace',
+      "--ws-font-small":    '"Star3000 Small", "Star3000", "Courier New", monospace',
+    }
+  },
   gaps: [
     "Text-page renderer stack not built — palette and typography are correct but layouts are generic.",
     "Needs Latest Observations, 36 Hour Forecast, Extended (3-col), Almanac and Travel stills to lay out faithfully.",

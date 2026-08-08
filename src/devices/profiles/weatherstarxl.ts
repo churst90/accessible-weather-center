@@ -34,6 +34,26 @@ export const WEATHERSTAR_XL: Device = {
     detailed:      { availability: "optional", name: "Latest Observations" },
     airport:       { availability: "optional" }
   },
+  visuals: {
+    iconSet: "/assets/icons/large",
+    iconResolution: 42,
+    backgroundImage: "",
+    extendedTitle: "Extended Forecast",
+    vars: {
+      "--ws-bg-deep":       "#000000",
+      "--ws-bg-mid":        "#0a1930",
+      "--ws-bg-top":        "#152a50",
+      "--ws-accent":        "#5eaacc",
+      "--ws-accent-warm":   "#debd69",
+      "--ws-text":          "#d4d4d4",
+      "--ws-text-dim":      "#9eaabb",
+      "--ws-led":           "#debd69",
+      "--ws-alert":         "#ff4444",
+      "--ws-font-display":  '"AkzidenzGroteskBE-BoldEx", "AkzidenzGroteskBE", "Helvetica Neue", "Arial", sans-serif',
+      "--ws-font-led":      '"AkzidenzGroteskBE", "Helvetica Neue", "Courier New", monospace',
+      "--ws-font-small":    '"AkzidenzGroteskBE-MdEx", "AkzidenzGroteskBE", "Helvetica", "Arial", sans-serif',
+    }
+  },
   gaps: [
     "No dated label in themes.ts, so the pre-2004 product era is inferred from the XL predating the IntelliStar rollout."
   ]

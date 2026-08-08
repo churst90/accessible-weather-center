@@ -37,6 +37,25 @@ export const WS4000_V1: Device = {
     hourly:        { availability: "optional", name: "Daily Planner", intro: ["dailyPlanner"] },
     airport:       { availability: "absent", absentNote: "Airport delays were not a WeatherStar 4000 product." }
   },
+  visuals: {
+    iconSet: "/assets/icons",
+    backgroundImage: "/assets/backgrounds/BackGround1.webp",
+    extendedTitle: "Extended Forecast",
+    vars: {
+      "--ws-bg-deep":       "#050d28",
+      "--ws-bg-mid":        "#0a1f4a",
+      "--ws-bg-top":        "#1b3b87",
+      "--ws-accent":        "#4ec9ff",
+      "--ws-accent-warm":   "#ff9933",
+      "--ws-text":          "#ffffff",
+      "--ws-text-dim":      "#b8c6e0",
+      "--ws-led":           "#ffd24d",
+      "--ws-alert":         "#ff5050",
+      "--ws-font-display":  '"Star4000", "Star4000 Extended", "Lato", "Helvetica Neue", "Arial", sans-serif',
+      "--ws-font-led":      '"Star4000 Large", "Star4000", "Courier New", monospace',
+      "--ws-font-small":    '"Star4000 Small", "Star4000", "Arial", sans-serif',
+    }
+  },
   gaps: [
     "Extended Forecast should be 3 vertical day-panels with the louvered blue gradient.",
     "Current Conditions wants the icon-left / fields-right layout from the broadcast stills.",
