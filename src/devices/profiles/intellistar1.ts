@@ -5,7 +5,21 @@ import type { Device } from "../types";
  *
  * Black-to-navy gradient palette with muted gold accents, Interstate
  * typography, and a pool of 254 city-gradient backgrounds rotating between
- * scenes. Jim Cantore is the voice.
+ * scenes.
+ *
+ * Allen Jackson is the voice, NOT Jim Cantore. TWC Archive's Vocal Local
+ * article is explicit: Jackson voiced the WeatherStar XL and the IntelliStar,
+ * and his narration stayed in service until the IntelliStar was retired in
+ * November 2015; Cantore was recorded for the IntelliStar 2 HD generation
+ * from 2008. The surviving IS1 drive dumps agree — their Vocal Local tree
+ * uses the same `doppler/LRADAR_DEFAULT{1,2}` filenames as our Allen Jackson
+ * library, which Cantore's library does not contain at all.
+ *
+ * This was previously set to jim-cantore, and that single wrong field is the
+ * whole reason `docs/asset-gaps.md` recorded "Jim Cantore has NO radar intro
+ * clip — Local Doppler and Storm Tracker are silent on this theme". The clips
+ * were never missing. They were on disk the entire time, under the narrator
+ * this hardware actually used.
  *
  * The theme deliberately reproduces the 2007-era look — see
  * docs/legacy-eras.md, "Suggest single intellistar1 = 2007-era look (longest
@@ -25,7 +39,7 @@ export const INTELLISTAR1: Device = {
   label: "IntelliStar 1 (2003-2013)",
   years: "2003-2013",
   era: "post-2004",
-  voice: "jim-cantore",
+  voice: "allan-jackson",
   musicTags: ["intellistar1"],
   extendedDays: 7,
   capabilities: { ldl: true, footer: false, icons: true, radar: true, narration: true, sponsorSlot: true },
@@ -66,7 +80,9 @@ export const INTELLISTAR1: Device = {
     }
   },
   gaps: [
-    "Jim Cantore has NO radar intro clip — Local Doppler and Storm Tracker are silent on this theme.",
+    // Resolved: this used to read "Jim Cantore has NO radar intro clip". He
+    // was never this machine's voice. Allen Jackson's radar intros were on
+    // disk the whole time and now play.
     "Air Quality product (colour-coded index, metro markets) has no scene.",
     "School Day Weather and Outdoor Activity Forecast (added Sept 2004) have no scenes.",
     "Pre-2007 layout variants (CC hero, Week Ahead 7-column, Daypart 4-column, Almanac 2-column) are unbuilt.",

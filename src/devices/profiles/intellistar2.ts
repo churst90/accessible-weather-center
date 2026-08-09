@@ -7,7 +7,19 @@ import type { Device } from "../types";
  * Neue LDL body text (matching the June 2, 2008 LDL redesign), and a combined
  * background pool of 254 sharp HD generics plus 28 blurred IS2 Jr plates.
  * Severe weather draws from a dedicated LOT8 severe background set.
- * Chandler is the voice.
+ *
+ * Jim Cantore is the voice. TWC recorded him for the IntelliStar 2 HD
+ * generation in 2008, and from the IntelliStar's retirement in November 2015
+ * his was the only Vocal Local heard on the network.
+ *
+ * This was previously set to `chandler`, which cannot be right on a 2013+
+ * unit: Dan Chandler was TWC's voice in the late 1980s and 1990s, and his
+ * library proves its own age — every hourly clip says "your local 36 hour
+ * forecast" and the extended says "the five day forecast", both pre-September
+ * 2004 product names. `docs/asset-gaps.md` had already noticed the symptom
+ * ("Chandler's clips use pre-2004 phrasing, which is anachronistic for a
+ * 2013+ unit") without spotting that the cause was the voice sitting on the
+ * wrong machine by about twenty-five years.
  *
  * Confirmed products (docs/legacy-eras.md "Era 5"): Current Conditions,
  * 12-hour forecast graph and 24-hour descriptive, 7-day, Local Forecast
@@ -27,7 +39,7 @@ export const INTELLISTAR2: Device = {
   label: "IntelliStar 2 / 2 Jr HD (2013+)",
   years: "2013-2022",
   era: "post-2004",
-  voice: "chandler",
+  voice: "jim-cantore",
   musicTags: ["intellistar2"],
   extendedDays: 7,
   capabilities: { ldl: true, footer: false, icons: true, radar: true, narration: true, sponsorSlot: true },
@@ -78,6 +90,9 @@ export const INTELLISTAR2: Device = {
     "Severe treatment should default to a single-line crawl over the LDL (red box left, yellow watches, orange statements); full-bleed red is the tornado-emergency tier only.",
     "Almanac needs the analog sunrise/sunset clock graphic (white = sunrise, black = sunset).",
     "IS2 Jr should suppress its LDL during national segments; currently both render identically.",
-    "Chandler's clips use pre-2004 '36-hour forecast' phrasing, which is anachronistic for a 2013+ unit."
+    // Replaces "Chandler's clips use pre-2004 phrasing, anachronistic for a
+    // 2013+ unit" — the cause was the voice, not the phrasing, and the voice
+    // is now Cantore. What remains is a genuine hole in his library.
+    "Jim Cantore has no radar intro clip, so Local Doppler falls back to spoken text. Unresolved whether TWC recorded one for the IntelliStar 2; the IS2 StarBundles (archive.org/details/bundles.-7z) would settle it."
   ]
 };

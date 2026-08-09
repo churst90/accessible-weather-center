@@ -7,6 +7,7 @@
  */
 
 import type { Device, ProductId, ProductAvailability } from "./types";
+import type { NarratorId } from "../audio/manifests/narratorSchema";
 import { DEVICES as DEVICE_LIST } from "./registry";
 
 export * from "./types";
@@ -25,6 +26,51 @@ export function getDevice(id: string): Device {
 
 export function hasDevice(id: string): boolean {
   return BY_ID.has(id);
+}
+
+/**
+ * Which voice actually narrates on this machine, given the user's preference.
+ *
+ * One function so the answer cannot differ between the Settings dropdown and
+ * the thing that plays the clips. It used to: Settings offered every narrator
+ * in the registry against any machine, and App independently resolved
+ * `settings.narrator ?? theme.defaultNarrator`. Pick a voice, switch to a
+ * WeatherStar 3000, and you got narration on a machine whose entire point is
+ * that it had none — the unit shipped with a warning tone and no voice track.
+ *
+ * Hardware capability wins over preference. A preference for something the
+ * machine could not do is not a preference the emulator should honour, in the
+ * same way the scene list refuses to show a 3000 a radar screen.
+ */
+export function resolveNarrator(
+  deviceId: string,
+  preferred: string | null | undefined
+): NarratorId {
+  const device = getDevice(deviceId);
+  if (!device.capabilities.narration) return "silent";
+  return (preferred as NarratorId) || device.voice;
+}
+
+/**
+ * Can the user choose a voice for this machine at all?
+ * False means the Settings panel should say why rather than offer a dropdown
+ * that does nothing.
+ */
+export function canNarrate(deviceId: string): boolean {
+  return getDevice(deviceId).capabilities.narration;
+}
+
+/**
+ * Was this voice ever heard on this machine?
+ *
+ * Used to sort the Settings dropdown rather than to censor it. Playing Jim
+ * Cantore over a WeatherStar 4000 is ahistorical, not harmful, and someone
+ * may well want to hear it — but it should be labelled as the novelty it is,
+ * not sat in the list looking equally correct. Mixing the two indiscriminately
+ * is how the IntelliStar ended up assigned the wrong narrator for months.
+ */
+export function isAuthenticVoice(deviceId: string, narrator: string): boolean {
+  return getDevice(deviceId).voice === narrator;
 }
 
 /**

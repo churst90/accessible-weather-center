@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { GRID_STEP_PRESETS_MI, type SettingsStore, type Settings } from "../../core/settings/SettingsStore";
-import { THEMES, getTheme, type ThemeId } from "../../core/settings/themes";
-import { getDevice, absentNote, type ProductId } from "../../devices";
+// Narrator questions now go to the device profile rather than the theme —
+// the theme is a rendering of the machine, and the machine is what had (or
+// did not have) a voice.
+import { THEMES, type ThemeId } from "../../core/settings/themes";
+import { getDevice, absentNote, canNarrate, isAuthenticVoice, type ProductId } from "../../devices";
 import { NARRATORS } from "../../audio/manifests/narratorSchema";
 import { BUNDLED_STATIONS, fetchActiveNwrStations, type NwrStation } from "../../audio/nwrStations";
 import { ModalDialog } from "../semantic/ModalDialog";
@@ -123,37 +126,65 @@ export function SettingsPanel({ store, open, onClose, flavors }: Props) {
               style={{ verticalAlign: "middle" }}
             />
           </label>
-          <label style={{ display: "block", marginBottom: 8 }}>
-            <input
-              type="checkbox"
-              checked={settings.useAjVoice}
-              onChange={(e) => store.update({ useAjVoice: e.target.checked })}
-            />{" "}
-            Use voice clips for narration (falls back to TTS for missing pieces)
-          </label>
-          <label style={{ display: "block", marginBottom: 8 }}>
-            Voice narrator:{" "}
-            <select
-              value={settings.narrator ?? ""}
-              onChange={(e) => store.update({ narrator: e.target.value || null })}
-            >
-              <option value="">Theme default ({getTheme(settings.theme as ThemeId).defaultNarrator.replace(/-/g, " ")})</option>
-              {NARRATORS.map((n) => (
-                <option key={n.id} value={n.id}>{n.label}</option>
-              ))}
-            </select>
-          </label>
-          <label style={{ display: "block", marginBottom: 8 }}>
-            Clip confidence threshold:{" "}
-            <select
-              value={settings.clipConfidence}
-              onChange={(e) => store.update({ clipConfidence: e.target.value as Settings["clipConfidence"] })}
-            >
-              <option value="confirmed">Confirmed only (most TTS)</option>
-              <option value="likely">Likely or better (recommended)</option>
-              <option value="guess">Any clip available (most clips)</option>
-            </select>
-          </label>
+          {/* Voice settings only exist for machines that had a voice. The
+              WeatherStar 3000 shipped with a warning tone and no narration at
+              all, so offering it a narrator dropdown is the same category of
+              error as offering it a radar screen. */}
+          {!canNarrate(settings.theme) ? (
+            <p style={{ margin: "0 0 12px", color: "var(--ws-text-dim)" }}>
+              The {getDevice(settings.theme).label} had no voice track — narration
+              settings do not apply. Scene text is still read by your screen reader.
+            </p>
+          ) : (
+            <>
+              <label style={{ display: "block", marginBottom: 8 }}>
+                <input
+                  type="checkbox"
+                  checked={settings.useAjVoice}
+                  onChange={(e) => store.update({ useAjVoice: e.target.checked })}
+                />{" "}
+                Use voice clips for narration (falls back to TTS for missing pieces)
+              </label>
+              <label style={{ display: "block", marginBottom: 8 }}>
+                Voice narrator:{" "}
+                <select
+                  value={settings.narrator ?? ""}
+                  onChange={(e) => store.update({ narrator: e.target.value || null })}
+                >
+                  <option value="">
+                    This machine&apos;s voice ({getDevice(settings.theme).voice.replace(/-/g, " ")})
+                  </option>
+                  {/* Grouped rather than filtered. Hearing Jim Cantore on a
+                      WeatherStar 4000 is ahistorical, not harmful, and someone
+                      may want it — but it must not sit in the list looking
+                      equally correct, because a list that treats every voice as
+                      interchangeable is how the IntelliStar spent months
+                      assigned to a narrator who never recorded for it. */}
+                  <optgroup label="Authentic for this machine">
+                    {NARRATORS.filter((n) => n.id !== "silent" && isAuthenticVoice(settings.theme, n.id)).map((n) => (
+                      <option key={n.id} value={n.id}>{n.label}</option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="Other voices — not historically accurate">
+                    {NARRATORS.filter((n) => n.id !== "silent" && !isAuthenticVoice(settings.theme, n.id)).map((n) => (
+                      <option key={n.id} value={n.id}>{n.label}</option>
+                    ))}
+                  </optgroup>
+                </select>
+              </label>
+              <label style={{ display: "block", marginBottom: 8 }}>
+                Clip confidence threshold:{" "}
+                <select
+                  value={settings.clipConfidence}
+                  onChange={(e) => store.update({ clipConfidence: e.target.value as Settings["clipConfidence"] })}
+                >
+                  <option value="confirmed">Confirmed only (most TTS)</option>
+                  <option value="likely">Likely or better (recommended)</option>
+                  <option value="guess">Any clip available (most clips)</option>
+                </select>
+              </label>
+            </>
+          )}
           <label style={{ display: "block", marginBottom: 8 }}>
             <input
               type="checkbox"

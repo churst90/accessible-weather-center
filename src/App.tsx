@@ -28,7 +28,7 @@ import { HelpDialog } from "./ui/semantic/HelpDialog";
 import { FirstRunSetup } from "./ui/semantic/FirstRunSetup";
 import { SceneUnavailable } from "./ui/scenes/SceneUnavailable";
 import { ProductUnavailable } from "./ui/scenes/ProductUnavailable";
-import { getDevice, productAvailability, absentNote, type ProductId } from "./devices";
+import { getDevice, productAvailability, absentNote, resolveNarrator, type ProductId } from "./devices";
 import { resolveSceneView } from "./ui/scenes/sceneRegistry";
 import { PlacesMode } from "./ui/mapnav/PlacesMode";
 import { MapNavView } from "./ui/mapnav/MapNavView";
@@ -359,7 +359,11 @@ export default function App() {
     // Narrator is either the user's explicit pick or the theme's default.
     if (settings.useAjVoice) {
       let script = null;
-      const narrator: NarratorId = (settings.narrator as NarratorId) ?? getTheme(settings.theme as ThemeId).defaultNarrator;
+      // The machine decides whether it speaks, then the user decides who with.
+      // Resolving it here rather than reading settings.narrator directly is
+      // what stops a saved preference from putting a voice on a WeatherStar
+      // 3000, which never had one.
+      const narrator: NarratorId = resolveNarrator(settings.theme, settings.narrator);
 
       if (scene.id === "current") {
         const data = scene.data as CurrentConditionsData;

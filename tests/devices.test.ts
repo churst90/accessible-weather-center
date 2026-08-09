@@ -1,9 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { DEVICES, getDevice, deviceSceneOrder, absentProducts, absentNote } from "../src/devices";
+import { DEVICES, getDevice, deviceSceneOrder, absentProducts, absentNote, resolveNarrator, canNarrate, isAuthenticVoice } from "../src/devices";
 import { THEMES, getSceneOrder } from "../src/core/settings/themes";
 import { pickBackground, listBackgrounds, getSceneBackground } from "../src/core/settings/backgroundCatalog";
 import { THEME_PRODUCT_ERA } from "../src/audio/manifests/sceneSegments";
+import { getNarrator, pickSceneIntro, NARRATORS } from "../src/audio/manifests/narratorSchema";
 
 /**
  * The device layer is the emulator's machine definitions. These tests hold it
@@ -230,5 +231,120 @@ test("per-scene background sets only exist where the machine varied art", () => 
     } else {
       assert.equal(bg, null, `${d.id} should defer to CSS / a single background`);
     }
+  }
+});
+
+// ─── Narrator assignment ───
+//
+// These pin a historical fact that the code got wrong for a long time, in the
+// only way that would have caught it: not by asserting the strings, but by
+// asserting that a machine's voice can actually speak that machine's screens.
+
+/**
+ * Device/product pairs that are silent because the recording does not exist
+ * in the library, not because the wiring is wrong. Each needs a reason, and
+ * the test below fails if one of these starts working — a stale exemption
+ * hides the next real regression just as effectively as no test at all.
+ */
+const KNOWN_SILENT = new Map<string, string>([
+  [
+    "intellistar2:radar",
+    "Jim Cantore's library has no radar intro. Whether TWC recorded one for " +
+    "the IntelliStar 2 is unresolved; the IS2 StarBundles on archive.org " +
+    "would settle it. Until then the scene falls back to spoken text."
+  ],
+]);
+
+test("known-silent exemptions are still actually silent", () => {
+  for (const [key, reason] of KNOWN_SILENT) {
+    const [deviceId, product] = key.split(":");
+    const d = getDevice(deviceId);
+    const clip = pickSceneIntro(d.voice, product, d.extendedDays === 7 ? "7-day" : "5-day");
+    assert.equal(
+      clip, null,
+      `${key} is exempted as silent (${reason}) but now resolves a clip — ` +
+      `delete the exemption so the coverage test guards it again`
+    );
+  }
+});
+
+test("every narrating device has a voice with clips for its core products", () => {
+  // The general form of the IntelliStar 1 bug. IS1 declared radar as a core
+  // product and narration as a capability, but pointed at a narrator with no
+  // radar intro in his library, so Local Doppler and Storm Tracker played
+  // silence for years. `docs/asset-gaps.md` recorded it as a missing
+  // recording; it was a mis-assigned voice. Nothing failed, because nothing
+  // checked that the two agreed.
+  const NARRATED_PRODUCTS = ["current", "extended", "radar"] as const;
+  for (const d of DEVICES) {
+    if (!d.capabilities.narration) continue;
+    const narrator = getNarrator(d.voice);
+    for (const product of NARRATED_PRODUCTS) {
+      if (d.products[product]?.availability !== "core") continue;
+      // Amy Bargeron's nine clips are the complete set TWC ever recorded, so
+      // Weatherscan legitimately has gaps. Everyone else must cover core.
+      if (d.voice === "amy-bargeron") continue;
+      if (KNOWN_SILENT.has(`${d.id}:${product}`)) continue;
+      // Resolve exactly the way the app does, era included — a 5-day machine
+      // asking a 7-day-only pool is the other way this fails silently.
+      const clip = pickSceneIntro(d.voice, product, d.extendedDays === 7 ? "7-day" : "5-day");
+      assert.ok(
+        clip,
+        `${d.id} shows "${product}" as a core product and claims narration, ` +
+        `but its voice (${narrator.label}) has no intro clip for it`
+      );
+    }
+  }
+});
+
+test("IntelliStar 1 speaks with Allen Jackson, IntelliStar 2 with Jim Cantore", () => {
+  // TWC Archive's Vocal Local article: Jackson voiced the WeatherStar XL and
+  // the IntelliStar, and stayed in service until the IntelliStar retired in
+  // November 2015. Cantore was recorded for the IntelliStar 2 HD in 2008.
+  // The IS1 drive dumps corroborate it — their Vocal Local tree carries the
+  // same doppler/LRADAR_DEFAULT filenames as the Allen Jackson library.
+  assert.equal(getDevice("intellistar1").voice, "allan-jackson");
+  assert.equal(getDevice("intellistar2").voice, "jim-cantore");
+});
+
+test("no post-2004 machine is voiced by a pre-2004 narrator", () => {
+  // Dan Chandler was TWC's voice from 1987 through the 1990s. His library
+  // says so itself — "your local 36 hour forecast", "the five day forecast",
+  // both retired in the September 2004 rename. Assigning him to a 2013+ unit
+  // put a twenty-five year old voice on HD hardware and produced narration
+  // that named products the machine did not have.
+  for (const d of DEVICES) {
+    if (d.era !== "post-2004") continue;
+    assert.notEqual(
+      d.voice, "chandler",
+      `${d.id} is a post-2004 machine and cannot be voiced by Dan Chandler`
+    );
+  }
+});
+
+test("a machine with no voice track cannot be given one", () => {
+  // The WeatherStar 3000 shipped with a warning tone and no narration. A
+  // saved narrator preference used to survive a theme switch and put a voice
+  // on it anyway, because Settings and App resolved the narrator separately
+  // and neither asked the hardware. resolveNarrator is now the only answer.
+  assert.equal(resolveNarrator("ws3000", "jim-cantore"), "silent");
+  assert.equal(resolveNarrator("ws3000", null), "silent");
+  assert.equal(canNarrate("ws3000"), false);
+});
+
+test("a narrating machine honours the user's pick, and defaults to its own voice", () => {
+  assert.equal(resolveNarrator("intellistar1", null), "allan-jackson", "its own voice");
+  assert.equal(resolveNarrator("intellistar1", "jim-cantore"), "jim-cantore", "explicit pick wins");
+  assert.equal(resolveNarrator("intellistar2", null), "jim-cantore");
+});
+
+test("every narrating machine marks exactly one voice authentic", () => {
+  // What the Settings dropdown groups on. Zero would leave the "authentic"
+  // group empty; more than one would mean a device claimed two voices.
+  for (const d of DEVICES) {
+    if (!d.capabilities.narration) continue;
+    const authentic = NARRATORS.filter((n) => n.id !== "silent" && isAuthenticVoice(d.id, n.id));
+    assert.equal(authentic.length, 1, `${d.id} should have exactly one authentic voice`);
+    assert.equal(authentic[0].id, d.voice);
   }
 });

@@ -27,7 +27,11 @@
     "test:all": "npm test && npm run clips:sweep:ci",
     "clips:explain": "node scripts/explain-narration.mjs",
     "device:report": "node scripts/device-report.mjs",
-    "build:clipindex": "node scripts/build-clip-index.mjs"
+    "build:clipindex": "node scripts/build-clip-index.mjs",
+    "assets:tiers": "node scripts/check-asset-tiers.mjs",
+    "assets:guard": "node scripts/check-asset-tiers.mjs --guard assets-web",
+    "sources:list": "node scripts/fetch-sources.mjs --list",
+    "sources:fetch": "node scripts/fetch-sources.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",

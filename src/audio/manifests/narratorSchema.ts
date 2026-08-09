@@ -186,12 +186,18 @@ export const NARRATORS: NarratorDef[] = [
         { file: `${JC_VOCALLOCAL_BASE}/Default_Phrases_Now/CC_INTRO4.mp3`, text: "Currently, it's.." },
         { file: `${JC_VOCALLOCAL_BASE}/Default_Phrases_Now/CC_INTRO5.mp3`, text: "Right now it's" },
       ],
-      // No radar intros. `Default_Phrases_Local_Radar/RADAR_DEFAULT{1,2}` were
-      // listed here from the initial commit, but that directory has never
-      // existed in Jim Cantore's library — the entries resolved to 404s and
-      // the radar scene played silence instead of falling back to spoken
-      // text. Removed rather than faked; add real clips if they surface.
-      // Caught by `npm run clips:sweep`.
+      // No radar intros, and this is now understood rather than merely
+      // observed. `Default_Phrases_Local_Radar/RADAR_DEFAULT{1,2}` were listed
+      // here from the initial commit but never existed in Cantore's library,
+      // so the radar scene played silence instead of falling back to text.
+      //
+      // The reason is that the IntelliStar 1 radar screens were never his to
+      // narrate: Allen Jackson voiced Vocal Local on the XL and IntelliStar,
+      // Cantore was recorded for the IntelliStar 2 HD generation in 2008, and
+      // the two libraries are not parallel. IS1 now correctly points at Allen
+      // Jackson (see devices/profiles/intellistar1.ts), whose radar intros are
+      // present, so the audible gap this comment used to describe is closed
+      // from the other end. If IS2-era radar clips ever surface, add them here.
       extended: [
         // JC's extended pool is entirely 7-day / week-ahead phrasing —
         // IntelliStar never ran a 5-day version. Tagged so 5-day themes
@@ -282,7 +288,20 @@ export const NARRATORS: NarratorDef[] = [
   },
   {
     id: "chandler",
-    label: "Chandler (IntelliStar)",
+    // Dan Chandler (1938-2023), TWC's staff voice from 1987 through the
+    // 1990s — NOT an IntelliStar voice, which is how this library ended up
+    // mislabelled and assigned to a 2013+ unit. The recordings date
+    // themselves: every hourly clip says "your local 36 hour forecast" and
+    // the extended says "the five day forecast", both retired in the
+    // September 2004 product rename.
+    //
+    // No device currently claims him. The library is intact and selectable
+    // by hand in Settings, but which machine it shipped on is unconfirmed —
+    // he has radar and travel-cities clips, which rules out the radar-less
+    // 3000 and Jr, and a five-day extended, which does not match the 4000's
+    // post-Feb-1991 three-day format. Left unassigned rather than guessed,
+    // since guessing the narrator is exactly the error being corrected here.
+    label: "Dan Chandler (1987-1990s)",
     hasTemps: false,
     hasConditions: false,
     hasWind: false,
