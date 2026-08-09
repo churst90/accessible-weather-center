@@ -179,5 +179,5 @@ current rendering and a faithful one.
 - Severe treatment should default to a single-line crawl over the LDL (red box left, yellow watches, orange statements); full-bleed red is the tornado-emergency tier only.
 - Almanac needs the analog sunrise/sunset clock graphic (white = sunrise, black = sunset).
 - IS2 Jr should suppress its LDL during national segments; currently both render identically.
-- Jim Cantore has no radar intro clip, so Local Doppler falls back to spoken text. Unresolved whether TWC recorded one for the IntelliStar 2; the IS2 StarBundles (archive.org/details/bundles.-7z) would settle it.
+- Jim Cantore has no radar intro clip, so Local Doppler falls back to spoken text. The IS2 XD StarBundle carries Allen Jackson's LRADAR_DEFAULT1/2 instead — see the note above before reassigning the voice.
 

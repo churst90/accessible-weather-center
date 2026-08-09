@@ -34,7 +34,8 @@
     "sources:fetch": "node scripts/fetch-sources.mjs",
     "layouts:extract": "node scripts/extract-layouts.mjs",
     "music:audit": "node scripts/audit-music.mjs",
-    "rundowns:extract": "node scripts/extract-rundowns.mjs"
+    "rundowns:extract": "node scripts/extract-rundowns.mjs",
+    "visual:coverage": "node scripts/visual-coverage.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",

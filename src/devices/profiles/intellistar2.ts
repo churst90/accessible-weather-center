@@ -93,6 +93,19 @@ export const INTELLISTAR2: Device = {
     // Replaces "Chandler's clips use pre-2004 phrasing, anachronistic for a
     // 2013+ unit" — the cause was the voice, not the phrasing, and the voice
     // is now Cantore. What remains is a genuine hole in his library.
-    "Jim Cantore has no radar intro clip, so Local Doppler falls back to spoken text. Unresolved whether TWC recorded one for the IntelliStar 2; the IS2 StarBundles (archive.org/details/bundles.-7z) would settle it."
+    // The StarBundles have now been checked, and the answer is not the one
+    // expected. The IntelliStar 2 XD HD bundle ships Vocal Local under
+    // audio/domestic/vocalLocal/JACKSON/ — including
+    // Default_Phrases_Local_Radar/LRADAR_DEFAULT{1,2}.wav — with no Cantore
+    // directory present at all. Allen Jackson's radar intros were deployed on
+    // 2013+ HD hardware.
+    //
+    // Not acted on yet, deliberately. These bundles are CHANGESETS, so they
+    // carry only what changed; Cantore files could exist in the base install
+    // and simply not appear here. Concluding "IS2 is really Jackson" from a
+    // delta would repeat the exact reasoning error that put Cantore on the
+    // IntelliStar 1 in the first place. Needs the Managed bundle or a base
+    // install to settle.
+    "Jim Cantore has no radar intro clip, so Local Doppler falls back to spoken text. The IS2 XD StarBundle carries Allen Jackson's LRADAR_DEFAULT1/2 instead — see the note above before reassigning the voice."
   ]
 };
