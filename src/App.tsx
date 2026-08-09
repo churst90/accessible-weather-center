@@ -432,23 +432,19 @@ export default function App() {
         void services.scheduler.refreshCurrent();
       }
 
+      // Screen reader first, and without waiting on any audio. It is the
+      // primary channel for the users this application exists for, and a
+      // tone must never delay the words.
       for (const a of u.fresh) {
-        if (isSevereAlert(a)) {
-          // Quick attention tone — the NWS 4-beep pattern. The scene
-          // interrupt below transitions to the alerts scene, which plays
-          // the full per-narrator beep + spoken warning via composeAlerts.
-          void services.clips.play("warning_beep");
-        } else {
-          void services.alertTones.playAdvisory();
-        }
         void services.announcer.announce(`${a.event}. ${a.headline}`, "assertive");
-
         // OS-level toast so the user sees it even when minimized to the
         // tray. The IPC bridge no-ops when Notification isn't supported.
         if (window.awc?.notify) {
           void window.awc.notify(a.event, `${a.headline}\n${a.affectedAreaDescription}`);
         }
       }
+
+      const freshSevere = u.fresh.some(isSevereAlert);
 
       // Severe ticker text.
       const severeAlerts = u.alerts.filter(isSevereAlert);
@@ -458,10 +454,34 @@ export default function App() {
           : ""
       );
 
-      // Interrupt on fresh severe; clear when no severe remains active.
-      if (u.fresh.some(isSevereAlert)) {
+      // Who plays the attention tone.
+      //
+      // This used to fire a tone here AND interrupt to the alerts scene at
+      // the same moment. Two things went wrong. Entering a scene runs the
+      // narration effect, whose first act is sequencer.stop(), so the tone
+      // was cut a few hundred milliseconds in — the user heard a blip, not
+      // the four-tone pattern. And composeAlerts already opens the alerts
+      // scene with the full per-narrator beep followed by the spoken
+      // warning, so even uninterrupted it was queueing a second one.
+      //
+      // So the scene owns the audio whenever there is going to be a scene.
+      // It plays beep-then-warning as one uninterrupted script, which is
+      // both the authentic Weatherscan treatment and the only way the tone
+      // reliably finishes.
+      const alreadyOnAlerts = services.scheduler.isInterrupted();
+      if (freshSevere && !alreadyOnAlerts) {
         void services.scheduler.interrupt("alerts");
+      } else if (u.fresh.length > 0) {
+        // No transition is coming — either this is an advisory, or a further
+        // severe alert arrived while the alerts scene was already up. Nothing
+        // else will make a sound, so the cue has to come from here. One tone
+        // for the batch: every tone routes through playOne(), which stops
+        // whatever is playing first, so a loop of four played three fragments.
+        void (freshSevere
+          ? services.clips.play("warning_beep")
+          : services.alertTones.playAdvisory());
       }
+
       if (!u.severeActive && services.scheduler.isInterrupted()) {
         void services.scheduler.clearInterrupt();
       }

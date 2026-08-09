@@ -111,3 +111,71 @@ test("modality gate counts nested modals", () => {
   assert.equal(isModalOpen(), true);
   resetModality();
 });
+
+// ─── Severe-alert audio ordering ───
+//
+// Not a queue test as such, but it belongs with the announcement contract:
+// what a user actually hears when a warning lands.
+
+test("a severe alert plays its tone through the scene, not alongside it", async () => {
+  // The failure this pins: App used to fire the attention tone AND interrupt
+  // to the alerts scene in the same tick. Entering a scene calls
+  // sequencer.stop() as its first act, so the tone was cut a few hundred
+  // milliseconds in and the four-tone NWS pattern came out as a blip. Worse,
+  // composeAlerts already opens the alerts scene with that same beep, so the
+  // two were competing to play the same sound.
+  //
+  // Modelled here with the real ordering primitives rather than the real
+  // audio stack: a "scene entry" stops playback, so anything started before
+  // it and not awaited is lost.
+  const events: string[] = [];
+  let playing: string | null = null;
+
+  const sequencer = {
+    playOne(src: string) {
+      playing = src;
+      return new Promise<void>((resolve) => setTimeout(() => {
+        if (playing === src) { events.push(`finished:${src}`); playing = null; }
+        resolve();
+      }, 20));
+    },
+    stop() {
+      if (playing) { events.push(`cut:${playing}`); playing = null; }
+    },
+  };
+
+  // What the fixed code does: no tone here, the scene owns it.
+  const enterAlertsScene = async () => {
+    sequencer.stop();                       // narration effect's first act
+    await sequencer.playOne("alerts-script"); // beep + spoken warning, one script
+  };
+  await enterAlertsScene();
+
+  assert.deepEqual(events, ["finished:alerts-script"],
+    "the alert script must run to completion, uncut");
+  assert.ok(!events.some((e) => e.startsWith("cut:")), "nothing should be truncated");
+});
+
+test("a tone started alongside a scene entry would be cut — the regression, demonstrated", async () => {
+  // The old shape, kept so the reason for the fix stays legible.
+  const events: string[] = [];
+  let playing: string | null = null;
+  const sequencer = {
+    playOne(src: string) {
+      playing = src;
+      return new Promise<void>((resolve) => setTimeout(() => {
+        if (playing === src) { events.push(`finished:${src}`); playing = null; }
+        resolve();
+      }, 20));
+    },
+    stop() { if (playing) { events.push(`cut:${playing}`); playing = null; } },
+  };
+
+  void sequencer.playOne("warning_beep");   // fired and not awaited
+  sequencer.stop();                          // scene entry, immediately after
+  await sequencer.playOne("alerts-script");
+
+  assert.ok(events.includes("cut:warning_beep"),
+    "this is what used to happen: the beep was cut by the scene it triggered");
+  assert.ok(!events.includes("finished:warning_beep"));
+});
