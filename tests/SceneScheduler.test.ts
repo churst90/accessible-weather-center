@@ -106,3 +106,99 @@ test("setSceneOrder reorders while preserving the current scene", async () => {
   assert.equal(sched.getCurrent()?.id, "c", "wraps to the new order's start");
   sched.stop();
 });
+
+test("refreshCurrent() re-prepares in place without counting as a scene entry", async () => {
+  // The screen used to freeze on whatever the data looked like when the
+  // scene was entered: refreshing the upstream caches changed nothing on
+  // screen, because nobody asked the scene to re-read them. refreshCurrent
+  // closes that gap — but it must stay SILENT, or App would stop the clips
+  // and re-narrate the same scene once a minute, forever.
+  let reading = 72;
+  const scene: Scene = {
+    id: "current",
+    title: "Current Conditions",
+    defaultHoldMs: 50,
+    async prepare(): Promise<RenderedScene> {
+      return { id: "current", title: "Current Conditions", data: { tempF: reading }, speech: `${reading} degrees`, holdMs: 50 };
+    }
+  };
+  const sched = new SceneScheduler([scene, fakeScene("b")], CTX);
+  sched.setAutoCycle(false);
+  const seen: { id: string | null; token: number }[] = [];
+  sched.subscribe((e) => seen.push({ id: e.scene?.id ?? null, token: e.sceneToken }));
+  await sched.start();
+
+  const entryToken = seen[seen.length - 1].token;
+  assert.equal((sched.getCurrent()!.data as { tempF: number }).tempF, 72);
+
+  reading = 68;
+  assert.equal(await sched.refreshCurrent(), true);
+
+  const after = seen[seen.length - 1];
+  assert.equal((sched.getCurrent()!.data as { tempF: number }).tempF, 68, "new data reached the screen");
+  assert.equal(sched.getCurrent()!.speech, "68 degrees");
+  assert.equal(after.token, entryToken, "sceneToken must NOT advance — this was not an entry");
+  assert.equal(sched.getStatus(), "running", "refresh must not disturb the loop");
+  sched.stop();
+});
+
+test("entering a scene advances sceneToken; refreshing does not", async () => {
+  const sched = new SceneScheduler([fakeScene("a"), fakeScene("b")], CTX);
+  sched.setAutoCycle(false);
+  const tokens: number[] = [];
+  sched.subscribe((e) => tokens.push(e.sceneToken));
+  await sched.start();
+  const afterStart = tokens[tokens.length - 1];
+  await sched.refreshCurrent();
+  assert.equal(tokens[tokens.length - 1], afterStart, "refresh is silent");
+  await sched.next();
+  assert.ok(tokens[tokens.length - 1] > afterStart, "a real entry advances the token");
+  sched.stop();
+});
+
+test("refreshCurrent() drops its result if the user moved on mid-prepare", async () => {
+  // Same hazard enter() guards with the generation counter: a slow refresh
+  // must never overwrite the scene the user has since tabbed to.
+  const slow = fakeScene("slow", { prepareDelayMs: 40 });
+  const sched = new SceneScheduler([slow, fakeScene("b")], CTX);
+  sched.setAutoCycle(false);
+  await sched.start();
+  assert.equal(sched.getCurrent()?.id, "slow");
+  const refreshing = sched.refreshCurrent();
+  await sched.next(); // user tabs to "b" while the refresh is in flight
+  assert.equal(await refreshing, false, "stale refresh reports that it dropped");
+  assert.equal(sched.getCurrent()?.id, "b", "the scene the user chose stands");
+  sched.stop();
+});
+
+test("a failed refresh leaves the good data on screen", async () => {
+  // A weather display must never trade a real reading for an error card
+  // because one background poll timed out.
+  let shouldFail = false;
+  const scene: Scene = {
+    id: "current",
+    title: "Current",
+    defaultHoldMs: 50,
+    async prepare(): Promise<RenderedScene> {
+      if (shouldFail) throw new Error("NWS down");
+      return { id: "current", title: "Current", data: { tempF: 72 }, speech: "72 degrees", holdMs: 50 };
+    }
+  };
+  const sched = new SceneScheduler([scene], CTX);
+  sched.setAutoCycle(false);
+  await sched.start();
+  shouldFail = true;
+  assert.equal(await sched.refreshCurrent(), false);
+  assert.equal((sched.getCurrent()!.data as { tempF: number }).tempF, 72, "still showing the last good reading");
+  assert.equal(sched.getCurrent()!.speech, "72 degrees");
+  sched.stop();
+});
+
+test("refreshCurrent() is a no-op before start and after stop", async () => {
+  const sched = new SceneScheduler([fakeScene("a")], CTX);
+  sched.setAutoCycle(false);
+  assert.equal(await sched.refreshCurrent(), false, "nothing on screen yet");
+  await sched.start();
+  sched.stop();
+  assert.equal(await sched.refreshCurrent(), false, "loop stopped");
+});

@@ -6,26 +6,25 @@ export function DetailedConditionsView({ data }: { data: DetailedConditionsData 
   const { place, observation } = data;
   const announcer = useAnnouncer();
 
+  // Hooks run unconditionally: a live refresh can flip `observation` from
+  // null to a reading on the same mounted instance, and a hook call that
+  // only happens on some renders makes React throw.
+  const rows = observation
+    ? [
+        { label: "Wind", value: formatWind(observation.windSpeedMph, observation.windDirDeg, observation.windGustMph) },
+        { label: "Humidity", value: observation.humidityPct != null ? `${observation.humidityPct}%` : "\u2014" },
+        { label: "Dewpoint", value: observation.dewpointF != null ? `${observation.dewpointF}\u00B0F` : "\u2014" },
+        { label: "Pressure", value: observation.pressureInHg != null ? `${observation.pressureInHg} inHg` : "\u2014" },
+        { label: "Visibility", value: observation.visibilityMi != null ? `${observation.visibilityMi} mi` : "\u2014" },
+      ]
+    : [];
+
+  const describeRow = (r: { label: string; value: string }) => `${r.label}: ${r.value}`;
+  const { index } = useArrowList(rows, describeRow, announcer, observation != null);
+
   if (!observation) {
     return <p>Detailed conditions for {place.name} are not available.</p>;
   }
-
-  const windValue = formatWind(
-    observation.windSpeedMph,
-    observation.windDirDeg,
-    observation.windGustMph
-  );
-
-  const rows = [
-    { label: "Wind", value: windValue },
-    { label: "Humidity", value: observation.humidityPct != null ? `${observation.humidityPct}%` : "\u2014" },
-    { label: "Dewpoint", value: observation.dewpointF != null ? `${observation.dewpointF}\u00B0F` : "\u2014" },
-    { label: "Pressure", value: observation.pressureInHg != null ? `${observation.pressureInHg} inHg` : "\u2014" },
-    { label: "Visibility", value: observation.visibilityMi != null ? `${observation.visibilityMi} mi` : "\u2014" },
-  ];
-
-  const describeRow = (r: { label: string; value: string }) => `${r.label}: ${r.value}`;
-  const { index } = useArrowList(rows, describeRow, announcer, true);
 
   return (
     <section aria-label={`Detailed conditions for ${place.name}`}>

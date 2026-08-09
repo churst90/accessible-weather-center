@@ -31,6 +31,8 @@ interface Props {
 export function PlacesMode({ places, weather, announcer, store, active, onDrillIn }: Props) {
   const [focusIdx, setFocusIdx] = useState(0);
   const [obs, setObs] = useState<Record<string, Observation | null>>({});
+  const obsRef = useRef(obs);
+  obsRef.current = obs;
   const [zipInput, setZipInput] = useState("");
   const [adding, setAdding] = useState(false);
   const zipInputRef = useRef<HTMLInputElement | null>(null);
@@ -41,20 +43,34 @@ export function PlacesMode({ places, weather, announcer, store, active, onDrillI
     setFocusIdx((i) => Math.min(Math.max(0, i), Math.max(0, places.length - 1)));
   }, [active, places.length]);
 
-  // Fetch and announce the focused place's conditions.
+  // Announce the focused place, then fill in its conditions.
+  //
+  // This used to announce nothing until getObservation() resolved, so every
+  // arrow press was answered by silence for as long as the network took —
+  // and on a cold list, by several places' worth of readouts arriving at
+  // once in whatever order the requests happened to finish. Name first,
+  // immediately, on the interrupting navigation channel; the temperature
+  // follows only if we didn't already have it cached and the user is still
+  // sitting on that place.
   useEffect(() => {
     if (!active) return;
     const place = places[focusIdx];
     if (!place) return;
+    const known = obsRef.current[place.id];
+    announcer.announce(describePlace(place, known ?? null), "navigation");
+    if (known !== undefined) return;
     let cancelled = false;
-    weather.getObservation(place).then((o) => {
+    void weather.getObservation(place).then((o) => {
       if (cancelled) return;
       setObs((prev) => ({ ...prev, [place.id]: o }));
-      void announcer.announce(describePlace(place, o), "polite");
-    });
+      announcer.announce(describePlace(place, o), "navigation");
+    }).catch(() => { /* the name was already spoken; nothing to add */ });
     return () => {
       cancelled = true;
     };
+    // `obs` is read through a ref on purpose: including it would re-run this
+    // effect (and re-announce) the moment its own fetch stored a result.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusIdx, active, places, weather, announcer]);
 
   // Arrow key handling — only while this mode is active. Bail out when the

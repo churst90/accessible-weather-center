@@ -11,8 +11,36 @@ function compassLabel(deg: number): string {
 }
 
 export function StormTrackerView({ data }: { data: StormTrackerData }) {
-  const { place, storm, summary } = data;
+  const { place, storm, summary, totalStorms } = data;
   const announcer = useAnnouncer();
+
+  // Hooks run unconditionally. This scene's data is re-prepared live as the
+  // radar scans, so `storm` flips between null and a reading on the same
+  // mounted instance — a hook behind the early return below would make React
+  // throw the moment the first storm appeared.
+  const rows = storm
+    ? [
+        { label: "Intensity", value: bandInfo(storm.band).label },
+        { label: "Distance", value: `${storm.distanceFromHomeMi.toFixed(1)} miles` },
+        { label: "Direction", value: compassLabel(storm.bearingFromHomeDeg) },
+        {
+          label: "Movement",
+          value:
+            storm.movementMph != null && storm.movementDeg != null && storm.movementMph > 0
+              ? `${compassLabel(storm.movementDeg)} at ${Math.round(storm.movementMph)} mph`
+              : "Stationary"
+        },
+        { label: "Peak Rate", value: `${storm.peakMmPerHour.toFixed(1)} mm/hr` },
+        { label: "Radius", value: `${storm.radiusMi.toFixed(1)} miles` },
+        {
+          label: "ETA",
+          value: storm.etaMinutes != null ? `${Math.round(storm.etaMinutes)} minutes` : "Not approaching"
+        }
+      ]
+    : [];
+
+  const describeRow = (r: { label: string; value: string }) => `${r.label}: ${r.value}`;
+  const { index } = useArrowList(rows, describeRow, announcer, storm != null);
 
   if (!storm) {
     return (
@@ -27,36 +55,15 @@ export function StormTrackerView({ data }: { data: StormTrackerData }) {
     );
   }
 
-  const movementText =
-    storm.movementMph != null && storm.movementDeg != null && storm.movementMph > 0
-      ? `${compassLabel(storm.movementDeg)} at ${Math.round(storm.movementMph)} mph`
-      : "Stationary";
-
-  const etaText =
-    storm.etaMinutes != null
-      ? `${Math.round(storm.etaMinutes)} minutes`
-      : "Not approaching";
-
-  const rows = [
-    { label: "Intensity", value: bandInfo(storm.band).label },
-    { label: "Distance", value: `${storm.distanceFromHomeMi.toFixed(1)} miles` },
-    { label: "Direction", value: compassLabel(storm.bearingFromHomeDeg) },
-    { label: "Movement", value: movementText },
-    { label: "Peak Rate", value: `${storm.peakMmPerHour.toFixed(1)} mm/hr` },
-    { label: "Radius", value: `${storm.radiusMi.toFixed(1)} miles` },
-    { label: "ETA", value: etaText }
-  ];
-
-  const describeRow = (r: { label: string; value: string }) => `${r.label}: ${r.value}`;
-  const { index } = useArrowList(rows, describeRow, announcer, true);
-
   return (
     <section aria-label={`Storm tracker for ${place.name}`}>
       <p style={{ margin: "0 0 12px", fontSize: 18, color: "var(--ws-text)" }}>
         {summary}
       </p>
       <p style={{ color: "var(--ws-text-dim)", marginTop: 0 }}>
-        Up and down arrows to walk storm details.
+        {totalStorms > 1
+          ? `Nearest of ${totalStorms} storms on radar. Up and down arrows to walk its details; press N for map navigation to walk every storm.`
+          : "Up and down arrows to walk storm details."}
       </p>
       <table
         className="ws-readout-table"

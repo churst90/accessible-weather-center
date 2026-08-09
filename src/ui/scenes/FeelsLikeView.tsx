@@ -12,16 +12,23 @@ export function FeelsLikeView({ data }: { data: FeelsLikeData }) {
   const { place, actualF, feelsLikeF, windChillActive, heatIndexActive, advisory } = data;
   const announcer = useAnnouncer();
 
+  // Hooks must run on every render, including the "no data" one. A live
+  // refresh can flip actualF from null to a number on the *same* mounted
+  // instance, and a hook call that only happens on some renders makes React
+  // throw "rendered more hooks than during the previous render".
+  const cells =
+    actualF == null
+      ? []
+      : [
+          { label: "Actual", value: `${actualF}°`, speech: `Actual temperature, ${actualF} degrees.` },
+          { label: "Feels Like", value: feelsLikeF != null ? `${feelsLikeF}°` : "—", speech: feelsLikeF != null ? `Feels like ${feelsLikeF} degrees.` : "Feels like unavailable." },
+        ];
+
+  const { index } = useArrowGrid(cells, 2, (c) => c.speech, announcer, actualF != null);
+
   if (actualF == null) {
     return <p>Feels like information for {place.name} is not available.</p>;
   }
-
-  const cells = [
-    { label: "Actual", value: `${actualF}°`, speech: `Actual temperature, ${actualF} degrees.` },
-    { label: "Feels Like", value: feelsLikeF != null ? `${feelsLikeF}°` : "—", speech: feelsLikeF != null ? `Feels like ${feelsLikeF} degrees.` : "Feels like unavailable." },
-  ];
-
-  const { index } = useArrowGrid(cells, 2, (c) => c.speech, announcer);
 
   const driver = windChillActive ? "wind-chill" : heatIndexActive ? "heat-index" : "neutral";
 

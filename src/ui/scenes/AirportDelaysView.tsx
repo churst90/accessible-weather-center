@@ -5,13 +5,9 @@ import { useArrowList } from "../../a11y/useArrowList";
 import { useAnnouncer } from "../../a11y/AnnouncerContext";
 
 export function AirportDelaysView({ data }: { data: AirportDelaysData }) {
-  if (!data.available) {
-    return <SceneUnavailable title="Airport Delays" reason={data.reason} />;
-  }
-  if (data.delays.length === 0) {
-    return <SceneUnavailable title="Airport Delays" reason="No delays reported nationwide." />;
-  }
-
+  // Every hook runs on every render — including the unavailable/empty ones.
+  // A live refresh can flip availability on the same mounted instance, and
+  // hooks behind an early return make React throw when that happens.
   const announcer = useAnnouncer();
   const describe = (d: AirportDelay) => {
     if (d.kind === "closure") {
@@ -22,7 +18,15 @@ export function AirportDelaysView({ data }: { data: AirportDelaysData }) {
     const mins = d.avgDelayMinutes != null ? `${d.avgDelayMinutes}-minute delay` : "delay (duration unspecified)";
     return `${d.name}. ${d.kind.replace("-", " ")}. ${mins}. ${d.reason || "no reason reported"}`;
   };
-  const { index } = useArrowList(data.delays, describe, announcer);
+  const usable = data.available && data.delays.length > 0;
+  const { index } = useArrowList(data.delays, describe, announcer, usable);
+
+  if (!data.available) {
+    return <SceneUnavailable title="Airport Delays" reason={data.reason} />;
+  }
+  if (data.delays.length === 0) {
+    return <SceneUnavailable title="Airport Delays" reason="No delays reported nationwide." />;
+  }
 
   return (
     <section aria-label="Airport delays">

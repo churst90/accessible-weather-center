@@ -40,7 +40,7 @@ type ViewMode = "scenes" | "places" | "mapnav";
 
 export default function App() {
   const services = useMemo(() => buildServices(), []);
-  const [event, setEvent] = useState<SchedulerEvent>({ status: "stopped", index: 0, scene: null, interrupted: false });
+  const [event, setEvent] = useState<SchedulerEvent>({ status: "stopped", index: 0, scene: null, interrupted: false, sceneToken: 0 });
   const [viewMode, setViewMode] = useState<ViewMode>("scenes");
   const [audioStarted, setAudioStarted] = useState(false);
   const [alertCount, setAlertCount] = useState(0);
@@ -66,6 +66,10 @@ export default function App() {
   const unlockAudioRef = useRef<(() => void) | null>(null);
   const viewModeRef = useRef<ViewMode>(viewMode);
   viewModeRef.current = viewMode;
+  /** Which scene is on screen, readable from service callbacks without
+   *  re-subscribing them on every scene change. */
+  const currentSceneIdRef = useRef<string | null>(null);
+  currentSceneIdRef.current = event.scene?.id ?? null;
 
   // Wire scheduler subscription.
   useEffect(() => services.scheduler.subscribe(setEvent), [services]);
@@ -192,35 +196,51 @@ export default function App() {
     };
   }, [services, needsSetup]);
 
-  // Keep weather data fresh independently of the scene loop.
+  // Keep weather data fresh independently of the scene loop, and push what
+  // arrives onto the screen the user is actually looking at.
   //
-  // WeatherService only fetches when something asks it to, and the only
-  // thing that asked was a scene entering. So a paused loop — or a loop that
-  // stalled for any reason — meant the app sat on hours-old conditions with
-  // no indication anything was wrong. For a weather application that is the
-  // worst kind of failure: confidently current-looking, actually stale.
+  // Two failures used to combine here. First, WeatherService only fetched
+  // when something asked it to, and the only thing that asked was a scene
+  // entering — so a paused loop meant hours-old conditions with nothing
+  // saying so. Second, and worse, even a successful background refresh went
+  // nowhere: scene data is a snapshot taken at prepare() time, so refilling
+  // the cache didn't change a single number on screen. The display only
+  // moved when the cycle happened to come back around to that scene.
   //
-  // Alerts (AlertWatcher, 1 min) and radar (StormScanner, ~2 min) already
-  // poll on their own; this closes the gap for observations and forecasts.
-  // The TTLs inside WeatherService still apply, so this warms the cache
-  // rather than hammering the API — a refresh that lands inside the TTL is
-  // served from memory and costs nothing.
+  // So: poll every minute, then ask the scheduler to re-prepare the current
+  // scene from the freshened caches. refreshCurrent() is silent — no clip
+  // restart, no re-narration, no effect on the hold timer — so the numbers
+  // update underneath the user without interrupting them.
+  //
+  // Alerts (AlertWatcher, 1 min) and radar (StormScanner, 2 min) poll on
+  // their own; this closes the gap for observations and forecasts.
   useEffect(() => {
     if (needsSetup) return;
-    const REFRESH_MS = 5 * 60_000;
-    const refresh = () => {
+    const REFRESH_MS = 60_000;
+    let stopped = false;
+    const refresh = async () => {
       const home = services.places.home();
       if (!home) return;
-      void services.weather.getObservation(home).catch(() => { /* stale-while-error handles it */ });
-      void services.weather.getForecast(home).catch(() => { /* ditto */ });
-      void services.weather.getHourly(home).catch(() => { /* ditto */ });
+      // Settle all three before re-preparing: a scene that reads more than
+      // one product (Current Conditions reads observation + forecast) would
+      // otherwise re-prepare against a half-updated cache and need a second
+      // pass to show a consistent picture. allSettled — one product being
+      // down must not stop the others from reaching the screen.
+      await Promise.allSettled([
+        services.weather.getObservation(home),
+        services.weather.getForecast(home),
+        services.weather.getHourly(home)
+      ]);
+      if (stopped) return;
+      await services.scheduler.refreshCurrent();
     };
-    refresh();
-    const id = setInterval(refresh, REFRESH_MS);
+    void refresh();
+    const id = setInterval(() => void refresh(), REFRESH_MS);
     // Background tabs get their timers throttled; catch up on return.
-    const onVisible = () => { if (!document.hidden) refresh(); };
+    const onVisible = () => { if (!document.hidden) void refresh(); };
     document.addEventListener("visibilitychange", onVisible);
     return () => {
+      stopped = true;
       clearInterval(id);
       document.removeEventListener("visibilitychange", onVisible);
     };
@@ -233,6 +253,17 @@ export default function App() {
     return services.stormScanner.subscribe((e: StormEvent) => {
       const home = services.places.home();
       if (!home) return;
+      // Every completed scan repositions the storms. The radar and storm
+      // tracker scenes hold a snapshot from when they were entered, so
+      // without this the plotted positions, distances and ETAs on screen
+      // stayed at wherever the storms were minutes ago. Silent re-prepare:
+      // no re-narration, just moved storms.
+      if (e.kind === "updated") {
+        const id = currentSceneIdRef.current;
+        if (id === "radar" || id === "stormtracker") {
+          void services.scheduler.refreshCurrent();
+        }
+      }
       if (e.kind === "storm-new" && e.storm) {
         void services.announcer.announce(
           `New storm detected. ${describeStorm(e.storm, home.coord)}`,
@@ -291,8 +322,17 @@ export default function App() {
 
   // On every scene change: stop any playing clips and unduck music,
   // then announce via NVDA and optionally play AJ clips.
+  //
+  // "Scene change" means a real entry, not a live data refresh. The
+  // scheduler re-prepares the on-screen scene every minute so the numbers
+  // stay current, which hands us a new `scene` object each time — running
+  // this effect on those would cut off the narration mid-sentence and start
+  // it over once a minute, forever.
+  const lastNarratedToken = useRef(-1);
   useEffect(() => {
     if (!event.scene) return;
+    if (event.sceneToken === lastNarratedToken.current) return;
+    lastNarratedToken.current = event.sceneToken;
     const scene = event.scene;
     const settings = services.settings.get();
 
@@ -370,7 +410,7 @@ export default function App() {
         services.scheduler.setNarrationPromise(narration);
       }
     }
-  }, [event.scene, services]);
+  }, [event.scene, event.sceneToken, services]);
 
   // Tier 1 alerts: the AlertWatcher service owns polling, home-change
   // re-pointing, and fresh-alert dedupe (core/alerts/AlertWatcher.ts).
@@ -380,6 +420,13 @@ export default function App() {
     return services.alertWatcher.subscribe((u: AlertUpdate) => {
       setAlertCount(u.alerts.length);
       setAlertsList(u.alerts);
+
+      // If the Alerts scene is what's on screen, re-prepare it so an alert
+      // that expired or was upgraded isn't left standing there. Silent —
+      // fresh alerts get their own announcement below.
+      if (currentSceneIdRef.current === "alerts") {
+        void services.scheduler.refreshCurrent();
+      }
 
       for (const a of u.fresh) {
         if (isSevereAlert(a)) {
@@ -491,10 +538,11 @@ export default function App() {
             services.announcer.cancel();
             if (next === "mapnav") {
               services.scheduler.pause();
-              void services.announcer.announce(
-                "Entering map navigation. Tab to switch modes, arrows to navigate, N or Escape to exit.",
-                "assertive"
-              );
+              // No announcement here on the way IN. MapNavView announces
+              // itself on activation with the storm and alert counts and the
+              // same key hints; saying a generic version first meant the
+              // user heard "Tab to switch modes, arrows to navigate, N or
+              // Escape to exit" twice in a row on every N press.
             } else {
               void services.scheduler.resume();
               void services.announcer.announce("Returning to scenes.", "assertive");

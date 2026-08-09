@@ -6,15 +6,21 @@ interface Props {
 }
 
 /**
- * The aria-live regions screen readers consume. Two independent regions —
- * polite (scene narration, navigation readouts) and assertive (alerts,
- * mode changes) — each holding its own latest announcement, so one channel
- * updating never wipes the other's text out of the DOM.
+ * The aria-live regions screen readers consume. Three independent regions —
+ * polite (scene narration, background status), assertive (alerts, mode
+ * changes), and navigation (the readout for the key the user just pressed) —
+ * each holding its own latest announcement, so one channel updating never
+ * wipes another's text out of the DOM.
  *
- * The element is positioned off-screen but readable to assistive tech.
+ * Navigation gets its own assertive region rather than sharing the polite
+ * one: a screen reader queues polite updates, so arrowing through a list
+ * faster than it could speak meant the middle items were replaced in the
+ * DOM before they were ever read aloud.
+ *
+ * The elements are positioned off-screen but readable to assistive tech.
  */
 export function AnnouncementRegion({ queue }: Props) {
-  const [state, setState] = useState<AnnouncementState>({ polite: null, assertive: null });
+  const [state, setState] = useState<AnnouncementState>({ polite: null, assertive: null, navigation: null });
 
   useEffect(() => {
     return queue.subscribe(setState);
@@ -39,6 +45,19 @@ export function AnnouncementRegion({ queue }: Props) {
         data-testid="awc-live-assertive"
       >
         {renderText(state.assertive)}
+      </div>
+      {/* Navigation readouts. Deliberately NOT role="alert": this is
+          keypress feedback, not an emergency, and role="alert" makes some
+          screen readers prefix every item with "alert". aria-live
+          "assertive" still gets the interrupting delivery navigation
+          needs. */}
+      <div
+        className="sr-only"
+        aria-live="assertive"
+        aria-atomic="true"
+        data-testid="awc-live-navigation"
+      >
+        {renderText(state.navigation)}
       </div>
     </>
   );

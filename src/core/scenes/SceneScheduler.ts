@@ -8,6 +8,16 @@ export interface SchedulerEvent {
   scene: RenderedScene | null;
   /** True when the current scene was forced via an interrupt (e.g. severe alert). */
   interrupted: boolean;
+  /**
+   * Bumped once per *entry* into a scene, never by a silent data refresh.
+   *
+   * `scene` is a fresh object whenever the scene's data is re-prepared, so
+   * subscribers can't use its identity to tell "the user moved to a new
+   * screen" from "the screen you're on just got newer numbers". The first
+   * should stop clips and narrate; the second must stay silent. Compare
+   * this token against the last one you narrated.
+   */
+  sceneToken: number;
 }
 
 /**
@@ -39,6 +49,8 @@ export class SceneScheduler {
    *  rapid Tab presses cause a "lag then catch-up" effect where the UI
    *  flashes through every transitional scene as each prepare resolves. */
   private generation = 0;
+  /** Incremented on each scene entry only — see SchedulerEvent.sceneToken. */
+  private sceneToken = 0;
 
   private ctx: SceneContext;
 
@@ -217,6 +229,45 @@ export class SceneScheduler {
     return this.current;
   }
 
+  /**
+   * Re-prepare the scene that is currently on screen and push the new data
+   * to subscribers WITHOUT counting as a scene entry.
+   *
+   * This is what makes the display live. Scene data is a snapshot taken
+   * when the scene was entered, so without this the temperature on screen
+   * was frozen from the moment the scene came up until the cycle brought it
+   * around again — and if the loop was paused, or the user was parked on
+   * one screen, it was frozen indefinitely. Refreshing the upstream caches
+   * alone did nothing; somebody had to ask the scene to re-read them.
+   *
+   * Deliberately does NOT: bump the generation, touch the hold timer, or
+   * clear the narration promise. The scene keeps its place in the cycle and
+   * whatever clips are playing keep playing; only `data` and `speech`
+   * change underneath. `sceneToken` stays put so App knows not to re-narrate.
+   */
+  async refreshCurrent(): Promise<boolean> {
+    if (this.status === "stopped" || !this.current) return false;
+    const scene = this.scenes[this.index];
+    if (!scene || scene.id !== this.current.id) return false;
+    const myGen = this.generation;
+    let prepared: RenderedScene;
+    try {
+      prepared = await scene.prepare(this.ctx);
+    } catch {
+      // A failed refresh must never replace good data with an error card.
+      // Keep showing what we have; the next tick tries again.
+      return false;
+    }
+    // The user moved (or the place/theme changed) while we were preparing.
+    // enter() owns the screen now; dropping this result is the whole point
+    // of the generation counter.
+    if (myGen !== this.generation) return false;
+    if (!this.current || this.current.id !== prepared.id) return false;
+    this.current = prepared;
+    this.emit();
+    return true;
+  }
+
   /** Set the post-narration delay in seconds. */
   setPostNarrationDelay(seconds: number): void {
     this.postNarrationDelaySec = Math.max(0, seconds);
@@ -258,6 +309,8 @@ export class SceneScheduler {
     // UI doesn't flash through every transitional scene.
     if (myGen !== this.generation) return;
     this.current = prepared;
+    // A real entry: publish a new token so App narrates this scene.
+    this.sceneToken++;
     // Emit so the UI renders and the narration effect fires.
     this.emit();
     if (this.status === "running" && this.autoCycle) {
@@ -302,7 +355,8 @@ export class SceneScheduler {
       status: this.status,
       index: this.index,
       scene: this.current,
-      interrupted: this.interrupted
+      interrupted: this.interrupted,
+      sceneToken: this.sceneToken
     };
     for (const fn of this.listeners) fn(event);
   }

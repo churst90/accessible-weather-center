@@ -146,7 +146,10 @@ function describeStormRow(storm: TrackedStorm, i: number): string {
     movement = ", stationary";
   }
   const eta = storm.etaMinutes != null ? `, estimated ${storm.etaMinutes} minutes to reach you` : "";
-  return `Storm ${i + 1}. ${intensity}, ${distance} ${direction}${movement}${eta}.`;
+  // No "Storm N" prefix — useArrowList appends "N of M" to every readout,
+  // so leading with the ordinal said the position twice.
+  void i;
+  return `${intensity}, ${distance} ${direction}${movement}${eta}.`;
 }
 
 function intensityLabel(storm: TrackedStorm): string {

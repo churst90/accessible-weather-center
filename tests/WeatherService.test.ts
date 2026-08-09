@@ -110,3 +110,71 @@ test("within TTL the cache is served without refetching", async () => {
   await service.getForecast(PLACE);
   assert.equal(calls, 1);
 });
+
+test("concurrent misses collapse onto a single upstream request", async () => {
+  // The 60-second refresh timer and a scene entering can ask for the same
+  // product in the same tick. Without in-flight dedupe, dropping the poll
+  // interval from five minutes to one would have multiplied the traffic
+  // rather than just making the data fresher.
+  let calls = 0;
+  const { service } = makeService({
+    getLatestObservation: async () => {
+      calls++;
+      await new Promise((r) => setTimeout(r, 20));
+      return null;
+    }
+  });
+  await Promise.all([
+    service.getObservation(PLACE),
+    service.getObservation(PLACE),
+    service.getObservation(PLACE)
+  ]);
+  assert.equal(calls, 1, "three simultaneous callers, one request");
+});
+
+test("a rejected in-flight request is not handed to later callers", async () => {
+  // The in-flight slot has to be released however the request settled. A
+  // rejected promise left registered would be replayed to every future
+  // caller for the life of the process.
+  let calls = 0;
+  const { service } = makeService({
+    getForecast: async () => {
+      calls++;
+      if (calls === 1) throw new Error("transient");
+      return [];
+    }
+  });
+  await assert.rejects(() => service.getForecast(PLACE), /transient/);
+  assert.deepEqual(await service.getForecast(PLACE), []);
+  assert.equal(calls, 2, "the retry actually went upstream");
+});
+
+test("observations refetch once their short TTL expires", async () => {
+  // The observation TTL and the background refresh interval used to be the
+  // same five minutes, so a refresh landing a hair early was served from
+  // memory and the temperature on screen could be ten minutes stale. The
+  // TTL is now well under the poll interval, so every poll is a real fetch.
+  const realNow = Date.now;
+  try {
+    let calls = 0;
+    const { service } = makeService({
+      getLatestObservation: async () => {
+        calls++;
+        return null;
+      }
+    });
+    await service.getObservation(PLACE);
+    assert.equal(calls, 1);
+    Date.now = () => realNow() + 20_000;
+    await service.getObservation(PLACE);
+    assert.equal(calls, 1, "still inside the TTL");
+    // The guarantee this test exists to protect: the observation TTL must
+    // stay under App's 60-second refresh interval, or the poll gets answered
+    // from memory and the displayed temperature quietly goes stale.
+    Date.now = () => realNow() + 60_000;
+    await service.getObservation(PLACE);
+    assert.equal(calls, 2, "a 60-second poll must land outside the observation TTL");
+  } finally {
+    Date.now = realNow;
+  }
+});
