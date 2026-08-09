@@ -52,10 +52,10 @@ export interface NarratorClipDef {
 
 // ─── Base paths for each narrator's assets ───
 
-const AJ_NARRATION = "/assets/narration/Alan Jackson";
-const JC_NARRATION = "/assets/narration/Jim Cantore";
-const AB_NARRATION = "/assets/narration/Amy Bargeron";
-const CH_NARRATION = "/assets/narration/Chandler";
+const AJ_NARRATION = "/assets/shared/narration/Alan Jackson";
+const JC_NARRATION = "/assets/shared/narration/Jim Cantore";
+const AB_NARRATION = "/assets/shared/narration/Amy Bargeron";
+const CH_NARRATION = "/assets/shared/narration/Chandler";
 
 /** Per-narrator asset root. Paths in clipReferenceTable.json are relative
  * to these roots — join with `/` to get the full src path. */

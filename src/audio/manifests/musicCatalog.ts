@@ -19,10 +19,10 @@ export interface MusicTrack {
 }
 
 const WS_BASE =
-  "/assets/music/The Weather Channel Weatherscan In-house production music (4 disk set)";
+  "/assets/shared/music/The Weather Channel Weatherscan In-house production music (4 disk set)";
 
 const TS_BASE =
-  "/assets/music/Trammell Starks - Music for Local Forecast (3 disk set) 1995";
+  "/assets/shared/music/Trammell Starks - Music for Local Forecast (3 disk set) 1995";
 
 /** Build the 41 generic Weatherscan jazz tracks programmatically. */
 function buildWeatherscanJazz(): MusicTrack[] {
@@ -112,7 +112,7 @@ function ts(disk: "d1" | "d2" | "d3", filename: string, moods: string[]): MusicT
 
 // ─── IntelliStar 1 music ───
 
-const I1_BASE = "/assets/music/intellistar1";
+const I1_BASE = "/assets/shared/music/intellistar1";
 
 const intellistar1Music: MusicTrack[] = [
   // All IS1 tracks tagged with `intellistar1` so the IS1 theme can filter
@@ -139,7 +139,7 @@ function i1(filename: string, title: string, moods: string[]): MusicTrack {
 
 // ─── IntelliStar 2 music ───
 
-const I2_BASE = "/assets/music/intellistar2";
+const I2_BASE = "/assets/shared/music/intellistar2";
 
 const intellistar2Music: MusicTrack[] = [
   // All IS2 tracks tagged with `intellistar2` so the IS2 theme filters

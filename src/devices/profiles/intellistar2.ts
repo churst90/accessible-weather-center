@@ -64,7 +64,7 @@ export const INTELLISTAR2: Device = {
     stormtracker:  { availability: "optional" }
   },
   visuals: {
-    iconSet: "/assets/icons/large",
+    iconSet: "/assets/shared/icons/large",
     iconResolution: 68,
     backgroundImage: "",
     extendedTitle: "7-Day Outlook",

@@ -1,4 +1,38 @@
-# Asset tiers
+# Asset layout and tiers
+
+## Layout
+
+The library is organised around one distinction: whether an asset belongs to
+a machine, or is shared between them.
+
+```
+assets/
+  devices/<device-id>/     art belonging to ONE machine
+    backgrounds/ icons/ chrome/
+  shared/                  pools genuinely used across machines
+    fonts/ music/ narration/ icons/ logos/ sfx/ sounds/ backgrounds/
+  data/                    station and city tables
+  inbox/                   unsorted intake, encumbered until reviewed
+```
+
+Device directory names are exactly the ids in `src/devices/profiles/<id>.ts`.
+That is the point: "what art does the WeatherStar 4000 v2 use" is answered by
+`ls`, not by knowing the history of the folder.
+
+It did not start this way. Icons lived in three places (`icons/`,
+`themes/intellistar/icons`, `themes/weatherscan/icons-png`), fonts in two, and
+`themes/` covered two of the ten machines while `backgrounds/` covered four
+and left 66 files loose at its root. `scripts/reorganize-assets.mjs` performed
+the migration — dry-run by default, move-only, and every move recorded to
+`.asset-migration.json` so `--undo` can replay it backwards. `assets/` is not
+in git, so a bad move there is not recoverable with `git checkout`; the
+manifest is the safety net.
+
+After moving, `npm run assets:check` confirmed all 170 statically-resolvable
+references still resolve, and `npm run clips:sweep` confirmed 0 missing files
+across both large narrator libraries.
+
+## Tiers
 
 The library is two libraries wearing one coat, and they have never had the
 same rules.

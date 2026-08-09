@@ -37,8 +37,8 @@ export const WSJR: Device = {
     weekend:       { availability: "absent", absentNote: "No weekend product." }
   },
   visuals: {
-    iconSet: "/assets/icons",
-    backgroundImage: "/assets/backgrounds/BackGround2.webp",
+    iconSet: "/assets/shared/icons",
+    backgroundImage: "/assets/shared/backgrounds/BackGround2.webp",
     extendedTitle: "Extended Forecast",
     sceneBackgroundSet: "wsjr",
     vars: {

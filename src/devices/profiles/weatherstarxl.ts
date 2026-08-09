@@ -35,7 +35,7 @@ export const WEATHERSTAR_XL: Device = {
     airport:       { availability: "optional" }
   },
   visuals: {
-    iconSet: "/assets/icons/large",
+    iconSet: "/assets/shared/icons/large",
     iconResolution: 42,
     backgroundImage: "",
     extendedTitle: "Extended Forecast",

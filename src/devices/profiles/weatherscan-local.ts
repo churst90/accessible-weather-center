@@ -38,8 +38,8 @@ export const WEATHERSCAN_LOCAL: Device = {
     traffic:       { availability: "optional" }
   },
   visuals: {
-    iconSet: "/assets/icons",
-    backgroundImage: "/assets/themes/weatherscan/backgrounds/local-era/neighborhood/now.webp",
+    iconSet: "/assets/shared/icons",
+    backgroundImage: "/assets/devices/weatherscan-local/backgrounds/neighborhood/now.webp",
     extendedTitle: "7-Day Outlook",
     backgroundPool: "ws-local-neighborhood",
     sceneBackgroundSet: "weatherscan-local",

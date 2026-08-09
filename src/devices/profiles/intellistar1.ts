@@ -43,7 +43,18 @@ export const INTELLISTAR1: Device = {
   musicTags: ["intellistar1"],
   extendedDays: 7,
   capabilities: { ldl: true, footer: false, icons: true, radar: true, narration: true, sponsorSlot: true },
-  rundown: ["current", "hourly", "extended", "localforecast", "radar", "travel", "almanac"],
+  // Derived from 3,839 real per-headend IntelliStar configuration files, not
+  // from a wiki: every deployed unit carried its playlist with an explicit
+  // priority per product, and thousands of markets agree on the order. See
+  // docs/reference/rundowns.md, regenerate with `npm run rundowns:extract`.
+  //
+  // This previously read current → hourly → extended → localforecast → radar,
+  // which put the two products the machine ran FIRST (the text forecast and
+  // Doppler, both priority 1) behind two that ran later (extended at 2,
+  // daypart at 4). NWSHeadlines is also priority 1 upstream, but alerts stay
+  // last here because in this application they are an interrupt rather than a
+  // rotation slot.
+  rundown: ["current", "localforecast", "radar", "extended", "hourly", "travel", "almanac"],
   products: {
     current:       { availability: "core", name: "Now" },
     hourly:        { availability: "core", name: "Daypart Forecast" },
@@ -59,7 +70,7 @@ export const INTELLISTAR1: Device = {
     stormtracker:  { availability: "optional" }
   },
   visuals: {
-    iconSet: "/assets/icons/large",
+    iconSet: "/assets/shared/icons/large",
     iconResolution: 42,
     backgroundImage: "",
     extendedTitle: "Week Ahead",

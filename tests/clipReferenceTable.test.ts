@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Sem, getLibrary } from "../src/audio/manifests/semanticRegistry";
 import { getNarratorClips } from "../src/audio/data/clipReferenceTable";
+import { NARRATOR_ASSET_ROOTS } from "../src/audio/manifests/narratorSchema";
 import { setClipReferenceTable } from "../src/audio/data/clipReferenceTable";
 import fullTable from "../src/audio/data/clipReferenceTable.json";
 
@@ -45,7 +46,12 @@ test("resolved clip paths match reference-table keys", () => {
   // If these drift apart again, confidence silently degrades to "guess".
   const lib = getLibrary("allan-jackson");
   const clips = getNarratorClips("allan-jackson");
-  const root = "/assets/narration/Alan Jackson/";
+  // Read the root from the code that owns it rather than repeating the
+  // string. Hardcoding it here meant the library could be reorganised and
+  // this test would fail for the path rather than for the drift it exists to
+  // catch — which is exactly what happened when assets/ moved to
+  // devices/ + shared/.
+  const root = `${NARRATOR_ASSET_ROOTS["allan-jackson"]}/`;
 
   const ids = [
     Sem.period("FRI"),

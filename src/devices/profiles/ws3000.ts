@@ -39,7 +39,7 @@ export const WS3000: Device = {
     traffic:       { availability: "absent", absentNote: "Traffic was not a 3000 product." }
   },
   visuals: {
-    iconSet: "/assets/icons/legacy/1990-regional",
+    iconSet: "/assets/shared/icons/legacy/1990-regional",
     backgroundImage: "",
     extendedTitle: "Extended Forecast",
     vars: {

@@ -39,8 +39,8 @@ export const WEATHERSCAN_V2: Device = {
     feelslike:     { availability: "optional" }
   },
   visuals: {
-    iconSet: "/assets/icons",
-    backgroundImage: "/assets/themes/weatherscan/backgrounds/city_bg.webp",
+    iconSet: "/assets/shared/icons",
+    backgroundImage: "/assets/devices/weatherscan-v2/backgrounds/city_bg.webp",
     extendedTitle: "7-Day Outlook",
     backgroundPool: "ws-city-skylines",
     vars: {

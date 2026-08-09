@@ -66,7 +66,7 @@ export function WeatherscanFrame({ sceneTitle, alertCount, children, statusHint,
         {twcLogoShown && (
           <img
             className="ws-twc-logo"
-            src="/assets/logos/twc/TWC_Logo.png"
+            src="/assets/shared/logos/twc/TWC_Logo.png"
             alt=""
             aria-hidden="true"
           />
@@ -89,7 +89,7 @@ export function WeatherscanFrame({ sceneTitle, alertCount, children, statusHint,
         {intellistarBugShown ? (
           <img
             className="ws-bug ws-bug-is"
-            src="/assets/logos/intellistar/IntelliStar_HQ.png"
+            src="/assets/shared/logos/intellistar/IntelliStar_HQ.png"
             alt=""
             aria-hidden="true"
           />

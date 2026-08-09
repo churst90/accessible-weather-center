@@ -153,7 +153,7 @@ current rendering and a faithful one.
 - **Product era:** post-2004
 - **Extended forecast:** 7-day
 - **Capabilities:** ldl, icons, radar, narration, sponsorSlot
-- **Rotation (12):** current → hourly → extended → localforecast → radar → travel → almanac → detailed → traffic → feelslike → stormtracker → alerts
+- **Rotation (12):** current → localforecast → radar → extended → hourly → travel → almanac → detailed → traffic → feelslike → stormtracker → alerts
 - **Optional packages:** `detailed`, `traffic`, `feelslike`, `stormtracker`
 
 **Outstanding work**

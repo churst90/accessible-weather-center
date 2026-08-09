@@ -96,8 +96,8 @@ test("PhraseSequencer reuses the node across separate play() calls", async () =>
 test("PhraseSequencer.playOne shares the same node as play()", async () => {
   const seq = new PhraseSequencer(makeMixer());
   await seq.play(script(2));
-  await seq.playOne("/assets/sounds/TWC_Mnemonic.mp3");
-  await seq.playOne("/assets/sounds/severe_weather_tone.mp3");
+  await seq.playOne("/assets/shared/sounds/TWC_Mnemonic.mp3");
+  await seq.playOne("/assets/shared/sounds/severe_weather_tone.mp3");
   assert.equal(counts.sourceNodes, 1);
 });
 

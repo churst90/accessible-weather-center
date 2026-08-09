@@ -5,10 +5,10 @@
  *
  * The icon base path can be overridden per theme (IntelliStar uses /large,
  * 1990s Classic uses /legacy/1990-regional, etc.). The default is the
- * WS4000 GIF set at /assets/icons.
+ * WS4000 GIF set at /assets/shared/icons.
  *
  * Under prefers-reduced-motion: reduce, swaps animated GIFs for static
- * PNGs from /assets/icons/stills/ when a still exists for the condition;
+ * PNGs from /assets/shared/icons/stills/ when a still exists for the condition;
  * unmapped conditions fall back to the GIF. Coverage gap is tracked in
  * TODO — a full STILLS_MAP from /stills/mv/ and /stills/wxl/ closes it.
  *
@@ -18,7 +18,7 @@
 
 import { useEffect, useState } from "react";
 
-let _iconBase = "/assets/icons";
+let _iconBase = "/assets/shared/icons";
 let _iconResolution: 28 | 42 | 68 | null = null;
 
 /** Set the icon base path. Called when the theme changes. */
@@ -27,7 +27,7 @@ export function setIconBase(base: string): void {
 }
 
 /**
- * Opt a theme into the higher-resolution WEBP icon pools at /assets/icons/
+ * Opt a theme into the higher-resolution WEBP icon pools at /assets/shared/icons/
  * {28x28,42x42,68x68}/. WEBP coverage is narrower than the GIF set —
  * unmapped conditions transparently fall back to the GIF pool.
  */
@@ -35,7 +35,7 @@ export function setIconResolution(res: 28 | 42 | 68 | null): void {
   _iconResolution = res;
 }
 
-const STILLS_BASE = "/assets/icons/stills";
+const STILLS_BASE = "/assets/shared/icons/stills";
 
 /** Map of condition key → WEBP filename stem (no extension).
  *  Same stem works in 28x28/, 42x42/, 68x68/. */
@@ -173,7 +173,7 @@ export function WeatherIcon({ name, size = 64, title }: Props) {
     candidates.push(`${STILLS_BASE}/${encodeURIComponent(STILLS_MAP[name])}`);
   }
   if (_iconResolution && WEBP_MAP[name]) {
-    candidates.push(`/assets/icons/${_iconResolution}x${_iconResolution}/${WEBP_MAP[name]}.webp`);
+    candidates.push(`/assets/shared/icons/${_iconResolution}x${_iconResolution}/${WEBP_MAP[name]}.webp`);
   }
   candidates.push(`${_iconBase}/${GIF_MAP[name] ?? "No-Data.gif"}`);
 

@@ -6,11 +6,11 @@ interface Props {
   /** Additional static items to prepend (e.g. current temp, scene title). */
   leadItems?: string[];
   /** Optional TWC-style tiny icon code (without `_Xsm.png`) shown next to
-   *  the section label — sourced from /assets/icons/tiny/. */
+   *  the section label — sourced from /assets/shared/icons/tiny/. */
   leadIconName?: string;
 }
 
-const TINY_BASE = "/assets/icons/tiny";
+const TINY_BASE = "/assets/shared/icons/tiny";
 
 /** Map of weather condition key → tiny TWC code stem (without _Xsm.png). */
 export const TINY_MAP: Record<string, string> = {

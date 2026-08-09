@@ -8,10 +8,10 @@
 import type { ThemeId } from "./themes";
 import { getDevice } from "../../devices";
 
-const I1_BASE = "/assets/backgrounds/intellistar1/clean";
-const I2_BASE = "/assets/backgrounds/intellistar2/Generic";
-const I2JR_BASE = "/assets/backgrounds/intellistar2jr/AMHQ";
-const XL_CLOUDS_BASE = "/assets/backgrounds/weatherstarxl-clouds";
+const I1_BASE = "/assets/devices/intellistar1/backgrounds/clean";
+const I2_BASE = "/assets/devices/intellistar2/backgrounds/Generic";
+const I2JR_BASE = "/assets/devices/intellistar2/backgrounds/jr/AMHQ";
+const XL_CLOUDS_BASE = "/assets/devices/weatherstarxl/backgrounds/clouds";
 
 /** Period-correct WSXL cloud-wallpaper backgrounds, sourced from the
  *  MIT-licensed mewtek/OpenStar fan project. Authentic blue-sky + cumulus
@@ -53,11 +53,11 @@ const I2_BACKGROUNDS = [
 
 /** Severe backgrounds for IntelliStar 2. */
 const I2_SEVERE = [
-  "/assets/backgrounds/intellistar2/Severe/LOT8_HD_EVENTgenericBG.webp",
-  "/assets/backgrounds/intellistar2/Severe/LOT8_HD_SevereStormCentral.webp",
+  "/assets/devices/intellistar2/backgrounds/Severe/LOT8_HD_EVENTgenericBG.webp",
+  "/assets/devices/intellistar2/backgrounds/Severe/LOT8_HD_SevereStormCentral.webp",
 ];
 
-const WS_BG_BASE = "/assets/themes/weatherscan/backgrounds";
+const WS_BG_BASE = "/assets/devices/weatherscan-v2/backgrounds";
 
 /** Weatherscan Local (1999-2003) ran on the WeatherStar XL hardware with
  *  per-scene, regional-themed backgrounds per the May 2000 redesign
@@ -68,7 +68,7 @@ const WS_BG_BASE = "/assets/themes/weatherscan/backgrounds";
  *  golden hour, not a cityscape with yellow wedges. Scene-specific
  *  selection happens via getSceneBackground() below; this pool is the
  *  rotating fallback for any unmapped scene. */
-const WS_LOCAL_BASE = "/assets/themes/weatherscan/backgrounds/local-era/neighborhood";
+const WS_LOCAL_BASE = "/assets/devices/weatherscan-local/backgrounds/neighborhood";
 const WS_LOCAL_BACKGROUNDS = [
   `${WS_LOCAL_BASE}/now.webp`,
   `${WS_LOCAL_BASE}/extended.webp`,
@@ -163,12 +163,12 @@ export function listBackgrounds(themeId: ThemeId): string[] {
 
 /**
  * Period-correct WeatherStar 4000 used a different background template per
- * scene type. The numbered BackGround*.webp files in /assets/backgrounds/
+ * scene type. The numbered BackGround*.webp files in /assets/shared/backgrounds/
  * are the renderer templates from the wesellis/FUN-WeatherStar-4000 fan
  * project. Mapping below is the best-guess assignment (verify visually
  * and tune as needed).
  */
-const WS4000_BG_BASE = "/assets/backgrounds";
+const WS4000_BG_BASE = "/assets/shared/backgrounds";
 
 const WS4000_SCENE_BACKGROUNDS: Record<string, string> = {
   current:        `${WS4000_BG_BASE}/BackGround1.webp`,
@@ -214,7 +214,7 @@ const WS_LOCAL_SCENE_BACKGROUNDS: Record<string, string> = {
   travel:         `${WS_LOCAL_BASE}/nearby.webp`,
   overnight:      `${WS_LOCAL_BASE}/now.webp`,
   weekend:        `${WS_LOCAL_BASE}/extended.webp`,
-  radar:          "/assets/themes/weatherscan/backgrounds/local-era/local-doppler-skeleton.webp",
+  radar:          "/assets/devices/weatherscan-local/backgrounds/local-doppler-skeleton.webp",
 };
 
 /**

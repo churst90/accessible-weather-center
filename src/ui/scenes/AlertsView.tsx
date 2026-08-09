@@ -25,7 +25,7 @@ export function AlertsView({ data }: { data: AlertsData }) {
     <section aria-label={`Active alerts for ${data.place.name}`}>
       <div className="ws-noaa-attribution">
         <img
-          src="/assets/logos/noaa/NOAA-Logo-Transparent.png"
+          src="/assets/shared/logos/noaa/NOAA-Logo-Transparent.png"
           alt=""
           aria-hidden="true"
           className="ws-noaa-logo"

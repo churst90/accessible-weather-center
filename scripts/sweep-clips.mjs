@@ -52,7 +52,7 @@ const ASSETS = path.resolve(ROOT, flag("assets", "assets"));
  * resolved paths drifting away from the names the library actually uses,
  * which is exactly how the .wav -> .mp3 rename broke narration silently.
  */
-const HAVE_ASSETS = fs.existsSync(path.join(ASSETS, "narration"));
+const HAVE_ASSETS = fs.existsSync(path.join(ASSETS, "shared", "narration"));
 const TABLE_ONLY = has("table-only") || !HAVE_ASSETS;
 if (TABLE_ONLY) {
   console.log(HAVE_ASSETS
@@ -125,7 +125,7 @@ const range = (lo, hi) => Array.from({ length: hi - lo + 1 }, (_, i) => lo + i);
  * is a code the app could legitimately ask for.
  */
 function codesFromDir(narratorRoot, relDir, transform = (s) => s) {
-  const dir = path.join(ASSETS, "narration", narratorRoot, relDir);
+  const dir = path.join(ASSETS, "shared", "narration", narratorRoot, relDir);
   try {
     return fs.readdirSync(dir)
       .filter((f) => f.toLowerCase().endsWith(".mp3"))
@@ -200,7 +200,7 @@ const ROOTS = {
  *  don't. `relPath` is relative to assets/. */
 function clipExists(relPath, narratorId) {
   if (!TABLE_ONLY) return fs.existsSync(path.join(ASSETS, relPath));
-  const root = `narration/${ROOTS[narratorId]}/`;
+  const root = `shared/narration/${ROOTS[narratorId]}/`;
   if (!relPath.startsWith(root)) return true; // outside the narrator tree
   return Boolean(getNarratorClips(narratorId)[relPath.slice(root.length)]);
 }
@@ -245,7 +245,7 @@ for (const narratorId of Object.keys(ROOTS)) {
 
   // ───────────────────────── reverse sweep ─────────────────────────
   // Which clips do we own but never reach?
-  const narratorDir = path.join(ASSETS, "narration", ROOTS[narratorId]);
+  const narratorDir = path.join(ASSETS, "shared", "narration", ROOTS[narratorId]);
   const owned = [];
   const walk = (dir) => {
     let entries = [];
@@ -268,7 +268,7 @@ for (const narratorId of Object.keys(ROOTS)) {
   // means a missing resolver family rather than a handful of stray files.
   const byDir = {};
   for (const f of unreachable) {
-    const d = path.dirname(f).replace(`narration/${ROOTS[narratorId]}/`, "");
+    const d = path.dirname(f).replace(`shared/narration/${ROOTS[narratorId]}/`, "");
     byDir[d] = (byDir[d] ?? 0) + 1;
   }
 
@@ -299,7 +299,7 @@ const extra = { sceneIntros: {}, namedClips: {}, longform: {} };
 for (const narratorId of Object.keys(ROOTS)) {
   if (ONLY_NARRATOR && narratorId !== ONLY_NARRATOR) continue;
   const def = getNarrator(narratorId);
-  const root = `/assets/narration/${ROOTS[narratorId]}`;
+  const root = `/assets/shared/narration/${ROOTS[narratorId]}`;
   let checked = 0;
   const missing = [];
   for (const [sceneId, clips] of Object.entries(def.sceneIntros ?? {})) {
@@ -373,7 +373,7 @@ for (const [narratorId, r] of Object.entries(report.narrators)) {
   r.reachableClips = r.ownedClips - stillUnreached.length;
   const byDir = {};
   for (const f of stillUnreached) {
-    const d = path.dirname(f).replace(`narration/${ROOTS[narratorId]}/`, "");
+    const d = path.dirname(f).replace(`shared/narration/${ROOTS[narratorId]}/`, "");
     byDir[d] = (byDir[d] ?? 0) + 1;
   }
   r.unreachableByDir = byDir;

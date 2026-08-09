@@ -61,7 +61,7 @@ export interface ThemeDef {
   /** Icon set path prefix for this theme's weather icons (GIF pool). */
   iconSet: string;
   /** Optional HD WEBP icon resolution. When set, the renderer uses
-   *  /assets/icons/{NN}x{NN}/ for conditions that have a WEBP mapping;
+   *  /assets/shared/icons/{NN}x{NN}/ for conditions that have a WEBP mapping;
    *  unmapped conditions fall back to the GIF pool at iconSet. */
   iconResolution?: 28 | 42 | 68;
   /** Music collection tags that match this theme. */

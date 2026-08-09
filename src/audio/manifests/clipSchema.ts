@@ -14,7 +14,7 @@
  * over adding entries here.
  */
 
-const AJ_BASE = "/assets/narration/Alan Jackson";
+const AJ_BASE = "/assets/shared/narration/Alan Jackson";
 const VL = `${AJ_BASE}/VocalLocal`;
 const VL_TEMPS = `${VL}/Temps_Specific`;
 const VL_INTROS = `${VL}/Intros_Curr_Cond`;
@@ -24,7 +24,7 @@ const CC_LEGACY = `${AJ_BASE}/current conditions`;
 
 /** Severe weather + sounds. */
 const SEVERE_BASE = `${AJ_BASE}/severe`;
-const SOUNDS_BASE = "/assets/sounds";
+const SOUNDS_BASE = "/assets/shared/sounds";
 
 export type ClipConfidence = "confirmed" | "likely" | "guess";
 
@@ -98,7 +98,7 @@ const RATE_OP_PATTERNS: RateOpEntry[] = [
   { pattern: /rain.*inch.*per hour/i,                    code: 8021, text: "Rainfall rates may reach one inch per hour at times" },
 ];
 
-const JC_VL = "/assets/narration/Jim Cantore/Vocal Local";
+const JC_VL = "/assets/shared/narration/Jim Cantore/Vocal Local";
 
 export function getRateOpClip(detailedForecast: string): ClipResolution | null {
   if (!detailedForecast) return null;

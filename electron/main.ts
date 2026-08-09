@@ -9,9 +9,9 @@ const isDev = process.env.NODE_ENV === "development";
  * Custom scheme the packaged app is served from.
  *
  * Why not file://: every media URL the renderer builds is root-relative
- * ("/assets/narration/..."), because that is what the web deployment needs.
+ * ("/assets/shared/narration/..."), because that is what the web deployment needs.
  * Loaded over file://, those resolve against the filesystem root — the app
- * would look for /assets/narration on the system drive and 404 everything.
+ * would look for /assets/shared/narration on the system drive and 404 everything.
  * Serving the app from a scheme with a host gives "/" a meaning we control,
  * so the same URLs work in Electron and in a browser with no branching in
  * the renderer.

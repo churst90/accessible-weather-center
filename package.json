@@ -31,7 +31,10 @@
     "assets:tiers": "node scripts/check-asset-tiers.mjs",
     "assets:guard": "node scripts/check-asset-tiers.mjs --guard assets-web",
     "sources:list": "node scripts/fetch-sources.mjs --list",
-    "sources:fetch": "node scripts/fetch-sources.mjs"
+    "sources:fetch": "node scripts/fetch-sources.mjs",
+    "layouts:extract": "node scripts/extract-layouts.mjs",
+    "music:audit": "node scripts/audit-music.mjs",
+    "rundowns:extract": "node scripts/extract-rundowns.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",

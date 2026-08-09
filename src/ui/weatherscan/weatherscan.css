@@ -3,7 +3,7 @@
  * meaning for assistive tech.
  *
  * Fonts: authentic Star4000 fonts from the WeatherStar community (MIT),
- * with Lato as the display fallback. Loaded locally from /assets/fonts/.
+ * with Lato as the display fallback. Loaded locally from /assets/shared/fonts/.
  */
 
 @import url("https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap");
@@ -13,25 +13,25 @@
    silently 404ed, so every WS4000-family theme rendered in Lato. */
 @font-face {
   font-family: "Star4000";
-  src: url("/assets/fonts/star4000/star4000.ttf") format("truetype");
+  src: url("/assets/shared/fonts/star4000/star4000.ttf") format("truetype");
   font-weight: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "Star4000 Large";
-  src: url("/assets/fonts/star4000/star4000_large.ttf") format("truetype");
+  src: url("/assets/shared/fonts/star4000/star4000_large.ttf") format("truetype");
   font-weight: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "Star4000 Small";
-  src: url("/assets/fonts/star4000/star4000_small.ttf") format("truetype");
+  src: url("/assets/shared/fonts/star4000/star4000_small.ttf") format("truetype");
   font-weight: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "Star4000 Extended";
-  src: url("/assets/fonts/star4000/star4000_extended.ttf") format("truetype");
+  src: url("/assets/shared/fonts/star4000/star4000_extended.ttf") format("truetype");
   font-weight: normal;
   font-display: swap;
 }
@@ -39,25 +39,25 @@
 /* Weatherscan theme fonts — Frutiger + Interstate */
 @font-face {
   font-family: "Frutiger";
-  src: url("/assets/themes/weatherscan/fonts/Frutiger.woff") format("woff");
+  src: url("/assets/shared/fonts/weatherscan/Frutiger.woff") format("woff");
   font-weight: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "Frutiger";
-  src: url("/assets/themes/weatherscan/fonts/FrutigerBold.woff") format("woff");
+  src: url("/assets/shared/fonts/weatherscan/FrutigerBold.woff") format("woff");
   font-weight: bold;
   font-display: swap;
 }
 @font-face {
   font-family: "Interstate";
-  src: url("/assets/themes/weatherscan/fonts/Interstate-Regular.woff") format("woff");
+  src: url("/assets/shared/fonts/weatherscan/Interstate-Regular.woff") format("woff");
   font-weight: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "Interstate";
-  src: url("/assets/themes/weatherscan/fonts/Interstate-Bold.woff") format("woff");
+  src: url("/assets/shared/fonts/weatherscan/Interstate-Bold.woff") format("woff");
   font-weight: bold;
   font-display: swap;
 }
@@ -66,8 +66,8 @@
    they silently fell through to Courier New. */
 @font-face {
   font-family: "InterstateMono";
-  src: url("/assets/themes/weatherscan/fonts/InterstateMono.woff2") format("woff2"),
-       url("/assets/themes/weatherscan/fonts/InterstateMono.woff") format("woff");
+  src: url("/assets/shared/fonts/weatherscan/InterstateMono.woff2") format("woff2"),
+       url("/assets/shared/fonts/weatherscan/InterstateMono.woff") format("woff");
   font-weight: normal;
   font-display: swap;
 }
@@ -75,44 +75,44 @@
 /* IntelliStar 1 & WeatherStar XL theme fonts — Akzidenz Grotesk family */
 @font-face {
   font-family: "AkzidenzGroteskBE";
-  src: url("/assets/fonts/akzidenz-grotesk/AkzidenzGroteskBE-Regular.otf") format("opentype");
+  src: url("/assets/shared/fonts/akzidenz-grotesk/AkzidenzGroteskBE-Regular.otf") format("opentype");
   font-weight: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "AkzidenzGroteskBE";
-  src: url("/assets/fonts/akzidenz-grotesk/AkzidenzGroteskBE-Bold.otf") format("opentype");
+  src: url("/assets/shared/fonts/akzidenz-grotesk/AkzidenzGroteskBE-Bold.otf") format("opentype");
   font-weight: bold;
   font-display: swap;
 }
 @font-face {
   font-family: "AkzidenzGroteskBE";
-  src: url("/assets/fonts/akzidenz-grotesk/AkzidenzGroteskBE-Light.otf") format("opentype");
+  src: url("/assets/shared/fonts/akzidenz-grotesk/AkzidenzGroteskBE-Light.otf") format("opentype");
   font-weight: 300;
   font-display: swap;
 }
 @font-face {
   font-family: "AkzidenzGroteskBE";
-  src: url("/assets/fonts/akzidenz-grotesk/AkzidenzGroteskBE-Md.otf") format("opentype");
+  src: url("/assets/shared/fonts/akzidenz-grotesk/AkzidenzGroteskBE-Md.otf") format("opentype");
   font-weight: 500;
   font-display: swap;
 }
 /* WeatherStar XL signature weights — Bold Extended & Medium Extended */
 @font-face {
   font-family: "AkzidenzGroteskBE-BoldEx";
-  src: url("/assets/fonts/akzidenz-grotesk/AkzidenzGroteskBE-BoldEx.otf") format("opentype");
+  src: url("/assets/shared/fonts/akzidenz-grotesk/AkzidenzGroteskBE-BoldEx.otf") format("opentype");
   font-weight: bold;
   font-display: swap;
 }
 @font-face {
   font-family: "AkzidenzGroteskBE-MdEx";
-  src: url("/assets/fonts/akzidenz-grotesk/AkzidenzGroteskBE-MdEx.otf") format("opentype");
+  src: url("/assets/shared/fonts/akzidenz-grotesk/AkzidenzGroteskBE-MdEx.otf") format("opentype");
   font-weight: 500;
   font-display: swap;
 }
 @font-face {
   font-family: "AkzidenzGroteskBE-BoldCn";
-  src: url("/assets/fonts/akzidenz-grotesk/AkzidenzGroteskBE-BoldCn.otf") format("opentype");
+  src: url("/assets/shared/fonts/akzidenz-grotesk/AkzidenzGroteskBE-BoldCn.otf") format("opentype");
   font-weight: bold;
   font-display: swap;
 }
@@ -120,19 +120,19 @@
 /* IntelliStar 2 theme fonts — Helvetica Neue */
 @font-face {
   font-family: "Helvetica Neue";
-  src: url("/assets/fonts/helvetica/HelveticaNeue-Roman.otf") format("opentype");
+  src: url("/assets/shared/fonts/helvetica/HelveticaNeue-Roman.otf") format("opentype");
   font-weight: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "Helvetica Neue";
-  src: url("/assets/fonts/helvetica/HelveticaNeue-Bold.otf") format("opentype");
+  src: url("/assets/shared/fonts/helvetica/HelveticaNeue-Bold.otf") format("opentype");
   font-weight: bold;
   font-display: swap;
 }
 @font-face {
   font-family: "Helvetica Neue";
-  src: url("/assets/fonts/helvetica/HelveticaNeue-Heavy.otf") format("opentype");
+  src: url("/assets/shared/fonts/helvetica/HelveticaNeue-Heavy.otf") format("opentype");
   font-weight: 900;
   font-display: swap;
 }
@@ -140,7 +140,7 @@
 /* Helvetica (fallback for IntelliStar themes) */
 @font-face {
   font-family: "Helvetica";
-  src: url("/assets/fonts/helvetica/HelveticaNeue-Roman.otf") format("opentype");
+  src: url("/assets/shared/fonts/helvetica/HelveticaNeue-Roman.otf") format("opentype");
   font-weight: normal;
   font-display: swap;
 }
@@ -148,34 +148,34 @@
 /* WeatherStar Jr fonts — late-90s simplified WS for smaller cable systems */
 @font-face {
   font-family: "StarJR";
-  src: url("/assets/fonts/starjr/StarJR.ttf") format("truetype");
+  src: url("/assets/shared/fonts/starjr/StarJR.ttf") format("truetype");
   font-display: swap;
 }
 @font-face {
   font-family: "StarJR Large";
-  src: url("/assets/fonts/starjr/StarJR Large Compressed.ttf") format("truetype");
+  src: url("/assets/shared/fonts/starjr/StarJR Large Compressed.ttf") format("truetype");
   font-display: swap;
 }
 @font-face {
   font-family: "StarJR Small";
-  src: url("/assets/fonts/starjr/StarJR Small.ttf") format("truetype");
+  src: url("/assets/shared/fonts/starjr/StarJR Small.ttf") format("truetype");
   font-display: swap;
 }
 
 /* WeatherStar 3000 fonts — late-80s pre-WS4000, blocky & text-heavy */
 @font-face {
   font-family: "Star3000";
-  src: url("/assets/fonts/star3000/Star3000.ttf") format("truetype");
+  src: url("/assets/shared/fonts/star3000/Star3000.ttf") format("truetype");
   font-display: swap;
 }
 @font-face {
   font-family: "Star3000 Large";
-  src: url("/assets/fonts/star3000/Star3000 Large.ttf") format("truetype");
+  src: url("/assets/shared/fonts/star3000/Star3000 Large.ttf") format("truetype");
   font-display: swap;
 }
 @font-face {
   font-family: "Star3000 Small";
-  src: url("/assets/fonts/star3000/Star3000 Small.ttf") format("truetype");
+  src: url("/assets/shared/fonts/star3000/Star3000 Small.ttf") format("truetype");
   font-display: swap;
 }
 
@@ -1736,7 +1736,7 @@ body[data-theme="intellistar2"] .ws-bug {
   display: flex;
   align-items: stretch;
   height: 40px;
-  background-image: url("/assets/logos/ldl/LDL.png");
+  background-image: url("/assets/shared/logos/ldl/LDL.png");
   background-size: 100% 100%;
   background-repeat: no-repeat;
   background-color: #000;

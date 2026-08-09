@@ -548,7 +548,7 @@ function getSevereAlertIntroClips(alerts: WeatherAlert[], narrator: NarratorId):
 
   if (narrator === "jim-cantore") {
     // JC: Crawl audio/{tier}_Beep.mp3 → Crawl audio/{tier}_{EVENT}.mp3.
-    const JC_CRAWL = "/assets/narration/Jim Cantore/Crawl audio";
+    const JC_CRAWL = "/assets/shared/narration/Jim Cantore/Crawl audio";
     const crawlClip = (file: string, text: string): ClipResolution => ({
       src: `${JC_CRAWL}/${file}`, text, confidence: "confirmed",
     });

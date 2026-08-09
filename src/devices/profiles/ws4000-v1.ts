@@ -38,8 +38,8 @@ export const WS4000_V1: Device = {
     airport:       { availability: "absent", absentNote: "Airport delays were not a WeatherStar 4000 product." }
   },
   visuals: {
-    iconSet: "/assets/icons",
-    backgroundImage: "/assets/backgrounds/BackGround1.webp",
+    iconSet: "/assets/shared/icons",
+    backgroundImage: "/assets/shared/backgrounds/BackGround1.webp",
     extendedTitle: "Extended Forecast",
     sceneBackgroundSet: "ws4000-v1",
     vars: {
