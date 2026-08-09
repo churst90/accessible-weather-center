@@ -32,21 +32,40 @@ After moving, `npm run assets:check` confirmed all 170 statically-resolvable
 references still resolve, and `npm run clips:sweep` confirmed 0 missing files
 across both large narrator libraries.
 
-## Tiers
+## The application does not know about any of this
 
-The library is two libraries wearing one coat, and they have never had the
-same rules.
+Worth stating before the rest, because it is the thing that matters at
+runtime: **the app loads whatever library it is pointed at.** It does not
+inspect the contents, classify them, or refuse to start over them. Feed it the
+authentic library and it plays the authentic library.
 
-Most of it is The Weather Channel's — narrator recordings, production music,
-broadcast art, licensed typefaces. Some of it is ours or freely licensed:
-station tables, generated plates, open fonts, synthesised tones.
+Resolution order (`electron/main.ts`, `resolveAssetsDir`):
 
-The desktop build is something you run on your own machine, from material you
-obtained yourself. The web build at `weather.codyhurst.com` is *publication*:
-it hands the bytes to anyone who loads the page, which is redistribution
-whatever the folder is called. Keeping both in one undifferentiated `assets/`
-meant the only thing between them was remembering, correctly, every time,
-which files were which. That is not a control. It is a hope.
+    AWC_ASSETS_DIR environment variable
+    the installed app's user-data directory
+    the app's resources directory
+    the repository checkout
+
+Nothing in `src/`, `electron/`, the Vite build or the Electron build
+references the tier tooling. Everything below is a **packaging** concern —
+what you choose to put in an archive and where you choose to publish it —
+and it runs only when you invoke it deliberately.
+
+The app also runs with no library at all: system fonts, no music, narration
+read by the screen reader. Missing clips degrade to spoken text rather than
+failing, so a partial install is a valid install.
+
+## Tiers, as a packaging decision
+
+Most of the library is The Weather Channel's — narrator recordings,
+production music, broadcast art, licensed typefaces. Some is ours or freely
+licensed: station tables, generated plates, open fonts, synthesised tones.
+
+Running the desktop build on your own machine from material you obtained
+yourself is one thing. Serving it from `weather.codyhurst.com` is
+publication, which is redistribution whatever the folder is called. The tier
+labels exist so that difference can be acted on at packaging time by
+somebody who has decided to act on it — not so the software polices it.
 
 ## The two tiers
 
@@ -75,6 +94,18 @@ npm run assets:guard          # block a publish containing encumbered assets
 `assets:guard` classifies a staging directory and exits non-zero if a single
 `real` asset is present. Run it before any deploy. It is the entire point of
 the split: the rule stops depending on anyone remembering it.
+
+## There is only one archive today
+
+Worth being blunt about, because it is easy to assume otherwise from the
+existence of two tier names: **there is one library with content in it, and
+it is the authentic one.** `npm run assets:package` produces it — fourteen
+tarballs, ~1.3 GB, split by device and by shared pool so nobody downloads
+500 MB of music to get the fonts.
+
+A second, fan-made archive does not exist. Not "is out of date" — has never
+been built, because the assets it would contain have not been made. Anything
+that says otherwise is describing a plan.
 
 ## Where things stand
 

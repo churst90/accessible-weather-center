@@ -92,10 +92,39 @@ fs.existsSync(SRC) || die(`Source directory not found: ${SRC}`);
 await fsp.mkdir(OUT, { recursive: true });
 
 step("Scanning categories");
-const categories = (await fsp.readdir(SRC, { withFileTypes: true }))
+/**
+ * Split a level deeper under `shared/` and `devices/`.
+ *
+ * The whole point of splitting is that somebody who wants fonts and icons
+ * does not download 500 MB of music. Packing top-level directories used to
+ * achieve that, but the library was reorganised into devices/ + shared/ and
+ * those two now hold everything — a plain top-level split produces one 1.5 GB
+ * `shared` blob and undoes the split entirely.
+ *
+ * `inbox/` is deliberately excluded. It is staging, not library: material
+ * sits there until it has been reviewed and promoted, and shipping it would
+ * hand people duplicates of things already packed properly elsewhere.
+ */
+const SPLIT_DEEPER = new Set(["shared", "devices"]);
+const EXCLUDE = new Set(["inbox"]);
+
+const topLevel = (await fsp.readdir(SRC, { withFileTypes: true }))
+  .filter((e) => e.isDirectory() && !EXCLUDE.has(e.name))
+  .map((e) => e.name)
+  .sort();
+
+const categories = [];
+for (const top of topLevel) {
+  if (!SPLIT_DEEPER.has(top)) { categories.push(top); continue; }
+  const children = (await fsp.readdir(path.join(SRC, top), { withFileTypes: true }))
     .filter((e) => e.isDirectory())
     .map((e) => e.name)
     .sort();
+  // A directory holding loose files as well as subdirectories would lose them
+  // to a children-only split, so fall back to packing the whole thing.
+  if (!children.length) { categories.push(top); continue; }
+  for (const child of children) categories.push(`${top}/${child}`);
+}
 categories.length || die(`No category directories under ${SRC}`);
 
 const manifest = {
@@ -116,7 +145,9 @@ for (const category of categories) {
   }
   grandRaw += raw;
 
-  const name = `assets-${category}.tar.gz`;
+  // "shared/narration" -> assets-shared-narration.tar.gz. The slash would
+  // otherwise be read as a directory in the output path.
+  const name = `assets-${category.replace(/\//g, "-")}.tar.gz`;
   const out = path.join(OUT, name);
 
   step(`Packing ${category} (${human(raw)} raw)`);
