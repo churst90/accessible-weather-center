@@ -35,7 +35,7 @@ export interface HeadlineClip {
 //  JC — VTEC phenomenon + significance → clip
 // ────────────────────────────────────────────────────────────────────────────
 
-interface VtecEntry {
+export interface VtecEntry {
   phenomenon: string;
   significance: string;
   text: string;
@@ -51,7 +51,7 @@ const JC_HEADLINE_DIR = `${JC_VOCALLOCAL_BASE}/Headline_Event_Phrases`;
  * File naming: {phenomenon}_{significance}.mp3
  * Significance: W = Warning, A = Watch, Y = Advisory
  */
-const JC_VTEC_HEADLINES: VtecEntry[] = [
+export const JC_VTEC_HEADLINES: VtecEntry[] = [
   // ── Tornado / Severe ──
   { phenomenon: "TO", significance: "W", text: "Tornado Warning",                          confidence: "likely" },
   { phenomenon: "TO", significance: "A", text: "Tornado Watch",                            confidence: "likely" },
