@@ -21,7 +21,7 @@ const outDir = path.join(root, ".test-dist");
 const filter = process.argv[2] ?? "";
 
 const entryPoints = readdirSync(testsDir)
-  .filter((f) => f.endsWith(".test.ts") && f.includes(filter))
+  .filter((f) => (f.endsWith(".test.ts") || f.endsWith(".test.tsx")) && f.includes(filter))
   .map((f) => path.join(testsDir, f));
 
 if (entryPoints.length === 0) {
@@ -41,7 +41,19 @@ await build({
   // .mjs so Node treats the bundles as ESM — the repo's package.json has
   // no "type": "module" (Electron main is CJS).
   outExtension: { ".js": ".mjs" },
-  sourcemap: "inline"
+  sourcemap: "inline",
+  // Force React's development build. Its rules-of-hooks checks, the
+  // "rendered fewer hooks than expected" error, and the act() warnings exist
+  // ONLY in that build — the production build strips them and silently
+  // renders whatever it can. Without this the component tests went green
+  // against deliberately broken components, which is worse than no tests: it
+  // is a false all-clear on the exact bug class they were written to catch.
+  define: { "process.env.NODE_ENV": '"development"' },
+  // happy-dom stays external. Bundling it drags in `ws`, which uses dynamic
+  // require() — legal in CJS, fatal once esbuild has flattened everything
+  // into a single ESM file ("Dynamic require of 'events' is not supported").
+  // It is a devDependency present at runtime, so Node resolves it fine.
+  external: ["happy-dom"]
 });
 
 const bundled = readdirSync(outDir)

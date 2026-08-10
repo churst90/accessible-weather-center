@@ -10,7 +10,7 @@ import {
   getNarrator,
   pickSceneIntro,
 } from "./manifests/narratorSchema";
-import { getMultiHeadlineClips } from "./manifests/headlineSchema";
+import { getMultiHeadlineClips, getAjEventClip, parseEventToVtec } from "./manifests/headlineSchema";
 import { getAccumulationClips } from "./manifests/accumulationSchema";
 import { findLongformMatch } from "./manifests/longformSchema";
 import { getSunTimes } from "../core/weather/SunCalc";
@@ -410,10 +410,30 @@ export function composeHourlyForecast(hours: HourlyForecastPoint[], placeName: s
       }
     }
 
-    // Precip probability if significant.
+    // Wind, then precipitation probability — the two facts the hourly screen
+    // was showing and the narrator was not saying.
+    //
+    // Precip probability was already in this script but pinned to
+    // `clip: null`, so only the screen reader ever spoke it even though both
+    // Allen Jackson and Jim Cantore have the whole P9 decile set recorded.
+    // Wind was absent altogether, despite `windSpeedMph`/`windDirDeg` sitting
+    // in every HourlyForecastPoint and the forecast composer already having a
+    // helper for exactly this. The result was an hourly readout of time,
+    // temperature and sky condition, noticeably thinner than the screen.
+    const mphH = Math.round(h.windSpeedMph ?? 0);
+    if (mphH > 0) {
+      if (def.hasWind && h.windDirDeg != null) {
+        // Same helper the forecast path uses, so hourly and daily wind are
+        // spoken identically rather than drifting into two phrasings.
+        script.push(...getWindClips(h.windDirDeg, mphH, narrator));
+      } else {
+        script.push({ clip: null, fallbackText: `winds at ${mphH} miles per hour.` });
+      }
+    }
+
     if (h.precipProbabilityPct > 0) {
       script.push({
-        clip: null,
+        clip: getPrecipProbClip(h.precipProbabilityPct, narrator),
         fallbackText: `${h.precipProbabilityPct} percent chance of precipitation.`
       });
     }
@@ -485,8 +505,27 @@ export function composeAlerts(alerts: WeatherAlert[], placeName: string, narrato
         });
       }
     } else {
-      const severeClip = pickSevereAnnouncementClip(alerts, narrator);
-      if (severeClip) script.push({ clip: severeClip, fallbackText: "" });
+      // No event-name clip for this alert. Only 64 of the ~229 event strings
+      // the parser recognises have an Allen Jackson recording, so this is the
+      // common path, not the rare one.
+      //
+      // What must NOT happen here is playing the alerts "scene intro" on its
+      // own. Those entries are sentence TAILS — "is in effect for your area",
+      // "has been issued for your area" — miscategorised as intros. Alone
+      // they produce four attention beeps followed by a voice saying "is in
+      // effect for your area", naming nothing. For a weather alert that is
+      // worse than silence: the tone says something urgent happened and the
+      // voice withholds what.
+      //
+      // So the tail is used only when something can name the event first.
+      // Otherwise the clip is dropped and the spoken fallback below carries
+      // the whole thing, which the screen reader reads in full.
+      const named = pickEventNameClip(alerts, narrator);
+      if (named) {
+        script.push({ clip: named, fallbackText: "" });
+        const tail = pickSevereAnnouncementClip(alerts, narrator);
+        if (tail) script.push({ clip: tail, fallbackText: "" });
+      }
     }
   }
 
@@ -578,6 +617,33 @@ function getSevereAlertIntroClips(alerts: WeatherAlert[], narrator: NarratorId):
  * clip per (narrator, alert intent) — see AJ_NAMED_MAP / JC_NAMED_MAP.
  * Amy / Chandler fall back to the generic "alerts" scene intro.
  */
+/**
+ * A clip that actually NAMES the event, for use ahead of a sentence tail.
+ *
+ * Falls back through the narrator's own event vocabulary: the bare
+ * Headline_Event recording if the alert maps to one, then the generic
+ * tornado / thunderstorm / flood announcements, which name their event even
+ * though they are not per-code recordings. Returns null when nothing in the
+ * library can say what this alert is — the signal to stay quiet and let the
+ * screen reader speak instead.
+ */
+function pickEventNameClip(alerts: WeatherAlert[], narrator: NarratorId): ClipResolution | null {
+  if (narrator === "allan-jackson") {
+    for (const a of alerts) {
+      const vtec = parseEventToVtec(a.event);
+      if (!vtec) continue;
+      const clip = getAjEventClip(vtec.phenomenon, vtec.significance);
+      if (clip) return { src: clip.src, text: clip.text, confidence: clip.confidence };
+    }
+  }
+  const events = alerts.map((a) => a.event.toLowerCase());
+  const library = getLibrary(narrator);
+  if (events.some((e) => /tornado/.test(e)))      return library.resolve(Sem.named("alert_tornado"));
+  if (events.some((e) => /thunderstorm/.test(e))) return library.resolve(Sem.named("alert_tstorm"));
+  if (events.some((e) => /flood|flash/.test(e)))  return library.resolve(Sem.named("alert_flood"));
+  return null;
+}
+
 function pickSevereAnnouncementClip(alerts: WeatherAlert[], narrator: NarratorId): ClipResolution | null {
   const events = alerts.map((a) => a.event.toLowerCase());
   const library = getLibrary(narrator);

@@ -11,8 +11,8 @@ are listed for completeness and excluded from the totals.
 point sizes. Where it says yes, the screen can be built exactly rather than
 measured off a screenshot.
 
-**58 of 97** device/scene combinations have every visual
-and audio prerequisite present. 39 fall short.
+**59 of 97** device/scene combinations have every visual
+and audio prerequisite present. 38 fall short.
 
 ---
 
@@ -84,7 +84,7 @@ and audio prerequisite present. 39 fall short.
 
 ## WeatherStar 4000 v1 (2001-2004)
 
-`ws4000-v1` · 2001-2004 · pre-2004 · voice allan-jackson
+`ws4000-v1` · 2001-2004 · pre-2004 · voice chandler
 
 - own backgrounds: **0** · own icons: **0** · own chrome: **0**
 - background pool: **0** · icon set `/assets/shared/icons`: **1549** files
@@ -96,7 +96,7 @@ and audio prerequisite present. 39 fall short.
 | extended | core | yes | yes | yes | yes |
 | hourly | optional | yes | yes | yes | yes |
 | radar | core | yes | yes | yes | yes |
-| travel | core | yes | yes | yes | **NO** |
+| travel | core | yes | yes | yes | yes |
 | almanac | core | yes | yes | yes | **NO** |
 | detailed | absent | — | — | — | — |
 | feelslike | absent | — | — | — | — |
@@ -345,7 +345,7 @@ and audio prerequisite present. 39 fall short.
 - Severe treatment should default to a single-line crawl over the LDL (red box left, yellow watches, orange statements); full-bleed red is the tornado-emergency tier only.
 - Almanac needs the analog sunrise/sunset clock graphic (white = sunrise, black = sunset).
 - IS2 Jr should suppress its LDL during national segments; currently both render identically.
-- Jim Cantore has no radar intro clip, so Local Doppler falls back to spoken text. Unresolved whether TWC recorded one for the IntelliStar 2; the IS2 StarBundles (archive.org/details/bundles.-7z) would settle it.
+- Jim Cantore has no radar intro clip, so Local Doppler falls back to spoken text. The IS2 XD StarBundle carries Allen Jackson's LRADAR_DEFAULT1/2 instead — see the note above before reassigning the voice.
 
 ## What is still missing
 
@@ -359,7 +359,6 @@ and audio prerequisite present. 39 fall short.
 | ws3000 | alerts | background |
 | wsjr | travel | narration |
 | wsjr | almanac | narration |
-| ws4000-v1 | travel | narration |
 | ws4000-v1 | almanac | narration |
 | ws4000-v2 | current | background |
 | ws4000-v2 | localforecast | background |

@@ -4,8 +4,15 @@ import {
   guessCcefForecastCode,
   guessCcshForecastCode,
   guessConditionCode,
-  periodTimeHint
+  periodTimeHint,
+  composeAlerts
 } from "../src/audio/PhraseComposer";
+import { setClipReferenceTable } from "../src/audio/data/clipReferenceTable";
+import fullTable from "../src/audio/data/clipReferenceTable.json";
+import type { WeatherAlert } from "../src/core/types";
+
+// Tooling wants the real transcriptions so clip text can be asserted on.
+setClipReferenceTable(fullTable as never);
 
 // The CCEF regression: general patterns (/shower/, /rain/) used to sit above
 // their specific compounds, so wintry phrasing narrated as plain rain.
@@ -69,4 +76,58 @@ test("guessConditionCode: null and unknown text return null, not garbage", () =>
 test("periodTimeHint reads NWS period names", () => {
   assert.equal(periodTimeHint("Tonight", false), "night");
   assert.equal(periodTimeHint("Monday", true), "day");
+});
+
+test("an alert never plays a sentence tail without naming the event", () => {
+  // Reported from real use: four attention beeps, then Allen Jackson saying
+  // "is in effect for your area" — naming nothing. The alerts "scene intro"
+  // pool holds sentence TAILS ("is in effect for your area", "has been
+  // issued for your area"), and the composer reached for one whenever no
+  // per-event recording existed. Only 64 of the ~229 event strings the
+  // parser recognises have an Allen Jackson event clip, so that was the
+  // common path.
+  //
+  // A tone that says "something urgent happened" followed by a voice that
+  // withholds what is worse than silence.
+  const mk = (event: string): WeatherAlert => ({
+    id: `t-${event}`, event, headline: `${event} in effect`, description: "",
+    instruction: null, severity: "Severe", urgency: "Immediate", certainty: "Observed",
+    effective: new Date(), expires: new Date(Date.now() + 3600_000),
+    affectedAreaDescription: "Testville",
+  } as unknown as WeatherAlert);
+
+  const TAIL = /is in effect for your area|has been issued for your area/i;
+
+  for (const event of [
+    "Excessive Heat Warning", "Dense Fog Advisory", "High Surf Advisory",
+    "Air Quality Alert", "Rip Current Statement", "Tornado Warning",
+  ]) {
+    const script = composeAlerts([mk(event)], "Testville", "allan-jackson");
+    const clips = script.filter((s) => s.clip).map((s) => s.clip!);
+    const tailIdx = clips.findIndex((c) => TAIL.test(c.text ?? ""));
+    if (tailIdx === -1) continue;           // tail not used at all: fine
+    assert.ok(
+      tailIdx > 0,
+      `${event}: a sentence tail is the first spoken clip — nothing names the event`
+    );
+    // Whatever precedes it must actually say something, not be a bare tone.
+    const before = clips[tailIdx - 1];
+    assert.ok(
+      (before.text ?? "").trim().length > 0,
+      `${event}: the clip before the tail is silent, so the tail still dangles`
+    );
+  }
+});
+
+test("a mapped event still gets its full spoken headline", () => {
+  // The fix must not have cost the events that DO have recordings.
+  const alert = {
+    id: "t1", event: "Winter Storm Warning", headline: "Winter Storm Warning in effect",
+    description: "", instruction: null, severity: "Severe", urgency: "Immediate",
+    certainty: "Observed", effective: new Date(), expires: new Date(Date.now() + 3600_000),
+    affectedAreaDescription: "Testville",
+  } as unknown as WeatherAlert;
+  const script = composeAlerts([alert], "Testville", "allan-jackson");
+  const spoken = script.filter((s) => s.clip).map((s) => s.clip!.text ?? "").join(" ");
+  assert.match(spoken, /winter storm warning/i, "the event must be named in the narrator's voice");
 });

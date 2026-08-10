@@ -3,10 +3,27 @@
  * meaning for assistive tech.
  *
  * Fonts: authentic Star4000 fonts from the WeatherStar community (MIT),
- * with Lato as the display fallback. Loaded locally from /assets/shared/fonts/.
+ * loaded locally from /assets/shared/fonts/.
+ *
+ * There used to be an @import of Lato from fonts.googleapis.com here, three
+ * lines under a comment claiming the fonts were local. It was wrong on more
+ * than accuracy:
+ *
+ *   - it contacted Google on every launch, handing a third party the user's
+ *     IP address, from an application that otherwise talks only to weather
+ *     services;
+ *   - an @import is render-blocking, so a cold start with no network waited
+ *     on a request that could never succeed, in an app designed to run
+ *     offline with system fonts;
+ *   - and it bought very little. Lato sits FOURTH in every stack that names
+ *     it, behind Star4000, Star4000 Extended and the local Frutiger — fonts
+ *     we ship. It was only ever reached when those failed to load, which is
+ *     the case the Helvetica Neue / Arial tail already covers.
+ *
+ * If Lato is wanted as a real fallback it should be vendored. It is SIL OFL,
+ * which makes it redistributable — and therefore the first genuine `clean`
+ * tier asset the library would have. See docs/asset-tiers.md.
  */
-
-@import url("https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap");
 
 /* Authentic Star4000 fonts — period-correct WeatherStar 4000 typefaces.
    NOTE the star4000/ subdirectory: these paths were flat for months and

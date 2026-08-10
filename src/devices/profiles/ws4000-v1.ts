@@ -15,13 +15,42 @@ import type { Device } from "../types";
  *
  * Ends at the September 2004 rename, so it keeps "36 Hour Forecast" and
  * "Daily Planner".
+ *
+ * Voice: Dan Chandler, not Allen Jackson
+ * ---------------------------------------
+ * Two independent reasons, one negative and one positive.
+ *
+ * Allen Jackson cannot be right here. Vocal Local — the feature that
+ * assembles his recordings — arrived with the WeatherStar XL in 1998; a 4000
+ * running "36 Hour Forecast" and "Daily Planner" predates it.
+ *
+ * Chandler fits on every axis. He narrated the Local Forecast from 1987 and
+ * on the 4000 specifically from 1990 until it was discontinued in April 1995,
+ * across four recorded sets (debut 1990, July 1990, July 1991, August 1992).
+ * The sources describe his 4000 narration as used *only to introduce products
+ * in the forecast segment* — which is exactly the shape of the library we
+ * hold: 202 clips, all scene intros, `hasTemps: false`, `hasConditions:
+ * false`. It also dates itself to this machine: "your local 36 hour forecast"
+ * and "the five day forecast", both retired in September 2004.
+ *
+ * And it rules out the 3000, which he also re-recorded for (July 1991, Fall
+ * 1992). His library contains radar intros — "the current local radar,
+ * showing any precipitation in your area" — and Local Radar was a 4000
+ * product added in November 1992. The 3000 could not render radar at all.
+ *
+ * Unresolved, and left alone deliberately: this profile is labelled
+ * "approx 2001-2004" while every hardware milestone its own docblock cites is
+ * 1991-1994, and Chandler stopped in 1995. The date range looks like the
+ * guess and the milestones look like the sourced part, but confirming that
+ * means deciding whether the project wants a separate early-4000 machine.
+ * That is a modelling decision, not a research one.
  */
 export const WS4000_V1: Device = {
   id: "ws4000-v1",
   label: "WeatherStar 4000 v1 (2001-2004)",
   years: "2001-2004",
   era: "pre-2004",
-  voice: "allan-jackson",
+  voice: "chandler",
   musicTags: ["trammell-starks"],
   extendedDays: 3,
   capabilities: { ldl: false, footer: false, icons: true, radar: true, narration: true, sponsorSlot: false },
