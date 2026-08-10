@@ -228,7 +228,19 @@ const HAS_COMPOSER = new Set([
  * scene added without narration fails this test rather than being discovered
  * by ear months later, which is how the previous seven were found.
  */
-const KNOWN_SILENT = new Set(["almanac", "precip"]);
+const KNOWN_SILENT = new Set([
+  // Products TWC never recorded a narrator intro for. Not gaps to hunt: the
+  // Vocal Local product set across every surviving library and every drive
+  // dump is current conditions, daypart, extended/7-day, local observations,
+  // local radar, severe, traffic and 36-hour. Almanac, precipitation outlook,
+  // travel cities and overnight appear in none of them.
+  "almanac", "precip",
+  // Storm Tracker is OUR scene, not a TWC product — 3,839 real IntelliStar
+  // market configs contain nothing by that name. It used to borrow the radar
+  // intro, so a storm list announced itself as "your local Doppler radar",
+  // describing a screen the user was not looking at.
+  "stormtracker",
+]);
 
 test("every scene is announced by at least one narrator", () => {
   const silent: string[] = [];
@@ -264,7 +276,9 @@ test("the default theme's narrator announces the opt-in scenes", () => {
   // Allan Jackson is the default narrator on the WeatherStar themes, and
   // these are the scenes a user turns on in Settings expecting them to behave
   // like the built-in ones.
-  for (const sceneId of ["detailed", "feelslike", "temptrend", "stormtracker", "traffic"]) {
+  // stormtracker is absent on purpose: it is our own derived scene, not a TWC
+  // product, and it no longer borrows the radar intro. See KNOWN_SILENT.
+  for (const sceneId of ["detailed", "feelslike", "temptrend", "traffic"]) {
     assert.ok(
       pickSceneIntro("allan-jackson", sceneId),
       `Allan Jackson cannot announce "${sceneId}" — it would play silently`

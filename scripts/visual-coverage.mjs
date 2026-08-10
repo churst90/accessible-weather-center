@@ -105,6 +105,23 @@ try {
   }
 } catch { /* layouts not extracted */ }
 
+/**
+ * Products no narrator ever recorded an intro for.
+ *
+ * The Vocal Local product set, consistent across every surviving narrator
+ * library and every drive dump, is: current conditions, daypart,
+ * extended/7-day, local observations, local radar, severe, traffic and
+ * 36-hour. Almanac, travel cities, precipitation outlook and overnight
+ * appear in none of them. Storm Tracker is our own derived scene and was
+ * never a TWC product at all.
+ *
+ * These scenes are silent on purpose and read by the screen reader. Listing
+ * them as gaps implies a recording exists to be found, which sends people
+ * hunting for audio that was never made.
+ */
+const KNOWN_SILENT = new Set(["almanac", "travel", "precip", "overnight", "stormtracker"]);
+
+const silentByDesign = [];
 const devices = m.DEVICES.filter((d) => !ONLY_DEVICE || d.id === ONLY_DEVICE);
 const lines = [];
 let totalNeeded = 0, totalReady = 0;
@@ -140,13 +157,27 @@ for (const d of devices) {
     }
     totalNeeded++;
 
-    // Four separate ways a machine can be dressed, and a scene only needs one
-    // of them. Checking just the per-device folder and the rotating pool
-    // reported every WeatherStar as having no art, when the 4000 v1 and the
-    // Jr are dressed by a single theme-level plate plus a per-scene set.
+    // Five ways a machine can be dressed, and a scene needs only one.
+    //
+    // This measurement has been wrong twice, in the same direction, so it is
+    // worth being explicit about what counts. First it checked only the
+    // per-device folder and the rotating pool, which reported every
+    // WeatherStar as bare when the 4000 v1 and the Jr are dressed by a
+    // theme-level plate plus a per-scene set. Then it still reported the 4000
+    // v2 as having no art at all across ten scenes — but `.ws-frame` paints
+    // `linear-gradient(--ws-bg-top, --ws-bg-mid, --ws-bg-deep)` for every
+    // theme, and `--ws-bg-image` is an optional photo overlay on top of it.
+    // The v2's own profile describes its background as an orange-to-purple
+    // gradient; CSS vars ARE its artwork, and it was never missing anything.
+    //
+    // A tool that invents work is worse than no tool. If a machine declares
+    // the gradient stops, it is dressed.
     let sceneBg = null;
     try { sceneBg = m.getSceneBackground(d.id, product); } catch { /* none */ }
-    const hasBg = bgOwn > 0 || poolCount > 0 || Boolean(d.visuals.backgroundImage) || Boolean(sceneBg);
+    const hasGradient = Boolean(
+      d.visuals.vars["--ws-bg-deep"] && d.visuals.vars["--ws-bg-mid"] && d.visuals.vars["--ws-bg-top"]
+    );
+    const hasBg = bgOwn > 0 || poolCount > 0 || Boolean(d.visuals.backgroundImage) || Boolean(sceneBg) || hasGradient;
     const needsIcons = d.capabilities.icons;
     const hasIcons = !needsIcons || iconSetCount > 0;
     const aliases = LAYOUT_ALIASES[product] ?? [];
@@ -163,9 +194,15 @@ for (const d of devices) {
     const missing = [];
     if (!hasBg) missing.push("background");
     if (needsIcons && !hasIcons) missing.push("icons");
-    if (hasNarration === false) missing.push("narration");
+    // Narration TWC never recorded is not a shortfall, it is a fact about the
+    // library. Counting it as work to do means the number never reaches
+    // completion no matter what anyone does, which makes it useless.
+    if (hasNarration === false && !KNOWN_SILENT.has(product)) missing.push("narration");
     if (missing.length) shortfalls.push({ device: d.id, product, missing });
-    else totalReady++;
+    else {
+      totalReady++;
+      if (hasNarration === false) silentByDesign.push({ device: d.id, product });
+    }
   }
   lines.push("");
   if (d.gaps?.length) {
@@ -200,6 +237,15 @@ const doc = [
   "",
   shortfalls.length ? "| device | scene | missing |\n|---|---|---|" : "_Nothing._",
   ...shortfalls.map((s) => `| ${s.device} | ${s.product} | ${s.missing.join(", ")} |`),
+  "",
+  "## Silent by design",
+  "",
+  "Complete, but with no narrator intro — because none was ever recorded.",
+  "The screen reader reads these scenes; that is the intended behaviour, not a",
+  "gap. Do not go looking for the audio.",
+  "",
+  silentByDesign.length ? "| device | scene |\n|---|---|" : "_None._",
+  ...silentByDesign.map((s) => `| ${s.device} | ${s.product} |`),
   "",
 ].join("\n");
 

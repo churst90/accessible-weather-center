@@ -84,7 +84,10 @@ Phrases wanted: "Storms in your area"
 
 | Narrator | Machines that would use it |
 |---|---|
+| Allan Jackson (Weatherscan) | WeatherStar 4000 v2 (2005-2009); WeatherStar XL; Weatherscan Local (1999-2003); IntelliStar 1 (2003-2013) |
 | Jim Cantore (IntelliStar) | IntelliStar 2 / 2 Jr HD (2013+) |
+| Amy Bargeron (Weatherscan) | Weatherscan V1 (2003-2005); Weatherscan V2 L-bar (2005-2022) |
+| Dan Chandler (1987-1990s) | WeatherStar 4000 v1 (2001-2004) |
 
 ## traffic
 

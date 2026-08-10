@@ -441,8 +441,15 @@ const SCENE_INTRO_ALIASES: Record<string, readonly string[]> = {
   detailed:     ["observations", "regionalConditions", "current"],
   feelslike:    ["observations", "current"],
   temptrend:    ["observations", "current"],
-  stormtracker: ["radar"],
   travel:       ["travelForecast"]
+  // `stormtracker` deliberately has NO alias. It used to borrow `radar`, so
+  // the storm list announced itself as "your local Doppler radar" — which is
+  // not what the screen shows, and was never a thing TWC did. Storm Tracker
+  // is our own derived scene: 3,839 real IntelliStar market configs contain
+  // no product of that name (docs/reference/rundowns.md), so there is no
+  // authentic recording to reach for and inventing one by aliasing describes
+  // the wrong screen. It is knowingly silent; the screen reader reads the
+  // storm list, which is the accurate description of what is on screen.
 };
 
 /** Scene ids are compared case-insensitively. The scene registry uses

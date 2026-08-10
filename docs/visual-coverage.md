@@ -11,8 +11,8 @@ are listed for completeness and excluded from the totals.
 point sizes. Where it says yes, the screen can be built exactly rather than
 measured off a screenshot.
 
-**59 of 97** device/scene combinations have every visual
-and audio prerequisite present. 38 fall short.
+**91 of 97** device/scene combinations have every visual
+and audio prerequisite present. 6 fall short.
 
 ---
 
@@ -25,13 +25,13 @@ and audio prerequisite present. 38 fall short.
 
 | scene | availability | background | icons | layout ref | narration |
 |---|---|---|---|---|---|
-| current | core | **NO** | n/a | yes | n/a |
-| localforecast | core | **NO** | n/a | yes | n/a |
-| extended | core | **NO** | n/a | yes | n/a |
+| current | core | yes | n/a | yes | n/a |
+| localforecast | core | yes | n/a | yes | n/a |
+| extended | core | yes | n/a | yes | n/a |
 | hourly | absent | — | — | — | — |
 | radar | absent | — | — | — | — |
-| travel | core | **NO** | n/a | yes | n/a |
-| almanac | core | **NO** | n/a | yes | n/a |
+| travel | core | yes | n/a | yes | n/a |
+| almanac | core | yes | n/a | yes | n/a |
 | detailed | absent | — | — | — | — |
 | feelslike | absent | — | — | — | — |
 | stormtracker | absent | — | — | — | — |
@@ -41,7 +41,7 @@ and audio prerequisite present. 38 fall short.
 | temptrend | absent | — | — | — | — |
 | traffic | absent | — | — | — | — |
 | airport | absent | — | — | — | — |
-| alerts | core | **NO** | n/a | yes | n/a |
+| alerts | core | yes | n/a | yes | n/a |
 
 **Recorded gaps** (from the device profile):
 
@@ -124,15 +124,15 @@ and audio prerequisite present. 38 fall short.
 
 | scene | availability | background | icons | layout ref | narration |
 |---|---|---|---|---|---|
-| current | core | **NO** | yes | yes | yes |
-| localforecast | core | **NO** | yes | yes | yes |
-| extended | core | **NO** | yes | yes | yes |
-| hourly | optional | **NO** | yes | yes | yes |
-| radar | core | **NO** | yes | yes | yes |
-| travel | core | **NO** | yes | yes | **NO** |
-| almanac | core | **NO** | yes | yes | **NO** |
-| detailed | optional | **NO** | yes | yes | yes |
-| feelslike | optional | **NO** | yes | yes | yes |
+| current | core | yes | yes | yes | yes |
+| localforecast | core | yes | yes | yes | yes |
+| extended | core | yes | yes | yes | yes |
+| hourly | optional | yes | yes | yes | yes |
+| radar | core | yes | yes | yes | yes |
+| travel | core | yes | yes | yes | **NO** |
+| almanac | core | yes | yes | yes | **NO** |
+| detailed | optional | yes | yes | yes | yes |
+| feelslike | optional | yes | yes | yes | yes |
 | stormtracker | absent | — | — | — | — |
 | overnight | absent | — | — | — | — |
 | weekend | absent | — | — | — | — |
@@ -140,7 +140,7 @@ and audio prerequisite present. 38 fall short.
 | temptrend | absent | — | — | — | — |
 | traffic | absent | — | — | — | — |
 | airport | absent | — | — | — | — |
-| alerts | core | **NO** | yes | yes | yes |
+| alerts | core | yes | yes | yes | yes |
 
 **Recorded gaps** (from the device profile):
 
@@ -296,7 +296,7 @@ and audio prerequisite present. 38 fall short.
 | almanac | core | yes | yes | yes | **NO** |
 | detailed | optional | yes | yes | yes | yes |
 | feelslike | optional | yes | yes | yes | yes |
-| stormtracker | optional | yes | yes | yes | yes |
+| stormtracker | optional | yes | yes | yes | **NO** |
 | overnight | absent | — | — | — | — |
 | weekend | absent | — | — | — | — |
 | precip | absent | — | — | — | — |
@@ -351,41 +351,37 @@ and audio prerequisite present. 38 fall short.
 
 | device | scene | missing |
 |---|---|---|
-| ws3000 | current | background |
-| ws3000 | localforecast | background |
-| ws3000 | extended | background |
-| ws3000 | travel | background |
-| ws3000 | almanac | background |
-| ws3000 | alerts | background |
-| wsjr | travel | narration |
-| wsjr | almanac | narration |
-| ws4000-v1 | almanac | narration |
-| ws4000-v2 | current | background |
-| ws4000-v2 | localforecast | background |
-| ws4000-v2 | extended | background |
-| ws4000-v2 | hourly | background |
-| ws4000-v2 | radar | background |
-| ws4000-v2 | travel | background, narration |
-| ws4000-v2 | almanac | background, narration |
-| ws4000-v2 | detailed | background |
-| ws4000-v2 | feelslike | background |
-| ws4000-v2 | alerts | background |
-| weatherstarxl | travel | narration |
-| weatherstarxl | almanac | narration |
 | weatherstarxl | airport | narration |
-| weatherscan-local | travel | narration |
-| weatherscan-local | almanac | narration |
 | weatherscan-v1 | extended | narration |
-| weatherscan-v1 | travel | narration |
-| weatherscan-v1 | almanac | narration |
 | weatherscan-v1 | alerts | narration |
 | weatherscan-v2 | extended | narration |
-| weatherscan-v2 | travel | narration |
-| weatherscan-v2 | almanac | narration |
 | weatherscan-v2 | alerts | narration |
-| intellistar1 | travel | narration |
-| intellistar1 | almanac | narration |
 | intellistar2 | radar | narration |
-| intellistar2 | travel | narration |
-| intellistar2 | almanac | narration |
-| intellistar2 | stormtracker | narration |
+
+## Silent by design
+
+Complete, but with no narrator intro — because none was ever recorded.
+The screen reader reads these scenes; that is the intended behaviour, not a
+gap. Do not go looking for the audio.
+
+| device | scene |
+|---|---|
+| wsjr | travel |
+| wsjr | almanac |
+| ws4000-v1 | almanac |
+| ws4000-v2 | travel |
+| ws4000-v2 | almanac |
+| weatherstarxl | travel |
+| weatherstarxl | almanac |
+| weatherscan-local | travel |
+| weatherscan-local | almanac |
+| weatherscan-v1 | travel |
+| weatherscan-v1 | almanac |
+| weatherscan-v2 | travel |
+| weatherscan-v2 | almanac |
+| intellistar1 | travel |
+| intellistar1 | almanac |
+| intellistar1 | stormtracker |
+| intellistar2 | travel |
+| intellistar2 | almanac |
+| intellistar2 | stormtracker |

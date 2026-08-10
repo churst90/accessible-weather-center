@@ -91,7 +91,11 @@ const EXPECTED: Record<string, NarratorId[]> = {
   // directory exists for him. Storm Tracker borrows the radar intro, so it
   // inherits the same gap.
   radar:         ["allan-jackson", "amy-bargeron", "chandler"],
-  stormtracker:  ["allan-jackson", "amy-bargeron", "chandler"],
+  // Nobody. Storm Tracker is our own derived scene rather than a TWC
+  // product — no market config in docs/reference/rundowns.md names one — so
+  // there is no authentic recording. It used to borrow the radar intro and
+  // announce a storm list as "your local Doppler radar".
+  stormtracker:  [],
 
   // Amy's nine clips include no extended-forecast phrasing.
   extended:      ["allan-jackson", "jim-cantore", "chandler"],
@@ -137,7 +141,19 @@ test("every scene a user can opt into is either narrated or knowingly silent", (
     "travel", "almanac", "detailed", "feelslike", "stormtracker",
     "precip", "temptrend", "traffic", "airport"
   ];
-  const KNOWN_SILENT = new Set(["almanac", "precip"]);
+  const KNOWN_SILENT = new Set([
+  // Products TWC never recorded a narrator intro for. Not gaps to hunt: the
+  // Vocal Local product set across every surviving library and every drive
+  // dump is current conditions, daypart, extended/7-day, local observations,
+  // local radar, severe, traffic and 36-hour. Almanac, precipitation outlook,
+  // travel cities and overnight appear in none of them.
+  "almanac", "precip",
+  // Storm Tracker is OUR scene, not a TWC product — 3,839 real IntelliStar
+  // market configs contain nothing by that name. It used to borrow the radar
+  // intro, so a storm list announced itself as "your local Doppler radar",
+  // describing a screen the user was not looking at.
+  "stormtracker",
+]);
   setProductEra("ws4000-v2");
   for (const sceneId of OPT_IN) {
     const anyone = N.some((n) => announces(sceneId, n));
