@@ -166,7 +166,12 @@ function buildCases(narratorId, roots) {
     add("windDim", Sem.windDim(r));
   }
   add("windCalm", Sem.windCalm());
-  for (const pct of [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]) add("precipProb", Sem.precipProb(pct));
+  // All three recorded sets, not just rain — sweeping only the default kind
+  // reported the snow and precipitation sets as unreachable when they were
+  // simply never asked for.
+  for (const pct of [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]) {
+    for (const kind of ["rain", "snow", "precip"]) add("precipProb", Sem.precipProb(pct, kind));
+  }
   for (const i of NAMED) add("named", Sem.named(i));
 
   // Data-derived families.

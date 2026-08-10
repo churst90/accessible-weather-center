@@ -36,14 +36,26 @@
  *   x121,x122 = 4+ feet variants
  *   x203,x204 = Range summary variants
  *
- * Allan Jackson does NOT have accumulation clips.
+ * Allan Jackson has his own, differently-encoded set — see AJ_ACCUM_* below.
+ * His A-series is NOT interchangeable with Jim Cantore's: A2xxx is snow AND
+ * ice for Jackson but plain ice for Cantore, A3xxx is wet snow rather than
+ * sleet, and the amount ladders differ rung for rung. Reading one table with
+ * the other's key is how "he has no accumulation clips" survived as long as
+ * it did.
  */
 
 import type { ClipConfidence } from "./clipSchema";
-import { JC_VOCALLOCAL_BASE } from "./narratorSchema";
+import { JC_VOCALLOCAL_BASE, AJ_VOCALLOCAL_BASE } from "./narratorSchema";
 import type { NarratorId } from "./narratorSchema";
 
 const JC_ACCUM_DIR = `${JC_VOCALLOCAL_BASE}/Wx_Phrases_Accumulation`;
+
+/**
+ * Allan Jackson's accumulation and rate clips share one directory with his
+ * precip-probability set rather than living in an Accumulation folder of
+ * their own, which is why they read as absent for so long.
+ */
+const AJ_ACCUM_DIR = `${AJ_VOCALLOCAL_BASE}/Wx_Phrases_Precip`;
 
 export interface AccumulationClip {
   src: string;
@@ -367,11 +379,13 @@ export function getAccumulationClipByCode(code: string): AccumulationClip | null
  * matching accumulation clips. Extracts snow, ice, sleet, and rain
  * accumulation amounts from natural language.
  *
- * Only works for JC narrator (only narrator with accumulation clips).
+ * Jackson and Cantore each have a recorded set; the other narrators do not.
+ * The two libraries use incompatible encodings, so each gets its own matcher.
  */
 export function getAccumulationClips(detailedForecast: string, narratorId: NarratorId): AccumulationClip[] {
-  if (narratorId !== "jim-cantore") return [];
   if (!detailedForecast) return [];
+  if (narratorId === "allan-jackson") return getAjAccumulationClips(detailedForecast);
+  if (narratorId !== "jim-cantore") return [];
 
   const text = detailedForecast.toLowerCase();
   const clips: AccumulationClip[] = [];
@@ -491,3 +505,231 @@ function findSleetAccumClip(low: number, high: number): AccumulationClip | null 
   if (mid <= 12)   return getAccumulationClipByCode("A3073");
   return getAccumulationClipByCode("A3083");
 }
+
+// ────────────────────────────────────────────────────────────────────────────
+//  Allan Jackson accumulation + rate clips
+// ────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Jackson's ladders, transcribed from the recordings themselves rather than
+ * inferred from Cantore's encoding. Each rung carries the span it names so a
+ * forecast amount can be matched to the nearest recorded phrase instead of
+ * being bucketed by a hand-written if-chain that has to be re-derived every
+ * time a rung is added.
+ */
+interface AjRange {
+  code: string;
+  /** Inclusive span the recording names, in inches. */
+  lo: number;
+  hi: number;
+  text: string;
+}
+
+/** "snow accumulating N to N inches" — A1xxx. */
+const AJ_SNOW: AjRange[] = [
+  { code: "A1011", lo: 0,  hi: 0.9, text: "snow accumulations less than one inch" },
+  { code: "A1021", lo: 1,  hi: 1,   text: "about an inch of snow" },
+  { code: "A1031", lo: 1,  hi: 2,   text: "snow accumulating 1 to 2 inches" },
+  { code: "A1041", lo: 1,  hi: 3,   text: "snow accumulating 1 to 3 inches" },
+  { code: "A1051", lo: 2,  hi: 4,   text: "snow accumulating 2 to 4 inches" },
+  { code: "A1061", lo: 3,  hi: 5,   text: "snow accumulating 3 to 5 inches" },
+  { code: "A1071", lo: 4,  hi: 6,   text: "snow accumulating 4 to 6 inches" },
+  { code: "A1081", lo: 5,  hi: 8,   text: "snow accumulating 5 to 8 inches" },
+  { code: "A1091", lo: 6,  hi: 10,  text: "snow accumulating 6 to 10 inches" },
+  { code: "A1101", lo: 8,  hi: 12,  text: "snow accumulating 8 to 12 inches" },
+  { code: "A1111", lo: 10, hi: 15,  text: "snow accumulating 10 to 15 inches" },
+  { code: "A1121", lo: 12, hi: 99,  text: "snow accumulation of a foot or more" },
+];
+
+/** "snow and ice accumulation of N to N inches" — A2xxx. */
+const AJ_SNOW_AND_ICE: AjRange[] = [
+  { code: "A2011", lo: 0, hi: 0.9, text: "snow and ice accumulations less than one inch" },
+  { code: "A2021", lo: 1, hi: 1,   text: "snow and ice accumulating around 1 inch" },
+  { code: "A2031", lo: 1, hi: 3,   text: "snow and ice accumulation of 1 to 3 inches" },
+  { code: "A2041", lo: 2, hi: 4,   text: "snow and ice accumulation of 2 to 4 inches" },
+  { code: "A2051", lo: 3, hi: 6,   text: "snow and ice accumulation of 3 to 6 inches" },
+  { code: "A2061", lo: 4, hi: 8,   text: "snow and ice accumulation of 4 to 8 inches" },
+  { code: "A2071", lo: 8, hi: 12,  text: "snow and ice accumulation of 8 to 12 inches" },
+];
+
+/** Wet / slushy snow — A3xxx. Selected when the text says so explicitly. */
+const AJ_WET_SNOW: AjRange[] = [
+  { code: "A3011", lo: 0, hi: 0.9, text: "a slushy accumulation less than one inch" },
+  { code: "A3021", lo: 1, hi: 1,   text: "wet snow accumulating up to one inch" },
+  { code: "A3031", lo: 2, hi: 2,   text: "wet snow accumulating up to 2 inches" },
+  { code: "A3041", lo: 1, hi: 3,   text: "wet snow accumulation of 1 to 3 inches" },
+  { code: "A3051", lo: 2, hi: 4,   text: "wet snow accumulation of 2 to 4 inches" },
+  { code: "A3061", lo: 3, hi: 6,   text: "wet snow accumulation of 3 to 6 inches" },
+  { code: "A3071", lo: 4, hi: 8,   text: "wet snow accumulation of 4 to 8 inches" },
+  { code: "A3081", lo: 8, hi: 12,  text: "wet snow accumulation of 8 to 12 inches" },
+];
+
+/** Rainfall amounts — A6xxx. Spans are in inches of rain, not snow. */
+const AJ_RAINFALL: AjRange[] = [
+  { code: "A6021", lo: 0.25, hi: 0.25, text: "rainfall around a quarter of an inch" },
+  { code: "A6031", lo: 0.5,  hi: 0.5,  text: "rainfall around a half an inch" },
+  { code: "A6041", lo: 1,    hi: 1,    text: "rainfall may reach one inch" },
+  { code: "A6051", lo: 1,    hi: 2,    text: "1 to 2 inches of rain expected" },
+  { code: "A6052", lo: 2,    hi: 99,   text: "rainfall possibly over 2 inches" },
+];
+
+const AJ_ALL_RANGES = [...AJ_SNOW, ...AJ_SNOW_AND_ICE, ...AJ_WET_SNOW, ...AJ_RAINFALL];
+
+/** Qualitative clips, keyed by code rather than by amount. */
+const AJ_STANDALONE: Record<string, string> = {
+  A4011: "some ice accumulation possible",
+  A4021: "significant ice accumulation possible",
+  A5011: "some icing possible",
+  A5021: "significant icing possible",
+  A7011: "higher amounts possible in some storms",
+  A7013: "locally heavier amounts possible",
+  R8011: "snowfall rates may reach one inch per hour at times",
+  R8012: "snowfall rates approaching 1 to 2 inches per hour at times",
+  R8021: "rainfall rates may reach 1 inch per hour at times",
+  R8022: "rainfall rates approaching 1 to 2 inches per hour at times",
+};
+
+function ajClip(code: string, text: string): AccumulationClip {
+  return { src: `${AJ_ACCUM_DIR}/${code}.mp3`, text, confidence: "likely" };
+}
+
+function ajStandalone(code: string): AccumulationClip | null {
+  const text = AJ_STANDALONE[code];
+  return text ? ajClip(code, text) : null;
+}
+
+/**
+ * Pick the recorded span whose own midpoint sits closest to the forecast
+ * amount. Ties break toward the narrower span, so "1 to 3 inches" is
+ * preferred over "1 to 15 inches" when both are equidistant.
+ */
+function nearestAjRange(ranges: AjRange[], low: number, high: number): AccumulationClip | null {
+  const mid = (low + high) / 2;
+  let best: AjRange | null = null;
+  let bestScore = Infinity;
+  for (const r of ranges) {
+    const score = Math.abs((r.lo + r.hi) / 2 - mid);
+    const width = r.hi - r.lo;
+    const bestWidth = best ? best.hi - best.lo : Infinity;
+    if (score < bestScore || (score === bestScore && width < bestWidth)) {
+      best = r;
+      bestScore = score;
+    }
+  }
+  return best ? ajClip(best.code, best.text) : null;
+}
+
+/** Words NWS uses for sub-inch amounts, plus plain decimals. */
+function parseInches(s: string): number | null {
+  if (!s) return null;
+  const t = s.toLowerCase().trim();
+  if (/^(a |one )?tenth/.test(t)) return 0.1;
+  if (/^(a |one )?quarter/.test(t)) return 0.25;
+  if (/^(a |one )?third/.test(t)) return 0.33;
+  if (/^(a |one )?half/.test(t)) return 0.5;
+  if (/three.quarter/.test(t)) return 0.75;
+  const words: Record<string, number> = {
+    one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7,
+    eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12, fifteen: 15,
+  };
+  if (words[t] != null) return words[t];
+  const n = parseFloat(t);
+  return Number.isNaN(n) ? null : n;
+}
+
+const AMOUNT = "(\\d+(?:\\.\\d+)?|a tenth|one tenth|a quarter|one quarter|a third|a half|one half|three quarters|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|fifteen)";
+
+/**
+ * Accumulation narration for Allan Jackson.
+ *
+ * Kept separate from the Cantore matcher rather than generalised: the two
+ * libraries disagree on what each type prefix means, so a shared matcher
+ * would have to branch on narrator at every lookup anyway, and the failure
+ * mode of getting it wrong is silent — the wrong amount, confidently spoken.
+ */
+function getAjAccumulationClips(detailedForecast: string): AccumulationClip[] {
+  const text = detailedForecast.toLowerCase();
+  const clips: AccumulationClip[] = [];
+
+  const isWet = /wet snow|slushy|slush/.test(text);
+  const isMixed = /snow and ice|ice and snow|wintry mix|mixed precipitation/.test(text);
+  const snowTable = isWet ? AJ_WET_SNOW : isMixed ? AJ_SNOW_AND_ICE : AJ_SNOW;
+
+  // Snow, as a range or a single amount.
+  const snowRange = text.match(new RegExp(`snow(?:fall)?\\s+accumulations?\\s+(?:of\\s+)?(?:around\\s+)?${AMOUNT}\\s+to\\s+${AMOUNT}\\s+inch`, "i"))
+    ?? text.match(new RegExp(`${AMOUNT}\\s+to\\s+${AMOUNT}\\s+inches\\s+of\\s+(?:wet\\s+)?snow`, "i"));
+  const snowSingle = text.match(new RegExp(`snow(?:fall)?\\s+accumulations?\\s+(?:of\\s+)?(?:around|about|near|up to)\\s+${AMOUNT}\\s+inch`, "i"));
+
+  if (snowRange) {
+    const lo = parseInches(snowRange[1]);
+    const hi = parseInches(snowRange[2]);
+    if (lo != null && hi != null) {
+      const clip = nearestAjRange(snowTable, lo, hi);
+      if (clip) clips.push(clip);
+    }
+  } else if (snowSingle) {
+    const v = parseInches(snowSingle[1]);
+    if (v != null) {
+      const clip = nearestAjRange(snowTable, v, v);
+      if (clip) clips.push(clip);
+    }
+  } else if (/(?:less than (?:an|one|1) inch|dusting)/.test(text) && /snow/.test(text)) {
+    clips.push(ajClip(isWet ? "A3011" : "A1011", isWet
+      ? "a slushy accumulation less than one inch"
+      : "snow accumulations less than one inch"));
+  } else if (/(?:a )?foot or more of snow|over a foot of snow/.test(text)) {
+    clips.push(ajClip("A1121", "snow accumulation of a foot or more"));
+  }
+
+  // Ice, which Jackson recorded qualitatively rather than by amount.
+  if (/ice accumulation|freezing rain|glaze of ice/.test(text)) {
+    const iceAmt = text.match(new RegExp(`ice accumulations?\\s+(?:of\\s+)?(?:around\\s+|up to\\s+)?${AMOUNT}`, "i"));
+    const inches = iceAmt ? parseInches(iceAmt[1]) : null;
+    const significant = (inches != null && inches >= 0.25) || /significant|damaging|heavy ice/.test(text);
+    const clip = ajStandalone(significant ? "A4021" : "A4011");
+    if (clip) clips.push(clip);
+  } else if (/icing/.test(text)) {
+    const clip = ajStandalone(/significant|heavy/.test(text) ? "A5021" : "A5011");
+    if (clip) clips.push(clip);
+  }
+
+  // Rainfall amounts.
+  const rainRange = text.match(new RegExp(`rainfall amounts?\\s+(?:of\\s+)?between\\s+${AMOUNT}\\s+and\\s+${AMOUNT}`, "i"));
+  const rainSingle = text.match(new RegExp(`(?:rainfall amounts?|new rainfall)\\s+(?:of\\s+)?(?:around|near|about|up to)?\\s*${AMOUNT}\\s*(?:of an\\s+)?inch`, "i"));
+  if (rainRange) {
+    const lo = parseInches(rainRange[1]);
+    const hi = parseInches(rainRange[2]);
+    if (lo != null && hi != null) {
+      const clip = nearestAjRange(AJ_RAINFALL, lo, hi);
+      if (clip) clips.push(clip);
+    }
+  } else if (rainSingle) {
+    const v = parseInches(rainSingle[1]);
+    if (v != null) {
+      const clip = nearestAjRange(AJ_RAINFALL, v, v);
+      if (clip) clips.push(clip);
+    }
+  }
+
+  // Rates and the "locally heavier" tail, both of which ride on top.
+  if (/snowfall rates?/.test(text)) {
+    const clip = ajStandalone(/two inches|2 inches|1 to 2/.test(text) ? "R8012" : "R8011");
+    if (clip) clips.push(clip);
+  }
+  if (/rainfall rates?/.test(text)) {
+    const clip = ajStandalone(/two inches|2 inches|1 to 2/.test(text) ? "R8022" : "R8021");
+    if (clip) clips.push(clip);
+  }
+  if (/locally heav|higher amounts/.test(text)) {
+    const clip = ajStandalone(/in some storms/.test(text) ? "A7011" : "A7013");
+    if (clip) clips.push(clip);
+  }
+
+  return clips;
+}
+
+/** Exposed for the sweep and for tests that assert AJ coverage. */
+export const AJ_ACCUMULATION_CODES: string[] = [
+  ...AJ_ALL_RANGES.map((r) => r.code),
+  ...Object.keys(AJ_STANDALONE),
+];

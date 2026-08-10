@@ -449,8 +449,18 @@ const EVENT_TO_VTEC: EventMapping[] = [
   { pattern: /^Lake Wind Advisory$/i,                         phenomenon: "LW", significance: "Y" },
 
   // Heat / Cold
+  //
+  // NWS renamed the heat products for the 2025 season: "Excessive Heat
+  // Warning" became "Extreme Heat Warning" and the Watch followed suit, to
+  // match the Extreme Cold naming. Both spellings are kept — the old one
+  // because archived and replayed alerts still carry it, the new one because
+  // it is what the API now sends. Without the new spelling the event failed
+  // to parse and a real heat warning announced nothing at all, even though
+  // NPW013/NPW014 have been recorded and mapped the whole time.
   { pattern: /^Excessive Heat Warning$/i,                     phenomenon: "EH", significance: "W" },
+  { pattern: /^Extreme Heat Warning$/i,                       phenomenon: "EH", significance: "W" },
   { pattern: /^Excessive Heat Watch$/i,                       phenomenon: "EH", significance: "A" },
+  { pattern: /^Extreme Heat Watch$/i,                         phenomenon: "EH", significance: "A" },
   { pattern: /^Heat Advisory$/i,                              phenomenon: "HT", significance: "Y" },
   { pattern: /^Extreme Cold Warning$/i,                       phenomenon: "EC", significance: "W" },
   { pattern: /^Extreme Cold Watch$/i,                         phenomenon: "EC", significance: "A" },
@@ -656,6 +666,13 @@ export function getHeadlineClips(eventText: string, narratorId: NarratorId): Hea
  * For multiple alerts, uses Headline_And_Event for subsequent events:
  *   "A Winter Storm Warning" + "and a Blizzard Watch" + "has been issued"
  */
+/** "an" before a vowel sound, "a" otherwise. Every NWS event name here that
+ *  starts with a vowel does so with an ordinary vowel sound (Excessive, Ice,
+ *  Air, Urban, Extreme), so the letter test is sufficient. */
+function indefiniteArticle(noun: string): string {
+  return /^[aeiou]/i.test(noun) ? "An" : "A";
+}
+
 function getAjHeadlineClips(phenomenon: string, significance: string): HeadlineClip[] {
   const ajCode = VTEC_TO_AJ_MAP.get(`${phenomenon}_${significance}`);
   if (!ajCode) return [];
@@ -665,10 +682,12 @@ function getAjHeadlineClips(phenomenon: string, significance: string): HeadlineC
 
   const clips: HeadlineClip[] = [];
 
-  // "A [event]" variant
+  // "A [event]" variant. The recording says the right article; only the
+  // fallback text needed fixing, and that is the text the screen reader
+  // reads — "A Excessive Heat Warning", "A Ice Storm Warning".
   clips.push({
     src: `${AJ_HL_BASE}/Headline_A_Event/${ajCode}A.mp3`,
-    text: `A ${entry.text}`,
+    text: `${indefiniteArticle(entry.text)} ${entry.text}`,
     confidence: entry.confidence,
   });
 

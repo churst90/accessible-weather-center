@@ -68,6 +68,15 @@ export type WindRange =
   | "Over_100";
 
 /**
+ * Which of the three recorded precip-probability sets to speak.
+ *
+ * The narrators recorded "chance of rain", "chance of snow" and "chance of
+ * precipitation" as three complete parallel decile sets. Picking the wrong
+ * one is not cosmetic — it makes a snow forecast announce "chance of rain".
+ */
+export type PrecipKind = "rain" | "snow" | "precip";
+
+/**
  * Temperature range tokens used by AJ (e.g. `H80S`, `L30S`, `M50S`).
  *
  * Decades start at 10 on purpose. There is no "0s" decade in the library —
@@ -144,8 +153,11 @@ export const Sem = {
   windShifting: (dir: CompassDir)  => make("windShifting", dir),
   windCalm:     () => make("windCalm", ""),
 
-  // Precip probability (10-90% in steps of 10)
-  precipProb: (pct: number) => make("precipProb", String(pct)),
+  // Precip probability, in steps of 10. `kind` selects which of the three
+  // recorded decile sets to use — see precipRelPath. Defaults to "rain" so
+  // callers that predate the parameter keep resolving to the same clip.
+  precipProb: (pct: number, kind: PrecipKind = "rain") =>
+    make("precipProb", `${pct}:${kind}`),
 
   // Qualifiers (pattern codes like 8060 = "Storms could contain tornadoes")
   qualifier: (code: number) => make("qualifier", String(code)),
@@ -316,8 +328,9 @@ const AJ_RESOLVERS: NarratorResolvers = {
   windShifting: (p) => `${AJ_VL}/Wind_Shifting/Shift_${p}.mp3`,
   windCalm:     ()  => `${AJ_VL}/Winds_Misc/W9900.mp3`,
 
-  // Precip probability — AJ uses P9{decile}1 under Wx_Phrases_Precip.
-  precipProb: (p) => precipRelPath(p, `${AJ_VL}/Wx_Phrases_Precip`, /*excludeTen=*/ false),
+  // Precip probability — AJ recorded the full 10-100% range for all three
+  // sets (rain P9011-P9101, snow P9111-P9201, precip P9211-P9301).
+  precipProb: (p) => precipRelPath(p, `${AJ_VL}/Wx_Phrases_Precip`, 10, 100),
 
   // Qualifiers — numeric code under Wx_Phrases_Qualifiers.
   qualifier: (p) => `${AJ_VL}/Wx_Phrases_Qualifiers/${p}.mp3`,
@@ -368,7 +381,9 @@ const JC_RESOLVERS: NarratorResolvers = {
   windCalm:     ()  => `${JC_VL}/Wind_Misc/W9900.mp3`,
 
   // Precip — JC uses Wx_Phrases_POP and is missing 10%.
-  precipProb: (p) => precipRelPath(p, `${JC_VL}/Wx_Phrases_POP`, /*excludeTen=*/ true),
+  // JC's POP library starts at 20% and stops at 90% — he has no 10% or 100%
+  // take in any of the three sets, so those resolve to null and fall to text.
+  precipProb: (p) => precipRelPath(p, `${JC_VL}/Wx_Phrases_POP`, 20, 90),
 
   // Qualifiers (same shape as AJ).
   qualifier: (p) => `${JC_VL}/Wx_Phrases_Qualifiers/${p}.mp3`,
@@ -400,14 +415,47 @@ const RESOLVERS_BY_NARRATOR: Record<NarratorId, NarratorResolvers> = {
 // ───────────────────────── Helpers ───────────────────────────────────
 
 /** Build a precip probability relPath. `P9{decile}1.mp3` — e.g. 30% → P9031. */
-function precipRelPath(paramPct: string, dir: string, excludeTen: boolean): string | null {
-  const pct = Number(paramPct);
+/** Spoken form of a precipProb id, matching whichever set it resolves to. */
+export function precipKindNoun(kind: PrecipKind): string {
+  return kind === "snow" ? "snow" : kind === "precip" ? "precipitation" : "rain";
+}
+
+function describePrecipProb(param: string): string {
+  const [pct, kind = "rain"] = param.split(":");
+  return `${pct} percent chance of ${precipKindNoun(kind as PrecipKind)}`;
+}
+
+/**
+ * Resolve a precip-probability clip.
+ *
+ * Each narrator's precip directory holds THREE parallel decile sets, recorded
+ * as one continuous run and numbered by a running index rather than by
+ * percentage:
+ *
+ *     rain    10-100%  ->  P9011 .. P9101   (index 01..10)
+ *     snow    10-100%  ->  P9111 .. P9201   (index 11..20)
+ *     precip  10-100%  ->  P9211 .. P9301   (index 21..30)
+ *
+ * Only the rain set used to be reachable, and only its 10-90 deciles, so a
+ * snow forecast announced "chance of rain" and a certain forecast said
+ * nothing at all — P9101 ("chance of rain 100 percent") existed the whole
+ * time behind a `rounded > 90` guard.
+ *
+ * `minPct`/`maxPct` bound what the narrator actually recorded: AJ has the
+ * full 10-100 in every set, JC only 20-90. Out-of-range resolves to null,
+ * which degrades to the spoken fallback rather than a 404.
+ */
+function precipRelPath(param: string, dir: string, minPct: number, maxPct: number): string | null {
+  const [pctRaw, kindRaw] = param.split(":");
+  const pct = Number(pctRaw);
   if (!Number.isInteger(pct)) return null;
+
   const rounded = Math.round(pct / 10) * 10;
-  if (rounded < 10 || rounded > 90) return null;
-  if (excludeTen && rounded === 10) return null;
-  const decile = String(rounded / 10).padStart(2, "0");
-  return `${dir}/P9${decile}1.mp3`;
+  if (rounded < minPct || rounded > maxPct) return null;
+
+  const setOffset = kindRaw === "snow" ? 10 : kindRaw === "precip" ? 20 : 0;
+  const index = setOffset + rounded / 10;
+  return `${dir}/P9${String(index).padStart(2, "0")}1.mp3`;
 }
 
 /** Derive display text from an ID when the reference table has no entry. */
@@ -457,7 +505,7 @@ function deriveText(category: Category, param: string): string {
     case "windBecoming":   return `becoming ${compassLong(param as CompassDir)}`;
     case "windShifting":   return `shifting to ${compassLong(param as CompassDir)}`;
     case "windCalm":       return "Wind calm";
-    case "precipProb":     return `${param} percent chance of precipitation`;
+    case "precipProb":     return describePrecipProb(param);
     case "qualifier":      return `qualifier ${param}`;
     case "rateOp":         return `rate ${param}`;
     case "accumulation":   return `accumulation ${param}`;

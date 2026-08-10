@@ -14,7 +14,7 @@ import { getMultiHeadlineClips, getAjEventClip, parseEventToVtec } from "./manif
 import { getAccumulationClips } from "./manifests/accumulationSchema";
 import { findLongformMatch } from "./manifests/longformSchema";
 import { getSunTimes } from "../core/weather/SunCalc";
-import { getLibrary, Sem, type CompassDir, type WindRange, type PeriodKey, type Weekday } from "./manifests/semanticRegistry";
+import { getLibrary, Sem, precipKindNoun, type CompassDir, type WindRange, type PeriodKey, type Weekday, type PrecipKind } from "./manifests/semanticRegistry";
 
 /**
  * The PhraseComposer turns structured scene data into an ordered narration
@@ -270,10 +270,24 @@ function appendPeriodNarration(
   const longformClip = useClips ? findLongformMatch(p.detailedForecast ?? p.shortForecast, narrator) : null;
   if (longformClip && longformClip.confidence !== "guess") {
     // Authentic Weatherscan flow: [period (if clean)] [longform] [temp]
-    // Longform already covers conditions + often wind/time. Wind/precip
-    // clips intentionally omitted to avoid the stacked-clip feel.
+    // Longform already covers conditions and often wind, so those clips stay
+    // omitted here to avoid the stacked-clip feel.
     script.push({ clip: longformClip, fallbackText: longformClip.text + "." });
     script.push(tempSegment);
+    // The numbers are the exception. Of the 2,083 longform recordings, not
+    // one states a precipitation percentage and not one states an
+    // accumulation amount — checked, not assumed — so the early return was
+    // dropping both outright: "showers and thunderstorms likely" with the
+    // 70% never spoken, "snow" with the 3 to 5 inches never spoken. Those
+    // are the two most decision-relevant figures on the screen, and no
+    // longform clip can ever cover them, so they are appended here.
+    const conditionText = `${p.shortForecast} ${p.detailedForecast ?? ""}`;
+    appendPrecipProb(script, p.precipProbabilityPct, narrator, conditionText);
+    if (p.detailedForecast) {
+      for (const ac of getAccumulationClips(p.detailedForecast, narrator)) {
+        script.push({ clip: { src: ac.src, text: ac.text, confidence: ac.confidence }, fallbackText: ac.text + "." });
+      }
+    }
     return;
   }
 
@@ -302,7 +316,7 @@ function appendPeriodNarration(
 
   // Wind, precipitation, qualifiers, and accumulation — only when no longform
   // covered them. This prevents the stacked-clip feel when longform matches.
-  appendForecastWindPrecip(script, p.windDirText, p.windSpeedText, p.precipProbabilityPct, narrator, def, p.detailedForecast);
+  appendForecastWindPrecip(script, p.windDirText, p.windSpeedText, p.precipProbabilityPct, narrator, def, p.detailedForecast, p.shortForecast);
 }
 
 /**
@@ -431,12 +445,7 @@ export function composeHourlyForecast(hours: HourlyForecastPoint[], placeName: s
       }
     }
 
-    if (h.precipProbabilityPct > 0) {
-      script.push({
-        clip: getPrecipProbClip(h.precipProbabilityPct, narrator),
-        fallbackText: `${h.precipProbabilityPct} percent chance of precipitation.`
-      });
-    }
+    appendPrecipProb(script, h.precipProbabilityPct, narrator, h.shortForecast);
   }
 
   return script;
@@ -701,7 +710,9 @@ function appendForecastWindPrecip(
   precipPct: number | null,
   narrator: NarratorId,
   def: { hasWind: boolean },
-  detailedForecast?: string
+  detailedForecast?: string,
+  /** Short condition text, used to pick the rain / snow / precip clip set. */
+  conditionHint?: string
 ): void {
   // Wind — parse the NWS text into a direction + speed for wind clips
   const mph = parseWindSpeedMph(windSpeedText);
@@ -716,13 +727,7 @@ function appendForecastWindPrecip(
   }
 
   // Precipitation probability — use P9 clips when available
-  if (precipPct != null && precipPct > 0) {
-    const precipClip = getPrecipProbClip(precipPct, narrator);
-    script.push({
-      clip: precipClip,
-      fallbackText: `${precipPct} percent chance of precipitation.`
-    });
-  }
+  appendPrecipProb(script, precipPct, narrator, `${conditionHint ?? ""} ${detailedForecast ?? ""}`);
 
   // Wind changes — becoming/shifting/increasing/diminishing from the detailed forecast
   if (detailedForecast && (narrator === "allan-jackson" || narrator === "jim-cantore")) {
@@ -1670,14 +1675,58 @@ function dirTextToCode(text: string): CompassDir | null {
 
 /**
  * Get a P9 precipitation probability clip. Both AJ and JC have these:
- *   AJ: VocalLocal/Wx_Phrases_Precip/P9{decile}1.mp3
- *   JC: Vocal Local/Wx_Phrases_POP/P9{decile}1.mp3
+ *   AJ: VocalLocal/Wx_Phrases_Precip/P9{index}1.mp3
+ *   JC: Vocal Local/Wx_Phrases_POP/P9{index}1.mp3
  *
- * P9011 = "10 percent chance of precipitation", P9021 = "20 percent", etc.
+ * `kind` selects the rain / snow / precipitation set — see precipRelPath.
  * Rounds to the nearest 10%.
  */
-function getPrecipProbClip(pct: number, narratorId: NarratorId): ClipResolution | null {
-  return getLibrary(narratorId).resolve(Sem.precipProb(pct));
+function getPrecipProbClip(pct: number, narratorId: NarratorId, kind: PrecipKind): ClipResolution | null {
+  return getLibrary(narratorId).resolve(Sem.precipProb(pct, kind));
+}
+
+/**
+ * Choose which recorded set matches the forecast wording.
+ *
+ * The generic "chance of precipitation" set is the answer whenever the type
+ * is mixed or ambiguous, which is also what the on-screen label says. Naming
+ * the wrong form is worse than staying generic: freezing rain is liquid that
+ * freezes on contact, so announcing "chance of snow" for it describes the
+ * wrong hazard, and "rain and snow" is neither one alone.
+ *
+ * "Snow showers" is snow, not a shower — the word has to be discounted
+ * before testing for liquid, or every snow shower reads as rain.
+ */
+function precipKindFor(conditionText: string): PrecipKind {
+  const t = conditionText.toLowerCase();
+  if (/freezing (rain|drizzle)/.test(t)) return "precip";
+
+  const snowy = /snow|flurr|wintry|winter mix|sleet|blizzard|ice pellets/.test(t);
+  const rainy = /\brain\b|drizzle|thunder|\bshowers?\b/.test(t.replace(/snow showers?/g, "snow"));
+
+  if (snowy && rainy) return "precip";
+  if (snowy) return "snow";
+  if (rainy) return "rain";
+  return "precip";
+}
+
+/**
+ * Emit the precipitation-probability segment, picking the set that matches
+ * the forecast wording so the spoken clip and the fallback text agree.
+ * No-ops at zero, which is how NWS reports "no chance".
+ */
+function appendPrecipProb(
+  script: PhraseScript,
+  precipPct: number | null | undefined,
+  narrator: NarratorId,
+  conditionText: string
+): void {
+  if (precipPct == null || precipPct <= 0) return;
+  const kind = precipKindFor(conditionText);
+  script.push({
+    clip: getPrecipProbClip(precipPct, narrator, kind),
+    fallbackText: `${precipPct} percent chance of ${precipKindNoun(kind)}.`
+  });
 }
 
 // ───────────────────────── High/Low temp clips (AJ) ─────────────────────────
