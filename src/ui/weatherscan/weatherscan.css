@@ -1878,3 +1878,43 @@ body[data-theme="wsjr"] .ws-cc-icon,
 body[data-theme="wsjr"] .ws-hero-icon {
   display: none;
 }
+
+/* ── Startup splash ───────────────────────────────────────────────────────
+   The TWC mark under the opening mnemonic. Fades out as the first scene
+   comes up rather than cutting, which is what the units did.
+
+   Sits above the frame but below the modals: first-run setup must still be
+   reachable if it is open, and it is the one thing that legitimately blocks
+   startup. */
+.ws-startup-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 50% 45%,
+              var(--ws-bg-mid, #0a1f4a) 0%,
+              var(--ws-bg-deep, #050d28) 70%);
+  opacity: 0;
+  transition: opacity 600ms ease-in-out;
+  pointer-events: none;
+}
+.ws-startup-splash[data-visible="true"] { opacity: 1; }
+
+.ws-startup-splash-mark {
+  max-width: min(46vw, 520px);
+  max-height: 40vh;
+  filter: drop-shadow(0 0 24px rgba(0, 0, 0, 0.6));
+  animation: ws-splash-in 900ms ease-out both;
+}
+
+@keyframes ws-splash-in {
+  from { opacity: 0; transform: scale(0.94); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* Respect the user's motion preference — the fade stays, the zoom goes. */
+@media (prefers-reduced-motion: reduce) {
+  .ws-startup-splash-mark { animation: none; }
+}

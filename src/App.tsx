@@ -26,6 +26,7 @@ import { AnnouncementRegion } from "./ui/semantic/AnnouncementRegion";
 import { ErrorBoundary } from "./ui/semantic/ErrorBoundary";
 import { HelpDialog } from "./ui/semantic/HelpDialog";
 import { FirstRunSetup } from "./ui/semantic/FirstRunSetup";
+import { StartupSplash } from "./ui/semantic/StartupSplash";
 import { SceneUnavailable } from "./ui/scenes/SceneUnavailable";
 import { ProductUnavailable } from "./ui/scenes/ProductUnavailable";
 import { getDevice, productAvailability, absentNote, resolveNarrator, type ProductId } from "./devices";
@@ -894,6 +895,12 @@ export default function App() {
           </ErrorBoundary>
         )}
       </WeatherscanFrame>
+      {/* The mnemonic gets a picture. Shown from audio unlock until the
+          signature finishes, then fades as the first scene comes up.
+          Deliberately not gated on data: the scheduler prepares Current
+          Conditions while this plays, so it costs nothing in time to first
+          forecast. */}
+      <StartupSplash visible={audioStarted && !mnemonicDone && !needsSetup} themeId={activeThemeId} />
       <SettingsPanel
         store={services.settings}
         open={settingsOpen}
