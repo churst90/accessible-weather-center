@@ -232,8 +232,10 @@ test("both the old and new heat product names parse", () => {
 });
 
 test("the spoken fallback uses the right article", () => {
-  const clips = getHeadlineClips("Extreme Heat Warning", "allan-jackson");
-  assert.ok(clips[0].text.startsWith("An "), `got "${clips[0].text}"`);
+  // Ice Storm Warning rather than a heat product: the heat codes take the
+  // bare-event path, because their "A" recording is the "and ..." take.
+  const ice = getHeadlineClips("Ice Storm Warning", "allan-jackson");
+  assert.ok(ice[0].text.startsWith("An "), `got "${ice[0].text}"`);
   const winter = getHeadlineClips("Winter Storm Warning", "allan-jackson");
   assert.ok(winter[0].text.startsWith("A "), `got "${winter[0].text}"`);
 });

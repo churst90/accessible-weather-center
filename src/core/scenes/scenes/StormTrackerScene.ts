@@ -5,7 +5,18 @@ import type { TrackedStorm } from "../../radar/StormTracker";
 
 export interface StormTrackerData {
   place: Place;
+  /** The storm the scene leads with — soonest to arrive, else the closest. */
   storm: TrackedStorm | null;
+  /**
+   * Every tracked storm, in the order the scene presents them: the same
+   * priority that picks `storm` for the headline, applied to the whole set.
+   *
+   * The scene used to keep only the nearest, so arrow keys had nothing to
+   * walk but that one storm's seven measurement rows — pressing Down on a
+   * screen called "Storm Tracker" read "Radius", "Peak Rate", "ETA" instead
+   * of the storms being tracked.
+   */
+  storms: TrackedStorm[];
   totalStorms: number;
   summary: string;
 }
@@ -21,21 +32,17 @@ export class StormTrackerScene implements Scene<StormTrackerData> {
     const snapshot = this.scanner.getSnapshot();
     const storms = snapshot.storms;
 
-    // Pick the closest storm, or if multiple have ETAs, prefer the one arriving soonest
-    let nearest: TrackedStorm | null = null;
-    if (storms.length > 0) {
-      nearest = storms.reduce((best, s) => {
-        // Prefer storm with lowest ETA if one is approaching
-        if (s.etaMinutes != null && (best.etaMinutes == null || s.etaMinutes < best.etaMinutes)) {
-          return s;
-        }
-        // Otherwise pick the closest
-        if (best.etaMinutes == null && s.distanceFromHomeMi < best.distanceFromHomeMi) {
-          return s;
-        }
-        return best;
-      });
-    }
+    // Order the whole set once, by the priority the headline already used:
+    // an approaching storm outranks a merely close one, and among approaching
+    // storms the soonest wins. Sorting rather than reducing means the list the
+    // user arrows through and the storm the scene leads with cannot disagree.
+    const ordered = [...storms].sort((a, b) => {
+      if (a.etaMinutes != null && b.etaMinutes != null) return a.etaMinutes - b.etaMinutes;
+      if (a.etaMinutes != null) return -1;
+      if (b.etaMinutes != null) return 1;
+      return a.distanceFromHomeMi - b.distanceFromHomeMi;
+    });
+    const nearest: TrackedStorm | null = ordered[0] ?? null;
 
     const summary = nearest
       ? `${storms.length} storm${storms.length === 1 ? "" : "s"} detected. Nearest: ${describeStorm(nearest, ctx.place.coord)}`
@@ -44,6 +51,7 @@ export class StormTrackerScene implements Scene<StormTrackerData> {
     const data: StormTrackerData = {
       place: ctx.place,
       storm: nearest,
+      storms: ordered,
       totalStorms: storms.length,
       summary
     };

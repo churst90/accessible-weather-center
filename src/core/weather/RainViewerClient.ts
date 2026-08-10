@@ -21,10 +21,22 @@ export class RainViewerClient {
 
   /**
    * Build a tile URL for a specific frame at a given zoom/x/y.
-   * Color scheme 4 is the original NWS-ish palette; size 256, smooth=1.
+   *
+   * `2` is "Universal Blue", which is what the server returns no matter what
+   * is asked for — tiles for schemes 0-8 are byte-for-byte identical — so the
+   * request now names the scheme the decoder actually implements instead of
+   * asking for the NWS ramp and silently receiving a different one.
+   *
+   * `0_0` = smooth off, snow off, and both matter to Palette.decodePixel:
+   * smoothing blends adjacent palette entries into colours that are in no
+   * table, and the snow ramp shares 49 colours with the rain ramp at
+   * different dBZ values. Off, every pixel is an exact, unambiguous entry.
+   *
+   * Zoom above 7 is not supported by the tile server: it returns a "Zoom
+   * Level Not Supported" placeholder image rather than an HTTP error.
    */
   buildTileUrl(frame: RainViewerFrame, host: string, z: number, x: number, y: number): string {
-    return `${host}${frame.path}/256/${z}/${x}/${y}/4/1_1.png`;
+    return `${host}${frame.path}/256/${z}/${x}/${y}/2/0_0.png`;
   }
 }
 

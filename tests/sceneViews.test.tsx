@@ -30,6 +30,15 @@ const STORM: TrackedStorm = {
   isNew: false, intensifiedBands: 0,
 } as unknown as TrackedStorm;
 
+/** Three storms, ordered as the scene orders them: soonest ETA first. */
+const STORMS: TrackedStorm[] = [
+  STORM,
+  { ...STORM, id: "track_2", band: "moderate", distanceFromHomeMi: 41.2,
+    bearingFromHomeDeg: 180, etaMinutes: 77 } as unknown as TrackedStorm,
+  { ...STORM, id: "track_3", band: "light", distanceFromHomeMi: 55.9,
+    bearingFromHomeDeg: 45, movementMph: 0, etaMinutes: null } as unknown as TrackedStorm,
+];
+
 function withAnnouncer(node: React.ReactElement, q: AnnouncementQueue) {
   return <AnnouncerContext.Provider value={q}>{node}</AnnouncerContext.Provider>;
 }
@@ -49,7 +58,7 @@ test("StormTrackerView survives storms appearing under it", () => {
   assert.match(view.text(), /No storms detected/);
 
   view.rerender(withAnnouncer(
-    <StormTrackerView data={{ place: PLACE, storm: STORM, totalStorms: 4, summary: "4 storms detected." }} />, q));
+    <StormTrackerView data={{ place: PLACE, storm: STORM, storms: STORMS, totalStorms: 4, summary: "4 storms detected." }} />, q));
   assert.match(view.text(), /4 storms detected/);
   assert.match(view.text(), /28\.5 miles/, "the storm's own readings should render");
 
@@ -114,28 +123,40 @@ test("arrowing a scene speaks the item on the interrupting navigation channel", 
   // answered by silence, which is indistinguishable from a dropped key.
   const q = new AnnouncementQueue();
   const view = mount(withAnnouncer(
-    <StormTrackerView data={{ place: PLACE, storm: STORM, totalStorms: 1, summary: "1 storm." }} />, q));
+    <StormTrackerView data={{
+      place: PLACE, storm: STORM, storms: STORMS, totalStorms: STORMS.length,
+      summary: `${STORMS.length} storms detected.`,
+    }} />, q));
 
   pressKey("ArrowDown");
   const first = q.getState();
   assert.equal(first.polite, null, "navigation must not land on the queued polite channel");
   assert.ok(first.navigation, "the first arrow press must speak");
-  assert.match(first.navigation!.text, /Intensity/);
-  assert.match(first.navigation!.text, /1 of 7/, "position belongs in the readout");
+  // Arrows walk the storms, not one storm's measurement rows: a screen called
+  // Storm Tracker that answers Down with "Intensity" has told the user about
+  // a parameter of something they were never offered a choice of.
+  assert.match(first.navigation!.text, /miles/, "the readout should describe a storm");
+  assert.doesNotMatch(first.navigation!.text, /^Intensity/);
+  assert.match(first.navigation!.text, /1 of 3/, "position belongs in the readout");
 
   pressKey("ArrowDown");
-  assert.match(q.getState().navigation!.text, /2 of 7/);
+  assert.match(q.getState().navigation!.text, /2 of 3/);
 
-  // Clamp at the top: Home from row 2 lands on row 1 and must still speak.
+  // Clamp at the top: Home from storm 2 lands on storm 1 and must still speak.
   pressKey("Home");
   const atTop = q.getState().navigation!;
-  assert.match(atTop.text, /1 of 7/);
+  assert.match(atTop.text, /1 of 3/);
 
   // Pressing Up at the boundary does not move — and must still answer.
   pressKey("ArrowUp");
   const again = q.getState().navigation!;
-  assert.match(again.text, /1 of 7/);
+  assert.match(again.text, /1 of 3/);
   assert.notEqual(again.id, atTop.id, "a boundary press must still produce a fresh announcement");
+
+  // The position must be announced exactly once. The view supplies the storm
+  // sentence and useArrowList appends "N of M"; having both do it read
+  // "...ETA 41 minutes. 1 of 1 1 of 1."
+  assert.equal((again.text.match(/1 of 3/g) ?? []).length, 1, "position announced twice");
   view.unmount();
 });
 
@@ -153,4 +174,82 @@ test("a scene's arrow keys go quiet once it is unmounted", () => {
   q.cancel();
   pressKey("ArrowDown");
   assert.equal(q.getState().navigation, null, "an unmounted scene must not still be listening");
+});
+
+test("arrowing the storm tracker changes storms, not measurement rows", () => {
+  // Reported from use: "arrowing through the storm tracker doesn't work —
+  // instead of a list of the storms to arrow through it reads one parameter
+  // per line, radius, speed, etc."
+  //
+  // The scene kept only the nearest storm and threw the rest away, so the
+  // only list the view had to offer arrow keys was that one storm's seven
+  // measurement rows.
+  const q = new AnnouncementQueue();
+  const view = mount(withAnnouncer(
+    <StormTrackerView data={{
+      place: PLACE, storm: STORM, storms: STORMS, totalStorms: 3,
+      summary: "3 storms detected.",
+    }} />, q));
+
+  // Every storm is listed, not just the nearest.
+  assert.match(view.text(), /41 mi/, "the second storm should be on screen");
+  assert.match(view.text(), /56 mi/, "the third storm should be on screen");
+
+  // Walking speaks storms.
+  pressKey("ArrowDown");
+  const one = q.getState().navigation!.text;
+  assert.match(one, /29 miles northwest/, "first storm");
+  assert.match(one, /1 of 3/);
+
+  pressKey("ArrowDown");
+  const two = q.getState().navigation!.text;
+  assert.match(two, /41 miles south/, "second storm");
+  assert.match(two, /2 of 3/);
+
+  // ...and the detail table follows the selection rather than staying pinned
+  // to the storm the scene led with.
+  assert.match(view.text(), /41\.2 miles/, "table should show the selected storm");
+  assert.match(view.text(), /selected storm, 2 of 3/, "the caption should track the selection");
+  view.unmount();
+});
+
+test("a lone storm still shows its measurements", () => {
+  // With one storm there is no list to walk, and the seven rows are the
+  // useful content — the original behaviour, kept.
+  const q = new AnnouncementQueue();
+  const view = mount(withAnnouncer(
+    <StormTrackerView data={{
+      place: PLACE, storm: STORM, storms: [STORM], totalStorms: 1, summary: "1 storm detected.",
+    }} />, q));
+  assert.match(view.text(), /Intensity/);
+  assert.match(view.text(), /Peak Rate/);
+  assert.match(view.text(), /One storm on radar/);
+  view.unmount();
+});
+
+test("Enter on a storm reads its full measurements", () => {
+  // Reported from use: "i can't press enter on them to hear details about
+  // them." useArrowList has an onActivate hook for exactly this and the view
+  // never passed one, so the key was swallowed.
+  const q = new AnnouncementQueue();
+  const view = mount(withAnnouncer(
+    <StormTrackerView data={{
+      place: PLACE, storm: STORM, storms: STORMS, totalStorms: 3,
+      summary: "3 storms detected.",
+    }} />, q));
+
+  pressKey("ArrowDown");
+  pressKey("ArrowDown");        // land on storm 2
+  pressKey("Enter");
+
+  // Details go to the assertive channel: the user asked for them, so they
+  // must not sit behind whatever the scene is narrating.
+  const said = q.getState().assertive;
+  assert.ok(said, "Enter must announce something");
+  assert.match(said!.text, /Storm 2 of 3/);
+  assert.match(said!.text, /Peak Rate/, "the full measurement set, not the one-line summary");
+  assert.match(said!.text, /Radius/);
+  assert.match(said!.text, /ETA/);
+  assert.match(said!.text, /41\.2 miles/, "the SELECTED storm's readings");
+  view.unmount();
 });

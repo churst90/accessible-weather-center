@@ -205,107 +205,112 @@ const AJ_HL_BASE = `${AJ_VOCALLOCAL_BASE}`;
 // SLS = Severe Local Storms
 // ZFP = Zone Forecast Product
 
-const AJ_HEADLINE_EVENTS: AjHeadlineEntry[] = [
-  // ── NPW: Non-Precipitation Weather ──
-  { code: "NPW005", text: "Wind Chill Warning",                     confidence: "likely" },
-  { code: "NPW006", text: "Wind Chill Advisory",                    confidence: "likely" },
-  { code: "NPW013", text: "Excessive Heat Warning",                 confidence: "likely" },
-  { code: "NPW014", text: "Excessive Heat Watch",                   confidence: "likely" },
-  { code: "NPW015", text: "Heat Advisory",                          confidence: "likely" },
-  { code: "NPW020", text: "Red Flag Warning",                       confidence: "likely" },
-  { code: "NPW021", text: "Fire Weather Watch",                     confidence: "likely" },
-  { code: "NPW024", text: "Dense Fog Advisory",                     confidence: "likely" },
-  { code: "NPW027", text: "Freeze Warning",                         confidence: "likely" },
-  { code: "NPW030", text: "Frost Advisory",                         confidence: "likely" },
-  { code: "NPW035", text: "High Wind Warning",                      confidence: "likely" },
-  { code: "NPW036", text: "High Wind Watch",                        confidence: "likely" },
-  { code: "NPW042", text: "Wind Advisory",                          confidence: "likely" },
-  { code: "NPW043", text: "Lake Wind Advisory",                     confidence: "likely" },
-  { code: "NPW046", text: "Dense Smoke Advisory",                   confidence: "likely" },
-  { code: "NPW049", text: "Blowing Dust Advisory",                  confidence: "likely" },
-  { code: "NPW052", text: "Dust Storm Warning",                     confidence: "likely" },
-  { code: "NPW055", text: "Hard Freeze Warning",                    confidence: "likely" },
-  { code: "NPW064", text: "Extreme Cold Warning",                   confidence: "likely" },
-  { code: "NPW067", text: "Extreme Cold Watch",                     confidence: "likely" },
-  { code: "NPW070", text: "Freeze Watch",                           confidence: "likely" },
-  { code: "NPW073", text: "Hard Freeze Watch",                      confidence: "likely" },
-  { code: "NPW076", text: "Air Stagnation Advisory",                confidence: "likely" },
-  { code: "NPW079", text: "Ashfall Advisory",                       confidence: "likely" },
-  { code: "NPW082", text: "Freezing Fog Advisory",                  confidence: "likely" },
-  { code: "NPW085", text: "Low Water Advisory",                     confidence: "likely" },
-  { code: "NPW088", text: "Brisk Wind Advisory",                    confidence: "guess" },
-  { code: "NPW091", text: "Special Weather Statement",              confidence: "guess" },
-  { code: "NPW500", text: "Weather Advisory",                       confidence: "guess" },
-  { code: "NPW520", text: "Weather Warning",                        confidence: "guess" },
+/**
+ * Allan Jackson event-name recordings, transcribed from the audio.
+ *
+ * This table was previously written from the code numbering alone and every
+ * one of its 31 entries named the wrong product — NPW013 was labelled
+ * "Excessive Heat Warning" while the recording says "high wind watch". A
+ * heat warning therefore announced itself as a high wind watch. The labels
+ * below come from the transcriptions in clipReferenceTable.json, which are
+ * derived from the recordings themselves, and headlineTranscript.test.ts
+ * fails if the two ever drift apart again.
+ */
+export const AJ_HEADLINE_EVENTS: AjHeadlineEntry[] = [
+  // ── NPW: non-precipitation watches, warnings and advisories ──
+  { code: "NPW005",  text: "Dense Fog Advisory",           confidence: "likely" },
+  { code: "NPW006",  text: "Fog Advisory",                 confidence: "likely" },
+  { code: "NPW013",  text: "High Wind Watch",              confidence: "likely" },
+  { code: "NPW014",  text: "High Wind Warning",            confidence: "likely" },
+  { code: "NPW015",  text: "Wind Advisory",                confidence: "likely" },
+  { code: "NPW020",  text: "Freeze Warning",               confidence: "likely" },
+  { code: "NPW021",  text: "Frost Warning",                confidence: "likely" },
+  { code: "NPW024",  text: "Freeze Advisory",              confidence: "likely" },
+  { code: "NPW027",  text: "Frost Advisory",               confidence: "likely" },
+  { code: "NPW030",  text: "Wind Chill Advisory",          confidence: "likely" },
+  { code: "NPW035",  text: "Excessive Heat Warning",       confidence: "likely" },
+  { code: "NPW036",  text: "Heat Advisory",                confidence: "likely" },
+  { code: "NPW042",  text: "Dense Fog Warning",            confidence: "likely" },
+  { code: "NPW043",  text: "Fog Warning",                  confidence: "likely" },
+  { code: "NPW046",  text: "Excessive Cold Warning",       confidence: "likely" },
+  { code: "NPW049",  text: "Excessive Cold Watch",         confidence: "likely" },
+  { code: "NPW052",  text: "Excessive Heat Watch",         confidence: "likely" },
+  { code: "NPW055",  text: "Freeze Watch",                 confidence: "likely" },
+  { code: "NPW064",  text: "Hurricane Wind Warning",       confidence: "likely" },
+  { code: "NPW067",  text: "Tropical Storm Wind Warning",  confidence: "likely" },
+  { code: "NPW070",  text: "Dust Storm Warning",           confidence: "likely" },
+  { code: "NPW073",  text: "Air Stagnation Advisory",      confidence: "likely" },
+  { code: "NPW076",  text: "Ashfall Advisory",             confidence: "likely" },
+  { code: "NPW079",  text: "Blowing Dust Advisory",        confidence: "likely" },
+  { code: "NPW082",  text: "Blowing Snow Advisory",        confidence: "likely" },
+  { code: "NPW085",  text: "Dense Smoke Advisory",         confidence: "likely" },
+  { code: "NPW088",  text: "Freezing Fog Advisory",        confidence: "likely" },
+  { code: "NPW091",  text: "Lake Wind Advisory",           confidence: "likely" },
+  { code: "NPW500",  text: "Air Pollution Watch",          confidence: "likely" },
+  { code: "NPW510A", text: "Ozone",                        confidence: "likely" },
+  { code: "NPW510B", text: "Air Quality",                  confidence: "likely" },
+  { code: "NPW510C", text: "Smog",                         confidence: "likely" },
+  { code: "NPW520",  text: "Air Pollution Warning",        confidence: "likely" },
+  { code: "NPW530",  text: "Avalanche",                    confidence: "likely" },
 
-  // ── WSW: Winter Storm ──
-  { code: "WSW005", text: "Winter Storm Warning",                   confidence: "likely" },
-  { code: "WSW006", text: "Winter Storm Watch",                     confidence: "likely" },
-  { code: "WSW007", text: "Winter Weather Advisory",                confidence: "likely" },
-  { code: "WSW018", text: "Blizzard Warning",                       confidence: "likely" },
-  { code: "WSW019", text: "Blizzard Watch",                         confidence: "likely" },
-  { code: "WSW020", text: "Ice Storm Warning",                      confidence: "likely" },
-  { code: "WSW021", text: "Ice Storm Watch",                        confidence: "guess" },
-  { code: "WSW022", text: "Lake Effect Snow Warning",               confidence: "likely" },
-  { code: "WSW025", text: "Lake Effect Snow Watch",                 confidence: "likely" },
-  { code: "WSW028", text: "Lake Effect Snow Advisory",              confidence: "likely" },
-  { code: "WSW031", text: "Lake Effect Snow and Blowing Snow Advisory", confidence: "likely" },
-  { code: "WSW036", text: "Wind Chill Warning",                     confidence: "likely" },
-  { code: "WSW037", text: "Wind Chill Watch",                       confidence: "likely" },
-  { code: "WSW040", text: "Avalanche Warning",                      confidence: "likely" },
-  { code: "WSW043", text: "Avalanche Watch",                        confidence: "likely" },
-  { code: "WSW047", text: "Winter Weather Advisory",                confidence: "guess" },
-  { code: "WSW050", text: "Freezing Rain Advisory",                 confidence: "likely" },
-  { code: "WSW053", text: "Snow Advisory",                          confidence: "guess" },
-  { code: "WSW056", text: "Blowing Snow Advisory",                  confidence: "guess" },
-  { code: "WSW059", text: "Sleet Advisory",                         confidence: "guess" },
-  { code: "WSW062", text: "Heavy Snow Warning",                     confidence: "guess" },
-  { code: "WSW065", text: "Snow Squall Warning",                    confidence: "guess" },
-  { code: "WSW068", text: "Lake Effect Snow and Blowing Snow Advisory", confidence: "guess" },
-  { code: "WSW071", text: "Freezing Spray Advisory",                confidence: "guess" },
-  { code: "WSW500", text: "Winter Weather Warning",                 confidence: "guess" },
-  { code: "WSW510", text: "Winter Weather Watch",                   confidence: "guess" },
+  // ── WSW: winter storm watches and warnings ──
+  { code: "WSW005", text: "Winter Storm Warning",            confidence: "likely" },
+  { code: "WSW006", text: "Winter Storm Watch",              confidence: "likely" },
+  { code: "WSW007", text: "Winter Weather Message",          confidence: "likely" },
+  { code: "WSW018", text: "Winter Weather Advisory",         confidence: "likely" },
+  { code: "WSW019", text: "Snow and Blowing Snow Advisory",  confidence: "likely" },
+  { code: "WSW020", text: "Snow Advisory",                   confidence: "likely" },
+  { code: "WSW021", text: "Heavy Snow Warning",              confidence: "likely" },
+  { code: "WSW022", text: "Blizzard Warning",                confidence: "likely" },
+  { code: "WSW025", text: "Ice Storm Warning",               confidence: "likely" },
+  { code: "WSW028", text: "Lake Snow Warning",               confidence: "likely" },
+  { code: "WSW031", text: "Lake Snow Advisory",              confidence: "likely" },
+  { code: "WSW036", text: "Freeze Warning",                  confidence: "likely" },
+  { code: "WSW037", text: "Frost Warning",                   confidence: "likely" },
+  { code: "WSW040", text: "Freeze Advisory",                 confidence: "likely" },
+  { code: "WSW043", text: "Frost Advisory",                  confidence: "likely" },
+  { code: "WSW047", text: "Lake Snow Watch",                 confidence: "likely" },
+  { code: "WSW050", text: "Blizzard Watch",                  confidence: "likely" },
+  { code: "WSW053", text: "Heavy Sleet Warning",             confidence: "likely" },
+  { code: "WSW056", text: "Freezing Rain Advisory",          confidence: "likely" },
+  { code: "WSW059", text: "Sleet Advisory",                  confidence: "likely" },
+  { code: "WSW062", text: "Blowing Snow Advisory",           confidence: "likely" },
+  { code: "WSW065", text: "Wind Chill Warning",              confidence: "likely" },
+  { code: "WSW068", text: "Wind Chill Watch",                confidence: "likely" },
+  { code: "WSW071", text: "Wind Chill Advisory",             confidence: "likely" },
+  { code: "WSW500", text: "Lake Effect Snow Advisory",       confidence: "likely" },
+  { code: "WSW510", text: "Lake Effect Snow Warning",        confidence: "likely" },
 
-  // ── CFW: Coastal Flood ──
-  { code: "CFW005", text: "Coastal Flood Warning",                  confidence: "likely" },
-  { code: "CFW006", text: "Coastal Flood Watch",                    confidence: "likely" },
+  // ── ZFP: tropical systems ──
+  { code: "ZFP005", text: "Tropical Storm Warning",        confidence: "likely" },
+  { code: "ZFP010", text: "Tropical Storm Watch",          confidence: "likely" },
+  { code: "ZFP015", text: "Hurricane Force Wind Warning",  confidence: "likely" },
+  { code: "ZFP020", text: "Hurricane Warning",             confidence: "likely" },
+  { code: "ZFP025", text: "Hurricane Watch",               confidence: "likely" },
 
-  // ── CWF: Coastal Waters ──
-  { code: "CWF046", text: "Gale Warning",                           confidence: "guess" },
-  { code: "CWF500", text: "Small Craft Advisory",                   confidence: "guess" },
-  { code: "CWF520", text: "Hazardous Seas Warning",                 confidence: "guess" },
+  // ── CFW: coastal flood ──
+  { code: "CFW005", text: "Coastal Flood Warning",  confidence: "likely" },
+  { code: "CFW006", text: "Coastal Flood Watch",    confidence: "likely" },
 
-  // ── FFS/FLS/FLW: Flood products ──
+  // ── CWF: surf and rip currents ──
+  { code: "CWF046",  text: "Heavy Surf Advisory",  confidence: "likely" },
+  { code: "CWF500",  text: "High Surf Advisory",   confidence: "likely" },
+  { code: "CWF510A", text: "Rip Currents",         confidence: "likely" },
+  { code: "CWF510B", text: "Rip Current",          confidence: "likely" },
+  { code: "CWF520",  text: "High Surf Warning",    confidence: "likely" },
+
+  // ── FFS / FLS / FLW / LSH: flooding ──
   { code: "FFS007", text: "Flash Flood Warning",                    confidence: "likely" },
   { code: "FFS008", text: "Flash Flood Watch",                      confidence: "likely" },
-  { code: "FFS009", text: "Flash Flood Statement",                  confidence: "likely" },
-  { code: "FLS007", text: "Flood Warning",                          confidence: "likely" },
-  { code: "FLS008", text: "Flood Watch",                            confidence: "likely" },
-  { code: "FLW001", text: "Flood Warning",                          confidence: "likely" },
+  { code: "FFS009", text: "Flood Watch",                            confidence: "likely" },
+  { code: "FLS007", text: "Urban and Small Stream Flood Advisory",  confidence: "likely" },
+  { code: "FLS008", text: "Flood Advisory",                         confidence: "likely" },
+  { code: "FLW001", text: "River Flood Warning",                    confidence: "likely" },
+  { code: "LSH005", text: "Flood Warning",                          confidence: "likely" },
 
-  // ── LSH: Lakeshore ──
-  { code: "LSH005", text: "Lakeshore Flood Warning",                confidence: "likely" },
-
-  // ── SLS: Severe Local Storms ──
-  { code: "SLS001", text: "Severe Thunderstorm Warning",            confidence: "likely" },
-  { code: "SLS002", text: "Tornado Warning",                        confidence: "likely" },
-
-  // ── ZFP: Zone Forecast Product headlines ──
-  { code: "ZFP005", text: "Today's Forecast",                       confidence: "guess" },
-  { code: "ZFP010", text: "Tonight's Forecast",                     confidence: "guess" },
-  { code: "ZFP015", text: "Tomorrow's Forecast",                    confidence: "guess" },
-  { code: "ZFP020", text: "Extended Forecast",                      confidence: "guess" },
-  { code: "ZFP025", text: "Weekend Forecast",                       confidence: "guess" },
-
-  // ── CWF special variants ──
-  { code: "CWF510A", text: "Marine Weather Warning",                confidence: "guess" },
-  { code: "CWF510B", text: "Marine Weather Advisory",               confidence: "guess" },
-
-  // ── NPW special variants ──
-  { code: "NPW510A", text: "Weather Warning",                       confidence: "guess" },
-  { code: "NPW510B", text: "Weather Watch",                         confidence: "guess" },
-  { code: "NPW510C", text: "Weather Advisory",                      confidence: "guess" },
-  { code: "NPW530",  text: "Special Weather Statement",             confidence: "guess" },
+  // ── SLS: severe local storms ──
+  { code: "SLS001", text: "Tornado Watch",              confidence: "likely" },
+  { code: "SLS002", text: "Severe Thunderstorm Watch",  confidence: "likely" },
 ];
 
 const AJ_HEADLINE_MAP = new Map<string, AjHeadlineEntry>();
@@ -325,44 +330,54 @@ interface ActionEntry {
   confidence: ClipConfidence;
 }
 
-const AJ_HEADLINE_ACTIONS: ActionEntry[] = [
-  // VTEC-style action/status phrases
-  { code: "A",  text: "is in effect",                               confidence: "likely" },
-  { code: "B",  text: "has been issued",                            confidence: "likely" },
-  { code: "C",  text: "continues",                                  confidence: "likely" },
-  { code: "D",  text: "has been cancelled",                         confidence: "likely" },
-  { code: "E",  text: "has expired",                                confidence: "likely" },
-  { code: "F",  text: "is in effect for",                           confidence: "guess" },
-  { code: "G",  text: "remains in effect",                          confidence: "guess" },
-  { code: "H",  text: "has been extended",                          confidence: "guess" },
-  { code: "I",  text: "has been issued for",                        confidence: "guess" },
-  { code: "J",  text: "is in effect through",                       confidence: "guess" },
-  { code: "K",  text: "has been upgraded to",                       confidence: "guess" },
-  { code: "L",  text: "is no longer in effect",                     confidence: "guess" },
-  { code: "N",  text: "has been issued by the National Weather Service", confidence: "guess" },
-  { code: "O",  text: "is now in effect",                           confidence: "guess" },
-  { code: "P",  text: "has been posted",                            confidence: "guess" },
-  { code: "Q",  text: "will expire",                                confidence: "guess" },
-  { code: "R",  text: "has been replaced",                          confidence: "guess" },
-  { code: "S",  text: "is in effect until",                         confidence: "guess" },
-  { code: "T",  text: "is in effect for your area",                 confidence: "guess" },
-  { code: "U",  text: "has been updated",                           confidence: "guess" },
-  { code: "X",  text: "has been downgraded",                        confidence: "guess" },
-  // Compound action variants
-  { code: "CF", text: "continues for",                              confidence: "guess" },
-  { code: "CT", text: "continues through",                          confidence: "guess" },
-  { code: "DF", text: "has been discontinued for",                  confidence: "guess" },
-  { code: "DT", text: "has been discontinued through",              confidence: "guess" },
-  { code: "RB", text: "has been replaced by",                       confidence: "guess" },
-  { code: "RW", text: "remains in effect with",                     confidence: "guess" },
-  { code: "UF", text: "has been updated for",                       confidence: "guess" },
-  { code: "UT", text: "has been updated through",                   confidence: "guess" },
-  // Named special types
-  { code: "Multi",       text: "Multiple alerts are",               confidence: "guess" },
-  { code: "AIR_QUALITY", text: "Air Quality Alert",                 confidence: "likely" },
-  { code: "AVALANCHE",   text: "Avalanche Warning",                 confidence: "likely" },
-  { code: "RIP_TIDE",    text: "Rip Current Statement",             confidence: "likely" },
+/**
+ * Allan Jackson action clips, transcribed from the audio.
+ *
+ * The previous table had "B" as "has been issued". It is "has ended" — so
+ * every alert announcement closed by saying the alert was over. The clip
+ * that actually says a warning has been issued is "I".
+ */
+export const AJ_HEADLINE_ACTIONS: ActionEntry[] = [
+  { code: "A",           text: "has been added",                                                  confidence: "likely" },
+  { code: "AIR_QUALITY", text: "A bulletin has been issued for our area due to the air quality",  confidence: "likely" },
+  { code: "AVALANCHE",   text: "There is a threat of an avalanche in some areas",                 confidence: "likely" },
+  { code: "B",           text: "has ended",                                                       confidence: "likely" },
+  { code: "C",           text: "Previously an effect has been cancelled",                         confidence: "likely" },
+  { code: "CF",          text: "has been changed from",                                           confidence: "likely" },
+  { code: "CT",          text: "has been changed to",                                             confidence: "likely" },
+  { code: "D",           text: "has been downgraded to",                                          confidence: "likely" },
+  { code: "DF",          text: "has been downgraded from",                                        confidence: "likely" },
+  { code: "DT",          text: "has been downgraded to",                                          confidence: "likely" },
+  { code: "E",           text: "previously in effect has expired",                                confidence: "likely" },
+  { code: "F",           text: "has finished",                                                    confidence: "likely" },
+  { code: "G",           text: "has been discontinued for our area",                              confidence: "likely" },
+  { code: "H",           text: "is in effect for our area",                                       confidence: "likely" },
+  { code: "I",           text: "has been issued for our area",                                    confidence: "likely" },
+  { code: "J",           text: "is expected",                                                     confidence: "likely" },
+  { code: "K",           text: "has been removed",                                                confidence: "likely" },
+  { code: "L",           text: "will likely be issued",                                           confidence: "likely" },
+  { code: "Multi",       text: "have been issued for our area by the National Weather Service",   confidence: "likely" },
+  { code: "N",           text: "may be needed for our area",                                      confidence: "likely" },
+  { code: "O",           text: "The National Weather Service has issued a weather bulletin",      confidence: "likely" },
+  { code: "P",           text: "may be issued for our area",                                      confidence: "likely" },
+  { code: "Q",           text: "may be required for our area",                                    confidence: "likely" },
+  { code: "R",           text: "remains in effect for our area",                                  confidence: "likely" },
+  { code: "RB",          text: "has been replaced by",                                            confidence: "likely" },
+  { code: "RIP_TIDE",    text: "there is a potential of rip currents at area beaches",            confidence: "likely" },
+  { code: "RW",          text: "has been replaced with",                                          confidence: "likely" },
+  { code: "S",           text: "in effect for our area will expire",                              confidence: "likely" },
+  { code: "T",           text: "continues for our area",                                          confidence: "likely" },
+  { code: "U",           text: "has been upgraded to",                                            confidence: "likely" },
+  { code: "UF",          text: "has been upgraded from",                                          confidence: "likely" },
+  { code: "UT",          text: "has been upgraded to",                                            confidence: "likely" },
+  { code: "X",           text: "has been issued for our area",                                    confidence: "likely" },
 ];
+
+/**
+ * The action clip for "a new alert exists". Named rather than inlined,
+ * because the letter is not guessable from the meaning: "B" is "has ended".
+ */
+const AJ_ACTION_ISSUED = "I";
 
 const AJ_ACTION_MAP = new Map<string, ActionEntry>();
 for (const e of AJ_HEADLINE_ACTIONS) AJ_ACTION_MAP.set(e.code, e);
@@ -550,83 +565,48 @@ export function parseEventToVtec(eventText: string): { phenomenon: string; signi
 // ────────────────────────────────────────────────────────────────────────────
 
 /**
- * Maps VTEC phenomenon+significance to the AJ AWIPS product code.
- * Some events appear in multiple products (e.g., Wind Chill Warning is in
- * both NPW005 and WSW036); we pick the primary one.
+ * VTEC code -> Allan Jackson clip code.
+ *
+ * Derived by joining on the product name rather than written out by hand.
+ * The hand-written version had Tornado Warning pointing at the Severe
+ * Thunderstorm Watch recording, Severe Thunderstorm Warning at the Tornado
+ * Watch, and every heat code off by several rungs; nothing in the build
+ * could notice, because a code that exists on disk resolves happily whatever
+ * it says. Deriving it means the mapping and the recordings cannot disagree.
+ *
+ * Anything with no matching recording is simply absent, and an absent
+ * mapping produces no clip — the alert is then carried entirely by the
+ * spoken fallback, which names it correctly. Silence beats a wrong name.
  */
-interface VtecToAjMapping {
-  phenomenon: string;
-  significance: string;
-  ajCode: string;
+const AJ_PRODUCT_ALIASES: Record<string, string> = {
+  // NWS renamed these for the 2025 season. Jackson recorded the older names,
+  // which are the period-correct ones for the hardware being emulated, so the
+  // modern product maps onto the older recording.
+  "extreme heat warning": "excessive heat warning",
+  "extreme heat watch":   "excessive heat watch",
+  "extreme cold warning": "excessive cold warning",
+  "extreme cold watch":   "excessive cold watch",
+};
+
+function normalizeProduct(name: string): string {
+  const n = name.toLowerCase().replace(/[^a-z ]/g, "").replace(/\s+/g, " ").trim();
+  return AJ_PRODUCT_ALIASES[n] ?? n;
 }
 
-const VTEC_TO_AJ: VtecToAjMapping[] = [
-  // Tornado / Severe
-  { phenomenon: "TO", significance: "W", ajCode: "SLS002" },
-  { phenomenon: "SV", significance: "W", ajCode: "SLS001" },
-
-  // Winter
-  { phenomenon: "WS", significance: "W", ajCode: "WSW005" },
-  { phenomenon: "WS", significance: "A", ajCode: "WSW006" },
-  { phenomenon: "WW", significance: "Y", ajCode: "WSW007" },
-  { phenomenon: "BZ", significance: "W", ajCode: "WSW018" },
-  { phenomenon: "BZ", significance: "A", ajCode: "WSW019" },
-  { phenomenon: "IS", significance: "W", ajCode: "WSW020" },
-  { phenomenon: "LE", significance: "W", ajCode: "WSW022" },
-  { phenomenon: "LE", significance: "A", ajCode: "WSW025" },
-  { phenomenon: "LE", significance: "Y", ajCode: "WSW028" },
-  { phenomenon: "LB", significance: "Y", ajCode: "WSW031" },
-  { phenomenon: "ZR", significance: "Y", ajCode: "WSW050" },
-  { phenomenon: "TAV", significance: "W", ajCode: "WSW040" },
-  { phenomenon: "TAV", significance: "A", ajCode: "WSW043" },
-
-  // Wind / Wind Chill
-  { phenomenon: "WC", significance: "W", ajCode: "NPW005" },
-  { phenomenon: "WC", significance: "Y", ajCode: "NPW006" },
-  { phenomenon: "WC", significance: "A", ajCode: "WSW037" },
-  { phenomenon: "HW", significance: "W", ajCode: "NPW035" },
-  { phenomenon: "HW", significance: "A", ajCode: "NPW036" },
-  { phenomenon: "WI", significance: "Y", ajCode: "NPW042" },
-  { phenomenon: "LW", significance: "Y", ajCode: "NPW043" },
-
-  // Heat / Cold
-  { phenomenon: "EH", significance: "W", ajCode: "NPW013" },
-  { phenomenon: "EH", significance: "A", ajCode: "NPW014" },
-  { phenomenon: "HT", significance: "Y", ajCode: "NPW015" },
-  { phenomenon: "EC", significance: "W", ajCode: "NPW064" },
-  { phenomenon: "EC", significance: "A", ajCode: "NPW067" },
-  { phenomenon: "FZ", significance: "W", ajCode: "NPW027" },
-  { phenomenon: "FZ", significance: "A", ajCode: "NPW070" },
-  { phenomenon: "HZ", significance: "W", ajCode: "NPW055" },
-  { phenomenon: "HZ", significance: "A", ajCode: "NPW073" },
-  { phenomenon: "FR", significance: "Y", ajCode: "NPW030" },
-
-  // Flood
-  { phenomenon: "FF", significance: "W", ajCode: "FFS007" },
-  { phenomenon: "FF", significance: "A", ajCode: "FFS008" },
-  { phenomenon: "FA", significance: "W", ajCode: "FLS007" },
-  { phenomenon: "FA", significance: "A", ajCode: "FLS008" },
-  { phenomenon: "CF", significance: "W", ajCode: "CFW005" },
-  { phenomenon: "CF", significance: "A", ajCode: "CFW006" },
-  { phenomenon: "LS", significance: "W", ajCode: "LSH005" },
-
-  // Fog / Smoke / Dust
-  { phenomenon: "FG", significance: "Y", ajCode: "NPW024" },
-  { phenomenon: "SM", significance: "Y", ajCode: "NPW046" },
-  { phenomenon: "DU", significance: "Y", ajCode: "NPW049" },
-  { phenomenon: "DS", significance: "W", ajCode: "NPW052" },
-  { phenomenon: "AS", significance: "Y", ajCode: "NPW076" },
-  { phenomenon: "AF", significance: "Y", ajCode: "NPW079" },
-  { phenomenon: "ZF", significance: "Y", ajCode: "NPW082" },
-  { phenomenon: "LO", significance: "Y", ajCode: "NPW085" },
-
-  // Fire
-  { phenomenon: "FW", significance: "W", ajCode: "NPW020" },
-  { phenomenon: "FW", significance: "A", ajCode: "NPW021" },
-];
-
 const VTEC_TO_AJ_MAP = new Map<string, string>();
-for (const m of VTEC_TO_AJ) VTEC_TO_AJ_MAP.set(`${m.phenomenon}_${m.significance}`, m.ajCode);
+{
+  const byProduct = new Map<string, string>();
+  // First code wins: the tables are sorted by code, so the lowest-numbered
+  // recording of a product is the plain one rather than a regional variant.
+  for (const e of AJ_HEADLINE_EVENTS) {
+    const key = normalizeProduct(e.text);
+    if (!byProduct.has(key)) byProduct.set(key, e.code);
+  }
+  for (const v of JC_VTEC_HEADLINES) {
+    const code = byProduct.get(normalizeProduct(v.text));
+    if (code) VTEC_TO_AJ_MAP.set(`${v.phenomenon}_${v.significance}`, code);
+  }
+}
 
 // ────────────────────────────────────────────────────────────────────────────
 //  Public headline composition API
@@ -666,6 +646,13 @@ export function getHeadlineClips(eventText: string, narratorId: NarratorId): Hea
  * For multiple alerts, uses Headline_And_Event for subsequent events:
  *   "A Winter Storm Warning" + "and a Blizzard Watch" + "has been issued"
  */
+/**
+ * Codes whose Headline_A_Event recording is the "and ..." take rather than
+ * the "a/an ..." one. Verified against the transcriptions; asserted in
+ * headlineTranscript.test.ts so the list cannot rot.
+ */
+const AJ_A_EVENT_IS_CONJUNCTION = new Set(["FLS007", "NPW035", "NPW073", "NPW076"]);
+
 /** "an" before a vowel sound, "a" otherwise. Every NWS event name here that
  *  starts with a vowel does so with an ordinary vowel sound (Excessive, Ice,
  *  Air, Urban, Extreme), so the letter test is sufficient. */
@@ -682,20 +669,24 @@ function getAjHeadlineClips(phenomenon: string, significance: string): HeadlineC
 
   const clips: HeadlineClip[] = [];
 
-  // "A [event]" variant. The recording says the right article; only the
-  // fallback text needed fixing, and that is the text the screen reader
-  // reads — "A Excessive Heat Warning", "A Ice Storm Warning".
+  // "A [event]" variant, except for the four codes whose A slot holds the
+  // "and ..." take instead of the article one — opening an alert with "and
+  // excessive heat warning" is a non-sentence. Those fall back to the bare
+  // event recording, which stands on its own before "has been issued".
+  const useBareEvent = AJ_A_EVENT_IS_CONJUNCTION.has(ajCode);
   clips.push({
-    src: `${AJ_HL_BASE}/Headline_A_Event/${ajCode}A.mp3`,
-    text: `${indefiniteArticle(entry.text)} ${entry.text}`,
+    src: useBareEvent
+      ? `${AJ_HL_BASE}/Headline_Event/${ajCode}.mp3`
+      : `${AJ_HL_BASE}/Headline_A_Event/${ajCode}A.mp3`,
+    text: useBareEvent ? entry.text : `${indefiniteArticle(entry.text)} ${entry.text}`,
     confidence: entry.confidence,
   });
 
-  // "has been issued" action
-  const actionEntry = AJ_ACTION_MAP.get("B");
+  // "has been issued for our area" — code I. NOT B, which says "has ended".
+  const actionEntry = AJ_ACTION_MAP.get(AJ_ACTION_ISSUED);
   if (actionEntry) {
     clips.push({
-      src: `${AJ_HL_BASE}/Headline_Action/B.mp3`,
+      src: `${AJ_HL_BASE}/Headline_Action/${AJ_ACTION_ISSUED}.mp3`,
       text: actionEntry.text,
       confidence: actionEntry.confidence,
     });
@@ -794,11 +785,11 @@ export function getMultiHeadlineClips(eventTexts: string[], narratorId: Narrator
       }
     }
 
-    // End with "has been issued"
-    const action = AJ_ACTION_MAP.get("B");
+    // End with "has been issued for our area" — code I, not B ("has ended").
+    const action = AJ_ACTION_MAP.get(AJ_ACTION_ISSUED);
     if (action && clips.length > 0) {
       clips.push({
-        src: `${AJ_HL_BASE}/Headline_Action/B.mp3`,
+        src: `${AJ_HL_BASE}/Headline_Action/${AJ_ACTION_ISSUED}.mp3`,
         text: action.text,
         confidence: action.confidence,
       });

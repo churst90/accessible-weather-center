@@ -66,8 +66,14 @@ export class MapTileCache {
     x: number,
     y: number
   ): string {
-    // Color scheme 4 (NWS palette), smooth=1, snow=1
-    return `${host}${path}/256/${z}/${x}/${y}/4/1_1.png`;
+    // Scheme 2 ("Universal Blue") — the only one the server actually serves;
+    // the value is ignored, so naming it honestly costs nothing. Smoothing
+    // stays ON here because these tiles are DRAWN, not decoded: blended edges
+    // look better on screen and nothing reads their pixels back. The sampler
+    // in RainViewerClient requests smooth=0 for exactly the opposite reason.
+    //
+    // Zoom above 7 gets a "Zoom Level Not Supported" placeholder image.
+    return `${host}${path}/256/${z}/${x}/${y}/2/1_1.png`;
   }
 
   private loadImage(url: string): Promise<HTMLImageElement> {
