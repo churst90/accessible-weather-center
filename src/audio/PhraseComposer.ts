@@ -1021,14 +1021,28 @@ export function guessCcshForecastCode(text: string | null, timeHint: TimeHint, i
     if (/rain.*ice/.test(t))                               return w ? 6513 : 6503;
     if (/freezing rain.*sleet/.test(t))                    return w ? 6610 : 6603;
     if (/wintry mix/.test(t))                              return w ? 6713 : 6703;
+    // Bare "freezing rain" / sleet, with none of the compounds above matching.
+    // The afternoon block catches these with 7603 ("an icy mix developing");
+    // morning has no equivalent code, so without a guard the generic /rain/
+    // three lines down swallowed them and announced "cloudy with morning
+    // rain" for an ice event.
+    //
+    // Note this must NOT return null — that exits the whole function and
+    // leaves the scene silent. It has to fall past the remaining rain and
+    // shower lines to the untimed section, which answers correctly with 1000
+    // ("freezing rain") or 1800 ("sleet"). Losing "morning" is the small
+    // price; understating an ice hazard as rain is not acceptable at all.
+    const icyNoTimeCode = /freez|sleet|\bicy?\b/.test(t);
     if (/snow.*shower/.test(t))                            return w ? 6813 : 6803;
     if (/light snow/.test(t))                              return w ? 6914 : 6904;
     if (/snow/.test(t))                                    return w ? 6913 : 6903;
-    if (/light rain/.test(t))                              return w ? 6314 : 6304;
-    if (/rain.*ending|periods.*rain/.test(t))              return w ? 6310 : 6300;
-    if (/rain/.test(t))                                    return w ? 6313 : 6303;
-    if (/shower.*ending|shower/.test(t))                   return w ? 6113 : 6103;
-    if (/drizzle/.test(t))                                 return w ? 6013 : 6003;
+    if (!icyNoTimeCode) {
+      if (/light rain/.test(t))                            return w ? 6314 : 6304;
+      if (/rain.*ending|periods.*rain/.test(t))            return w ? 6310 : 6300;
+      if (/rain/.test(t))                                  return w ? 6313 : 6303;
+      if (/shower.*ending|shower/.test(t))                 return w ? 6113 : 6103;
+      if (/drizzle/.test(t))                               return w ? 6013 : 6003;
+    }
   }
 
   // ── Time-of-day: afternoon/late/overnight (7xxx) ──
@@ -1161,7 +1175,18 @@ export function guessCcefForecastCode(text: string | null, timeHint: TimeHint, _
   // Specific compounds MUST come before their general fallbacks — /shower/
   // would swallow "snow showers" and /rain/ would swallow "rain and snow".
   // (The CCSH blocks below always had this ordering; these two didn't.)
-  if (timeHint === "morning" || /early|ending/.test(t)) {
+  // Freezing rain, sleet and ice are NOT rain, and must never fall through to
+  // a generic /rain/ below. There is no morning or afternoon variant of these
+  // in the CCEF set, so an icy forecast skips the time-of-day blocks entirely
+  // and is answered further down by 1000 ("with some freezing rain"), 1800
+  // ("with sleet") and friends. Losing "in the morning" is a small price;
+  // announcing "rain in the morning" for a freezing-rain forecast understates
+  // an ice hazard, which is the one direction it must not be wrong in.
+  //
+  // "wintry mix" keeps its morning code because 6703 genuinely says wintry.
+  const icy = /freez|sleet|\bicy?\b/.test(t) && !/wintry mix/.test(t);
+
+  if (!icy && (timeHint === "morning" || /early|ending/.test(t))) {
     if (/drizzle/.test(t))                                    return 6003;
     if (/rain.*snow/.test(t))                                 return 6403;
     if (/wintry mix/.test(t))                                 return 6703;
@@ -1174,7 +1199,7 @@ export function guessCcefForecastCode(text: string | null, timeHint: TimeHint, _
   }
 
   // ── Time-of-day: afternoon/evening (7xxx) ──
-  if (timeHint === "afternoon" || timeHint === "night" || /late|overnight|developing|afternoon/.test(t)) {
+  if (!icy && (timeHint === "afternoon" || timeHint === "night" || /late|overnight|developing|afternoon/.test(t))) {
     if (/rain.*snow/.test(t))                                 return 7403;
     if (/snow.*shower/.test(t))                               return 7803;
     if (/shower/.test(t) && !(/thunder/.test(t)))             return 7103;
@@ -1465,7 +1490,7 @@ function getWindClips(dirDeg: number | null, speedMph: number, narratorId: Narra
  * Pattern-matched against NWS detailedForecast text.
  * Only the first match is used (highest priority = most severe/specific).
  */
-const QUALIFIER_PATTERNS: Array<{ pattern: RegExp; code: number; text: string }> = [
+export const QUALIFIER_PATTERNS: Array<{ pattern: RegExp; code: number; text: string }> = [
   // Thunderstorm severity (highest priority)
   { pattern: /tornado/i,                                    code: 8060, text: "Storms could contain tornadoes" },
   { pattern: /large hail.*(strong|damaging) wind/i,         code: 8075, text: "Storms may produce large hail and strong winds" },
