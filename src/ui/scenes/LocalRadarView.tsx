@@ -7,6 +7,8 @@ import { useAnnouncer } from "../../a11y/AnnouncerContext";
 import { bandInfo } from "../../core/radar/IntensityLegend";
 import { WeatherIcon, chooseIcon } from "../weatherscan/WeatherIcon";
 import { RadarMapCanvas } from "./RadarMapCanvas";
+import { PrecipLegend } from "./PrecipLegend";
+import type { BaseMapStyle } from "../../core/radar/MapTileCache";
 
 /**
  * Storm Scanner view. Renders a TV-style radar map (decorative) alongside
@@ -20,11 +22,17 @@ import { RadarMapCanvas } from "./RadarMapCanvas";
 export function LocalRadarView({
   data,
   rainviewer,
-  alerts = []
+  alerts = [],
+  baseMap = "dark",
+  precipLegend = false
 }: {
   data: LocalRadarData;
   rainviewer: RainViewerClient;
   alerts?: WeatherAlert[];
+  /** The WeatherStar 4000 v2's 2005 radar redesign ran on a light map. */
+  baseMap?: BaseMapStyle;
+  /** ...and put a graded PRECIP ramp in the header. Same machine, same era. */
+  precipLegend?: boolean;
 }) {
   const announcer = useAnnouncer();
 
@@ -41,11 +49,16 @@ export function LocalRadarView({
 
   return (
     <section aria-label={`Local radar for ${data.place.name}`}>
+      {/* The 2005 WeatherStar 4000 v2 radar redesign: PRECIP ramp in the
+          header, and a light basemap instead of the dark navy one. Both are
+          that machine's alone — every other unit kept the dark map. */}
+      {precipLegend && <PrecipLegend />}
       <RadarMapCanvas
         center={data.place.coord}
         storms={data.storms}
         rainviewer={rainviewer}
         alerts={alerts}
+        baseMap={baseMap}
         className="ws-radar-map-scene"
       />
 

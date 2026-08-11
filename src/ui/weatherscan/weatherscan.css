@@ -2256,3 +2256,58 @@ body[data-theme="intellistar2"] .ws-frame.ws-windowed > .ws-ldl {
   font-stretch: condensed;
   font-weight: 700;
 }
+
+/* ============================================================
+   WeatherStar 4000 v2 — PRECIP legend
+   ------------------------------------------------------------
+   Colours measured from
+   docs/reference/ws4000/WS4000_Simulator_v2_-_Local_Radar.jpg,
+   averaged over each block's interior rather than sampled at a
+   point (the capture is a JPEG and the blocks are separated by
+   black borders that ring into single pixels).
+
+   Eight steps, not seven — the profile said seven and was
+   wrong. The fourth is near-black and that is genuine; see the
+   note in PrecipLegend.tsx.
+   ============================================================ */
+
+.ws4000-precip {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6vw;
+  margin-bottom: 12px;
+  font-family: var(--ws-font-display);
+  font-size: clamp(12px, 1.5vw, 20px);
+  color: var(--ws-led, #ffd24d);
+  text-shadow: 1px 1px 0 #000, -1px 1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000;
+}
+
+.ws4000-precip-title { font-weight: 800; letter-spacing: 0.08em; }
+.ws4000-precip-end { font-weight: 700; }
+
+.ws4000-precip-ramp {
+  display: inline-flex;
+  border: 2px solid #000;
+}
+
+.ws4000-precip-ramp i {
+  display: block;
+  width: clamp(14px, 2vw, 30px);
+  height: clamp(14px, 1.8vw, 28px);
+  border-right: 1px solid #000;
+}
+.ws4000-precip-ramp i:last-child { border-right: none; }
+
+.ws4000-precip-nd {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4vw;
+}
+
+.ws4000-precip-nd i {
+  display: block;
+  width: clamp(20px, 2.6vw, 40px);
+  height: clamp(14px, 1.8vw, 28px);
+  border: 2px solid #000;
+}

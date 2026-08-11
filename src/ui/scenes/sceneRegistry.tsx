@@ -81,7 +81,29 @@ const DEFAULT_VIEWS: Record<string, SceneRenderer> = {
 
 /** Per-theme structural overrides. Empty today — the v1.0 era renderers
  *  (WS3000 text pages, LOT8s frame, L-bar) register here. */
-const THEME_VIEWS: Partial<Record<ThemeId, Partial<Record<string, SceneRenderer>>>> = {};
+const THEME_VIEWS: Partial<Record<ThemeId, Partial<Record<string, SceneRenderer>>>> = {
+  "ws4000-v2": {
+    /**
+     * The 2005 radar redesign, and the first entry in this table.
+     *
+     * `WS4000_Simulator_v2_-_Local_Radar.jpg` shows a graded PRECIP ramp in a
+     * pink header over a light off-white basemap with red state borders —
+     * where every other machine's radar sat on dark navy. Same view, same
+     * data, same storm table; different chrome. That is exactly the split
+     * this table exists for, and it beats threading a themeId down into a
+     * view that has no other use for one.
+     */
+    radar: (c) => (
+      <LocalRadarView
+        data={c.data as LocalRadarData}
+        rainviewer={c.rainviewer}
+        alerts={c.alerts}
+        baseMap="light"
+        precipLegend
+      />
+    ),
+  },
+};
 
 export function resolveSceneView(themeId: ThemeId, sceneId: string): SceneRenderer | null {
   return THEME_VIEWS[themeId]?.[sceneId] ?? DEFAULT_VIEWS[sceneId] ?? null;

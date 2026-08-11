@@ -146,8 +146,8 @@ and audio prerequisite present. 6 fall short.
 
 - The footer's month-to-date precipitation stop is not rendered. "May Precipitation: 1.20 in" is one of the four confirmed strings, but nothing in the app knows that number — not the observation, not the almanac — and printing a plausible decimal would be inventing a measurement. Needs a precipitation feed.
 - The footer's wind and pressure stops are extrapolated from the v2 Current Conditions field set, not from a capture. Its dwell time (5s here) is a guess: the four captures are a minute apart.
-- Radar needs the pink/purple header, 7-step PRECIP legend with Incomplete Data swatch, and the light basemap with red state borders.
-- Current Conditions is missing the pressure-trend arrow and Ceiling field.
+- The radar basemap is CARTO positron, the closest available light tile set. The real one had pale-blue water, black coastlines and red state borders; positron is grey-on-white with no state emphasis.
+- The radar header keeps the standard frame chrome. The real v2 radar had a pink/magenta skewed header — the same parallelogram as the orange one, recoloured — and no footer bar, the map running full-bleed beneath it.
 
 ## WeatherStar XL
 

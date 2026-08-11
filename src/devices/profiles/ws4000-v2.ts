@@ -71,7 +71,12 @@ export const WS4000_V2: Device = {
     // is content the app cannot source and timing no capture pins down.
     "The footer's month-to-date precipitation stop is not rendered. \"May Precipitation: 1.20 in\" is one of the four confirmed strings, but nothing in the app knows that number — not the observation, not the almanac — and printing a plausible decimal would be inventing a measurement. Needs a precipitation feed.",
     "The footer's wind and pressure stops are extrapolated from the v2 Current Conditions field set, not from a capture. Its dwell time (5s here) is a guess: the four captures are a minute apart.",
-    "Radar needs the pink/purple header, 7-step PRECIP legend with Incomplete Data swatch, and the light basemap with red state borders.",
-    "Current Conditions is missing the pressure-trend arrow and Ceiling field."
+    // Was "7-step PRECIP legend". Measuring the capture says EIGHT: the
+    // fourth block is near-black (#071506) and holds that value averaged
+    // across its whole interior, so it is a real step and not a JPEG gap.
+    // The legend and the light basemap are now built; what is left is the map
+    // itself and the header shape.
+    "The radar basemap is CARTO positron, the closest available light tile set. The real one had pale-blue water, black coastlines and red state borders; positron is grey-on-white with no state emphasis.",
+    "The radar header keeps the standard frame chrome. The real v2 radar had a pink/magenta skewed header — the same parallelogram as the orange one, recoloured — and no footer bar, the map running full-bleed beneath it."
   ]
 };

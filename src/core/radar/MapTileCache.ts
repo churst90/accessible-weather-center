@@ -1,9 +1,13 @@
+/** Which CARTO base set to draw under the radar. */
+export type BaseMapStyle = "dark" | "light";
+
 /**
  * Simple in-memory image cache for slippy map tiles. Loads tile PNGs into
  * HTMLImageElement instances so the canvas can drawImage() them directly.
  *
  * Two tile sources are supported:
- *   - Base map (CartoDB dark matter — matches the app's dark aesthetic)
+ *   - Base map (CartoDB dark matter, or positron for the machines whose
+ *     radar sat on a light map)
  *   - Radar overlay (RainViewer animated frames)
  *
  * The cache is bounded by a simple LRU eviction: once it exceeds MAX_ENTRIES,
@@ -51,11 +55,24 @@ export class MapTileCache {
     await Promise.all(urls.map((u) => this.getTile(u)));
   }
 
-  /** Build a CartoDB dark-matter base tile URL. */
-  static baseUrl(z: number, x: number, y: number): string {
+  /**
+   * Build a CartoDB base tile URL.
+   *
+   * Dark matter by default, which suits every machine whose radar sat on a
+   * dark navy map. The WeatherStar 4000 v2 is the exception: its 2005 radar
+   * redesign moved to a light off-white map with red state borders
+   * (`docs/reference/ws4000/WS4000_Simulator_v2_-_Local_Radar.jpg`), so it
+   * asks for "light" and gets CARTO's positron.
+   *
+   * This is the closest available stand-in, not a match. The real basemap had
+   * pale-blue water, black coastlines and red state borders; positron is
+   * grey-on-white with no state emphasis.
+   */
+  static baseUrl(z: number, x: number, y: number, style: BaseMapStyle = "dark"): string {
     // Use subdomains a-d for connection parallelism.
     const sub = ["a", "b", "c", "d"][(x + y) % 4];
-    return `https://${sub}.basemaps.cartocdn.com/dark_all/${z}/${x}/${y}.png`;
+    const set = style === "light" ? "light_all" : "dark_all";
+    return `https://${sub}.basemaps.cartocdn.com/${set}/${z}/${x}/${y}.png`;
   }
 
   /** Build a RainViewer radar tile URL for a specific frame. */

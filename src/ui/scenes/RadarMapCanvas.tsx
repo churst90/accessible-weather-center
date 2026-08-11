@@ -2,7 +2,7 @@ import { useEffect, useRef, useCallback } from "react";
 import type { LatLon, WeatherAlert } from "../../core/types";
 import type { TrackedStorm } from "../../core/radar/StormTracker";
 import type { RainViewerClient, RainViewerManifest, RainViewerFrame } from "../../core/weather/RainViewerClient";
-import { MapTileCache } from "../../core/radar/MapTileCache";
+import { MapTileCache, type BaseMapStyle } from "../../core/radar/MapTileCache";
 import { BAND_INFO, bandInfo } from "../../core/radar/IntensityLegend";
 import {
   TILE_SIZE,
@@ -16,7 +16,8 @@ import {
  * Animated radar map rendered on an HTML5 Canvas — TV-style.
  *
  * Layers (bottom to top):
- *   1. CartoDB dark-matter base tiles (geography/roads/labels)
+ *   1. CartoDB base tiles (geography/roads/labels) — dark matter, or
+ *      positron on the machines whose radar ran on a light map
  *   2. RainViewer radar tiles (animated, same NEXRAD source as TV)
  *   3. NWS alert/warning polygons (red=warning, yellow=watch, cyan=advisory)
  *   4. Radar range rings + compass crosshair
@@ -43,6 +44,8 @@ interface Props {
   className?: string;
   /** If provided, highlights this location on the map. */
   highlightCoord?: LatLon | null;
+  /** Base map set. The WeatherStar 4000 v2 radar ran on a light map. */
+  baseMap?: BaseMapStyle;
   /**
    * Loop through the radar frames. Default true.
    *
@@ -69,7 +72,8 @@ export function RadarMapCanvas({
   radarOpacity = 0.75,
   className,
   highlightCoord,
-  animate: shouldAnimate = true
+  animate: shouldAnimate = true,
+  baseMap = "dark"
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const cacheRef = useRef(new MapTileCache());
@@ -151,7 +155,7 @@ export function RadarMapCanvas({
 
       // Layer 1: Base map tiles.
       for (const t of tiles) {
-        const url = MapTileCache.baseUrl(zoom, t.x, t.y);
+        const url = MapTileCache.baseUrl(zoom, t.x, t.y, baseMap);
         const img = await cache.getTile(url);
         if (img) {
           const dx = (t.x - minTx) * tileW;
@@ -236,7 +240,7 @@ export function RadarMapCanvas({
         }
       }
     },
-    [center, zoom, radarOpacity, coordToCanvas, getFrames]
+    [center, zoom, radarOpacity, coordToCanvas, getFrames, baseMap]
   );
 
   /** Animation loop: advance through radar frames. */
@@ -280,7 +284,7 @@ export function RadarMapCanvas({
 
         const bbox = boxAround(center, RADIUS_MI);
         const tiles = tilesCoveringBox(bbox, zoom);
-        const baseUrls = tiles.map((t) => MapTileCache.baseUrl(zoom, t.x, t.y));
+        const baseUrls = tiles.map((t) => MapTileCache.baseUrl(zoom, t.x, t.y, baseMap));
         await cacheRef.current.preload(baseUrls);
 
         const frames = [...manifest.radar.past, ...manifest.radar.nowcast];
