@@ -33,7 +33,6 @@ export const WSJR: Device = {
     alerts:        { availability: "core" },
     radar:         { availability: "absent", absentNote: "The WeatherStar Jr had no on-unit radar." },
     hourly:        { availability: "absent", absentNote: "Inherited the 3000 product set, which had no hourly." },
-    stormtracker:  { availability: "absent", absentNote: "Requires radar, which this unit lacked." },
     weekend:       { availability: "absent", absentNote: "No weekend product." }
   },
   visuals: {

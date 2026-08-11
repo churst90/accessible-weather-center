@@ -21,7 +21,6 @@ import { WeekendForecastScene } from "./core/scenes/scenes/WeekendForecastScene"
 import { OvernightForecastScene } from "./core/scenes/scenes/OvernightForecastScene";
 import { AlmanacScene } from "./core/scenes/scenes/AlmanacScene";
 import { TravelCitiesScene } from "./core/scenes/scenes/TravelCitiesScene";
-import { StormTrackerScene } from "./core/scenes/scenes/StormTrackerScene";
 import { TemperatureTrendScene } from "./core/scenes/scenes/TemperatureTrendScene";
 import { TrafficScene } from "./core/scenes/scenes/TrafficScene";
 import { AirportDelaysScene } from "./core/scenes/scenes/AirportDelaysScene";
@@ -53,7 +52,6 @@ export const FLAVORS: ReadonlyArray<{ id: string; title: string }> = [
   { id: "almanac",      title: "Almanac" },
   { id: "detailed",     title: "Detailed Conditions" },
   { id: "feelslike",    title: "Feels Like" },
-  { id: "stormtracker", title: "Storm Tracker" },
   { id: "overnight",    title: "Overnight Forecast" },
   { id: "weekend",      title: "Weekend Forecast" },
   { id: "precip",       title: "Precipitation Outlook" },
@@ -100,7 +98,6 @@ export function buildServices() {
     new AlmanacScene(),
     new DetailedConditionsScene(),
     new FeelsLikeScene(),
-    new StormTrackerScene(stormScanner),
     new OvernightForecastScene(),
     new WeekendForecastScene(),
     new PrecipOutlookScene(),

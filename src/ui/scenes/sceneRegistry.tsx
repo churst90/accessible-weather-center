@@ -16,7 +16,6 @@ import { WeekendForecastView } from "./WeekendForecastView";
 import { OvernightForecastView } from "./OvernightForecastView";
 import { AlmanacView } from "./AlmanacView";
 import { TravelCitiesView } from "./TravelCitiesView";
-import { StormTrackerView } from "./StormTrackerView";
 import { TemperatureTrendView } from "./TemperatureTrendView";
 import { TrafficView } from "./TrafficView";
 import { AirportDelaysView } from "./AirportDelaysView";
@@ -34,7 +33,6 @@ import type { WeekendForecastData } from "../../core/scenes/scenes/WeekendForeca
 import type { OvernightForecastData } from "../../core/scenes/scenes/OvernightForecastScene";
 import type { AlmanacData } from "../../core/scenes/scenes/AlmanacScene";
 import type { TravelCitiesData } from "../../core/scenes/scenes/TravelCitiesScene";
-import type { StormTrackerData } from "../../core/scenes/scenes/StormTrackerScene";
 import type { TemperatureTrendData } from "../../core/scenes/scenes/TemperatureTrendScene";
 import type { TrafficData } from "../../core/scenes/scenes/TrafficScene";
 import type { AirportDelaysData } from "../../core/scenes/scenes/AirportDelaysScene";
@@ -67,7 +65,6 @@ const DEFAULT_VIEWS: Record<string, SceneRenderer> = {
   detailed:      (c) => <DetailedConditionsView data={c.data as DetailedConditionsData} />,
   feelslike:     (c) => <FeelsLikeView data={c.data as FeelsLikeData} />,
   radar:         (c) => <LocalRadarView data={c.data as LocalRadarData} rainviewer={c.rainviewer} alerts={c.alerts} />,
-  stormtracker:  (c) => <StormTrackerView data={c.data as StormTrackerData} />,
   localforecast: (c) => <LocalForecastView data={c.data as LocalForecastData} />,
   hourly:        (c) => <HourlyForecastView data={c.data as HourlyForecastData} />,
   extended:      (c) => <ExtendedForecastView data={c.data as ExtendedForecastData} />,

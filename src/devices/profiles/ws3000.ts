@@ -34,7 +34,6 @@ export const WS3000: Device = {
     radar:         { availability: "absent", absentNote: "The WeatherStar 3000 could not render radar on the unit." },
     hourly:        { availability: "absent", absentNote: "Hourly/daypart forecasts did not exist on the 3000." },
     weekend:       { availability: "absent", absentNote: "No weekend product on the 3000." },
-    stormtracker:  { availability: "absent", absentNote: "Radar-derived products require radar, which the 3000 lacked." },
     airport:       { availability: "absent", absentNote: "Airport delays were not a 3000 product." },
     traffic:       { availability: "absent", absentNote: "Traffic was not a 3000 product." }
   },

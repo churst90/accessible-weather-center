@@ -261,7 +261,7 @@ export default function App() {
       // no re-narration, just moved storms.
       if (e.kind === "updated") {
         const id = currentSceneIdRef.current;
-        if (id === "radar" || id === "stormtracker") {
+        if (id === "radar") {
           void services.scheduler.refreshCurrent();
         }
       }

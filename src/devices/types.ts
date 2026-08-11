@@ -29,7 +29,7 @@ import type { ProductEra } from "../audio/manifests/sceneSegments";
 /** Scene ids, matching the ids the scene classes report. */
 export type ProductId =
   | "current" | "localforecast" | "radar" | "extended" | "hourly"
-  | "travel" | "almanac" | "detailed" | "feelslike" | "stormtracker"
+  | "travel" | "almanac" | "detailed" | "feelslike"
   | "overnight" | "weekend" | "precip" | "temptrend" | "traffic"
   | "airport" | "alerts";
 

@@ -67,7 +67,6 @@ export const INTELLISTAR1: Device = {
     detailed:      { availability: "optional", name: "Latest Observations" },
     traffic:       { availability: "optional", name: "Traffic Pulse" },
     feelslike:     { availability: "optional" },
-    stormtracker:  { availability: "optional" }
   },
   visuals: {
     iconSet: "/assets/shared/icons/large",

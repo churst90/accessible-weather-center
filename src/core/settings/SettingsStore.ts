@@ -70,7 +70,6 @@ export const DEFAULT_SETTINGS: Settings = {
     // Value-add scenes — OFF by default (toggled in Settings)
     detailed: false,
     feelslike: false,
-    stormtracker: false,
     overnight: false,
     weekend: false,
     precip: false,

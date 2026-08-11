@@ -4,7 +4,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { AnnouncerContext } from "../src/a11y/AnnouncerContext";
 import { AnnouncementQueue } from "../src/a11y/AnnouncementQueue";
-import { StormTrackerView } from "../src/ui/scenes/StormTrackerView";
+import { LocalRadarView } from "../src/ui/scenes/LocalRadarView";
+import type { RainViewerClient } from "../src/core/weather/RainViewerClient";
 import { DetailedConditionsView } from "../src/ui/scenes/DetailedConditionsView";
 import { FeelsLikeView } from "../src/ui/scenes/FeelsLikeView";
 import { AirportDelaysView } from "../src/ui/scenes/AirportDelaysView";
@@ -39,11 +40,17 @@ const STORMS: TrackedStorm[] = [
     bearingFromHomeDeg: 45, movementMph: 0, etaMinutes: null } as unknown as TrackedStorm,
 ];
 
+const RV = { getManifest: async () => ({ radar: { past: [] } }) } as unknown as RainViewerClient;
+
+function radar(data: Record<string, unknown>) {
+  return <LocalRadarView data={data as never} rainviewer={RV} />;
+}
+
 function withAnnouncer(node: React.ReactElement, q: AnnouncementQueue) {
   return <AnnouncerContext.Provider value={q}>{node}</AnnouncerContext.Provider>;
 }
 
-test("StormTrackerView survives storms appearing under it", () => {
+test("LocalRadarView survives storms appearing under it", () => {
   // The crash: this view returned its "no storms" markup BEFORE calling
   // useArrowList. React counts hooks per render, so the first render with a
   // storm called one more hook than the render without, and threw
@@ -54,17 +61,17 @@ test("StormTrackerView survives storms appearing under it", () => {
   // mounted instance as a matter of course.
   const q = new AnnouncementQueue();
   const empty = { place: PLACE, storm: null, totalStorms: 0, summary: "No storms detected. All clear." };
-  const view = mount(withAnnouncer(<StormTrackerView data={empty} />, q));
-  assert.match(view.text(), /No storms detected/);
+  const view = mount(withAnnouncer(radar({ place: PLACE, capturedAt: null, storms: [], summary: "No precipitation within 150 miles. All clear.", error: null }), q));
+  assert.match(view.text(), /No precipitation within 150 miles/);
 
   view.rerender(withAnnouncer(
-    <StormTrackerView data={{ place: PLACE, storm: STORM, storms: STORMS, totalStorms: 4, summary: "4 storms detected." }} />, q));
-  assert.match(view.text(), /4 storms detected/);
-  assert.match(view.text(), /28\.5 miles/, "the storm's own readings should render");
+    radar({ place: PLACE, capturedAt: new Date(), storms: STORMS, summary: "4 storms detected.", error: null }), q));
+  assert.match(view.text(), /storms detected/);
+  assert.match(view.text(), /29 mi/, "the storm's distance should render");
 
   // And back again — a storm clearing is just as ordinary.
-  view.rerender(withAnnouncer(<StormTrackerView data={empty} />, q));
-  assert.match(view.text(), /No storms detected/);
+  view.rerender(withAnnouncer(radar({ place: PLACE, capturedAt: null, storms: [], summary: "No precipitation within 150 miles. All clear.", error: null }), q));
+  assert.match(view.text(), /No precipitation within 150 miles/);
   view.unmount();
 });
 
@@ -123,10 +130,8 @@ test("arrowing a scene speaks the item on the interrupting navigation channel", 
   // answered by silence, which is indistinguishable from a dropped key.
   const q = new AnnouncementQueue();
   const view = mount(withAnnouncer(
-    <StormTrackerView data={{
-      place: PLACE, storm: STORM, storms: STORMS, totalStorms: STORMS.length,
-      summary: `${STORMS.length} storms detected.`,
-    }} />, q));
+    radar({ place: PLACE, capturedAt: new Date(), storms: STORMS,
+      summary: `${STORMS.length} storms detected.`, error: null }), q));
 
   pressKey("ArrowDown");
   const first = q.getState();
@@ -166,7 +171,7 @@ test("a scene's arrow keys go quiet once it is unmounted", () => {
   // over the top of the current one.
   const q = new AnnouncementQueue();
   const view = mount(withAnnouncer(
-    <StormTrackerView data={{ place: PLACE, storm: STORM, totalStorms: 1, summary: "1 storm." }} />, q));
+    radar({ place: PLACE, capturedAt: new Date(), storms: [STORM], summary: "1 storm.", error: null }), q));
   pressKey("ArrowDown");
   assert.ok(q.getState().navigation);
   view.unmount();
@@ -176,7 +181,7 @@ test("a scene's arrow keys go quiet once it is unmounted", () => {
   assert.equal(q.getState().navigation, null, "an unmounted scene must not still be listening");
 });
 
-test("arrowing the storm tracker changes storms, not measurement rows", () => {
+test("arrowing the radar screen walks storms, not measurement rows", () => {
   // Reported from use: "arrowing through the storm tracker doesn't work —
   // instead of a list of the storms to arrow through it reads one parameter
   // per line, radius, speed, etc."
@@ -186,10 +191,8 @@ test("arrowing the storm tracker changes storms, not measurement rows", () => {
   // measurement rows.
   const q = new AnnouncementQueue();
   const view = mount(withAnnouncer(
-    <StormTrackerView data={{
-      place: PLACE, storm: STORM, storms: STORMS, totalStorms: 3,
-      summary: "3 storms detected.",
-    }} />, q));
+    radar({ place: PLACE, capturedAt: new Date(), storms: STORMS,
+      summary: `${STORMS.length} storms detected.`, error: null }), q));
 
   // Every storm is listed, not just the nearest.
   assert.match(view.text(), /41 mi/, "the second storm should be on screen");
@@ -206,24 +209,9 @@ test("arrowing the storm tracker changes storms, not measurement rows", () => {
   assert.match(two, /41 miles south/, "second storm");
   assert.match(two, /2 of 3/);
 
-  // ...and the detail table follows the selection rather than staying pinned
-  // to the storm the scene led with.
-  assert.match(view.text(), /41\.2 miles/, "table should show the selected storm");
-  assert.match(view.text(), /selected storm, 2 of 3/, "the caption should track the selection");
-  view.unmount();
-});
-
-test("a lone storm still shows its measurements", () => {
-  // With one storm there is no list to walk, and the seven rows are the
-  // useful content — the original behaviour, kept.
-  const q = new AnnouncementQueue();
-  const view = mount(withAnnouncer(
-    <StormTrackerView data={{
-      place: PLACE, storm: STORM, storms: [STORM], totalStorms: 1, summary: "1 storm detected.",
-    }} />, q));
-  assert.match(view.text(), /Intensity/);
-  assert.match(view.text(), /Peak Rate/);
-  assert.match(view.text(), /One storm on radar/);
+  // The per-selection measurement table belonged to the Storm Tracker screen,
+  // which is gone — the radar screen lists every storm and gives the full
+  // measurements on Enter instead. Nothing to assert about a table here.
   view.unmount();
 });
 
@@ -233,10 +221,8 @@ test("Enter on a storm reads its full measurements", () => {
   // never passed one, so the key was swallowed.
   const q = new AnnouncementQueue();
   const view = mount(withAnnouncer(
-    <StormTrackerView data={{
-      place: PLACE, storm: STORM, storms: STORMS, totalStorms: 3,
-      summary: "3 storms detected.",
-    }} />, q));
+    radar({ place: PLACE, capturedAt: new Date(), storms: STORMS,
+      summary: `${STORMS.length} storms detected.`, error: null }), q));
 
   pressKey("ArrowDown");
   pressKey("ArrowDown");        // land on storm 2
@@ -246,10 +232,10 @@ test("Enter on a storm reads its full measurements", () => {
   // must not sit behind whatever the scene is narrating.
   const said = q.getState().assertive;
   assert.ok(said, "Enter must announce something");
-  assert.match(said!.text, /Storm 2 of 3/);
-  assert.match(said!.text, /Peak Rate/, "the full measurement set, not the one-line summary");
-  assert.match(said!.text, /Radius/);
-  assert.match(said!.text, /ETA/);
-  assert.match(said!.text, /41\.2 miles/, "the SELECTED storm's readings");
+  assert.match(said!.text, /Storm 2 details/);
+  assert.match(said!.text, /Peak rate/i, "the full measurement set, not the one-line summary");
+  assert.match(said!.text, /Radius/i);
+  assert.match(said!.text, /minutes to reach your location/);
+  assert.match(said!.text, /41 miles/, "the SELECTED storm's readings");
   view.unmount();
 });

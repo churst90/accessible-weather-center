@@ -184,7 +184,6 @@ const WS4000_SCENE_BACKGROUNDS: Record<string, string> = {
   weekend:        `${WS4000_BG_BASE}/BackGround2_1.webp`,
   precip:         `${WS4000_BG_BASE}/BackGround5_1.webp`,
   detailed:       `${WS4000_BG_BASE}/BackGround1_2_1.webp`,
-  stormtracker:   `${WS4000_BG_BASE}/BackGround5_2.webp`,
   traffic:        `${WS4000_BG_BASE}/BackGround4_1.webp`,
   airport:        `${WS4000_BG_BASE}/BackGround4_2.webp`,
   alerts:         `${WS4000_BG_BASE}/BackGround6.webp`,

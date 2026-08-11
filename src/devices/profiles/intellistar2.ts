@@ -61,7 +61,6 @@ export const INTELLISTAR2: Device = {
     detailed:      { availability: "optional" },
     feelslike:     { availability: "optional" },
     temptrend:     { availability: "optional" },
-    stormtracker:  { availability: "optional" }
   },
   visuals: {
     iconSet: "/assets/shared/icons/large",

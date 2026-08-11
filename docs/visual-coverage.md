@@ -11,7 +11,7 @@ are listed for completeness and excluded from the totals.
 point sizes. Where it says yes, the screen can be built exactly rather than
 measured off a screenshot.
 
-**91 of 97** device/scene combinations have every visual
+**89 of 95** device/scene combinations have every visual
 and audio prerequisite present. 6 fall short.
 
 ---
@@ -296,7 +296,7 @@ and audio prerequisite present. 6 fall short.
 | almanac | core | yes | yes | yes | **NO** |
 | detailed | optional | yes | yes | yes | yes |
 | feelslike | optional | yes | yes | yes | yes |
-| stormtracker | optional | yes | yes | yes | **NO** |
+| stormtracker | absent | — | — | — | — |
 | overnight | absent | — | — | — | — |
 | weekend | absent | — | — | — | — |
 | precip | absent | — | — | — | — |
@@ -330,7 +330,7 @@ and audio prerequisite present. 6 fall short.
 | almanac | core | yes | yes | yes | **NO** |
 | detailed | optional | yes | yes | yes | yes |
 | feelslike | optional | yes | yes | yes | yes |
-| stormtracker | optional | yes | yes | yes | **NO** |
+| stormtracker | absent | — | — | — | — |
 | overnight | absent | — | — | — | — |
 | weekend | absent | — | — | — | — |
 | precip | absent | — | — | — | — |
@@ -381,7 +381,5 @@ gap. Do not go looking for the audio.
 | weatherscan-v2 | almanac |
 | intellistar1 | travel |
 | intellistar1 | almanac |
-| intellistar1 | stormtracker |
 | intellistar2 | travel |
 | intellistar2 | almanac |
-| intellistar2 | stormtracker |
