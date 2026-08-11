@@ -17,7 +17,11 @@ Each machine now declares itself in `src/devices/profiles/<id>.ts`: era, voice, 
 
 ## Test harness
 
-- [x] **The suite could silently shrink.** `npm test` ran all 29 bundles in one `node --test` invocation with `--test-force-exit`. That flag is load-bearing — happy-dom's window, the frame clock's 1s interval and the radar animation timers keep handles open, so without it the run never terminates — but it exits "once all *known* tests have finished", and with files running in parallel that set drains while the slowest file is still going. Measured over eight runs of an unchanged tree: four reported 244 tests, four reported 234, and **every one of them exited 0**. The missing ten were always the last ten declared in `devices.test.ts`. Fixed with `--test-concurrency=1` (2.7s → 7s, 17/17 clean runs), plus a backstop: a junit reporter writes per-testcase `file=` attributes and the runner fails if any file reports fewer tests than it declares. The fix is a workaround for runner behaviour that a Node upgrade could change; the backstop is what notices if it does.
+- [x] **The suite could silently shrink.** `npm test` ran all 29 bundles in one `node --test` invocation with `--test-force-exit`. That flag exits "once all *known* tests have finished", and with files running in parallel that set drains while the slowest file is still going, killing it mid-execution. Measured over eight runs of an unchanged tree: four reported 244 tests, four reported 234, and **every one of them exited 0** with `fail 0`. The missing ten were always the last ten declared in `devices.test.ts`.
+
+  The flag was the mechanism, not the cause. The cause was one file: `audioNodeReuse.test.ts` stubs the audio element to fire `ended` on the next tick, and `MusicPlayer`'s `ended` handler advances to the next track — which plays, ends and advances again, forever. Three tests started a player and never stopped it (17 timers still pending five seconds after the last assertion, all `FakeAudio.play → playTrack → advance`). A real element makes the same loop harmless by taking three minutes per track.
+
+  Fixed by disposing the players. Every file now terminates on its own — verified individually with no flag and a 15s timeout — so `--test-force-exit` is gone, parallelism is back, and the run is 3s. A junit-reporter backstop stays: the runner fails if any file reports fewer tests than it declares, because there is no failing test to catch a test that never ran.
 
 ## Narration period accuracy
 

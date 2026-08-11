@@ -61,41 +61,37 @@ const bundled = readdirSync(outDir)
   .map((f) => path.join(outDir, f));
 
 /**
- * `--test-force-exit` is load-bearing and also the reason for the check below.
+ * No `--test-force-exit`, and that is the point.
  *
- * Without it the run never terminates: happy-dom's window, the frame clock's
- * 1s interval and the radar animation timers all keep handles open long after
- * the assertions are done, and `node --test` waits for a quiet event loop.
+ * The suite used to run with it, and could silently shrink as a result.
+ * Measured over eight consecutive runs of an unchanged tree: four reported
+ * 244 tests and four reported 234, and **every one of them exited 0** with
+ * "fail 0". The missing ten were always the last ten declared in the largest
+ * file. They were not failed, skipped or cancelled — they never ran.
  *
- * With it, Node exits "once all KNOWN tests have finished". With files running
- * in parallel that set can drain while the slowest file is still working, and
- * the process is killed mid-file. The tests that had not run yet are not
- * reported as failed or skipped — they simply never happened, and the run
- * still prints `fail 0` and exits 0.
+ * The flag exits "once all KNOWN tests have finished", and with files running
+ * in parallel that set drains while the slowest file is still going, killing
+ * it mid-execution. So the flag was the mechanism. It was not the cause.
  *
- * This is not hypothetical. Measured here across eight consecutive runs of an
- * unchanged tree: four reported 244 tests and four reported 234. The missing
- * ten were always the last ten declared in devices.test.ts, the largest file.
- * Every one of those runs exited 0.
+ * The cause was one test file. `audioNodeReuse.test.ts` stubs the audio
+ * element with one that fires `ended` on the next tick, and MusicPlayer's
+ * `ended` handler advances to the next track — which plays, ends, and
+ * advances again, forever. Three tests started a player and never stopped it.
+ * A real element makes that same loop harmless by taking three minutes over
+ * each track. Measured: 17 timers still pending five seconds after the last
+ * assertion, all of them `FakeAudio.play -> playTrack -> advance`.
  *
- * A suite that can quietly shrink is worse than a smaller suite, because the
- * green tick means something different from run to run — and the whole
- * verification story of this project rests on these files.
+ * With those players disposed, every one of the 29 files now terminates on
+ * its own — verified individually, `node --test <file>` with no flag and a
+ * 15-second timeout, none hit it. So the flag is gone, the event loop decides
+ * when the run is over, and parallelism is back (7s -> 2.7s).
  *
- * Two changes, and they do different jobs:
- *
- * `--test-concurrency=1` is the FIX. Run one file at a time and the known set
- * cannot drain early, because there is never a queued file waiting behind a
- * slow one. It costs about 4 seconds (2.7s -> 7s for 29 files), which is a
- * cheap price for a number that means the same thing twice. Verified over 17
- * consecutive runs: 244 every time, versus 4 short runs in the 8 before it.
- *
- * The count check is the BACKSTOP, kept because the fix is a workaround for
- * runner behaviour that could change under us on any Node upgrade, and the
- * failure mode is silent by nature. The human output still comes from the
- * spec reporter; a second junit reporter writes machine-readable results
- * carrying `file=` per testcase, and every file must report as many tests as
- * it declares.
+ * The count check below stays. It is cheap, and it is the only thing that
+ * would notice this class of failure returning — there is no failing test to
+ * catch a test that never ran. If a future file leaks a handle the run will
+ * hang rather than lie, which is the failure mode to prefer; if someone
+ * reaches for `--test-force-exit` to fix that hang, this check is what stops
+ * the lie coming back with it.
  *
  * The expectation is derived, not maintained: `^test(` at the start of a line
  * counts top-level declarations, which is how every file here is written.
@@ -108,10 +104,6 @@ const result = spawnSync(
   process.execPath,
   [
     "--test",
-    "--test-force-exit",
-    // One file at a time. See the comment above — this is what stops the
-    // suite silently dropping tests, not a performance preference.
-    "--test-concurrency=1",
     "--test-reporter=spec", "--test-reporter-destination=stdout",
     "--test-reporter=junit", `--test-reporter-destination=${resultsPath}`,
     ...bundled
@@ -154,8 +146,9 @@ if (short.length > 0) {
       short
         .map((r) => `    ${path.basename(String(r.f)).replace(/\.mjs$/, "")}: ran ${r.got} of ${r.want}`)
         .join("\n") +
-      `\n\n  The run was cut short by --test-force-exit; "fail 0" above does not\n` +
-      `  cover the tests that never executed. Re-run.\n`
+      `\n\n  "fail 0" above does not cover tests that never executed. This is\n` +
+      `  the signature of the run being cut short — check for --test-force-exit\n` +
+      `  having been reintroduced, or for a file that registers tests lazily.\n`
   );
   process.exit(1);
 }

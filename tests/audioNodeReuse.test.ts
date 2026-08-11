@@ -1,4 +1,4 @@
-import { test, beforeEach } from "node:test";
+import { test, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
 import { PhraseSequencer } from "../src/audio/PhraseSequencer";
 import { MusicPlayer } from "../src/audio/MusicPlayer";
@@ -26,6 +26,31 @@ interface Counters {
   sourceNodes: number;
 }
 let counts: Counters;
+
+/**
+ * Every MusicPlayer a test starts, so it can be torn down again.
+ *
+ * This is not tidiness. `FakeAudio.play()` fires `ended` on the next tick, and
+ * MusicPlayer's `ended` handler advances to the next track — which plays,
+ * ends, and advances again, as fast as the event loop will go. A real element
+ * makes that loop harmless by taking three minutes over each track; this one
+ * makes it a spin that never stops.
+ *
+ * Left running it kept the process alive forever, which is why the whole
+ * suite needed `--test-force-exit`, which in turn is what let the runner kill
+ * files mid-execution and silently drop ten tests a run. One unstopped
+ * playlist in one test file cost the suite its trustworthiness.
+ */
+const startedPlayers: MusicPlayer[] = [];
+function makeMusic(): MusicPlayer {
+  const m = new MusicPlayer(makeMixer());
+  startedPlayers.push(m);
+  return m;
+}
+
+afterEach(() => {
+  for (const m of startedPlayers.splice(0)) m.dispose();
+});
 
 /** Minimal HTMLAudioElement stand-in. Resolves playback immediately. */
 class FakeAudio {
@@ -110,7 +135,7 @@ test("stop() does not discard the shared node", async () => {
 });
 
 test("MusicPlayer reuses one element and node across track changes", async () => {
-  const music = new MusicPlayer(makeMixer());
+  const music = makeMusic();
   await music.start();
   for (let i = 0; i < 10; i++) await music.skip();
   assert.equal(counts.sourceNodes, 1, `created ${counts.sourceNodes} source nodes across 11 tracks`);
@@ -118,7 +143,7 @@ test("MusicPlayer reuses one element and node across track changes", async () =>
 });
 
 test("MusicPlayer stop/start cycles do not leak nodes", async () => {
-  const music = new MusicPlayer(makeMixer());
+  const music = makeMusic();
   await music.start();
   for (let i = 0; i < 5; i++) {
     music.setEnabled(false);
