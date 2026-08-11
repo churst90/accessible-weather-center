@@ -188,7 +188,11 @@ export class NwsClient {
       pressureInHg: paToInHg(p.barometricPressure?.value),
       visibilityMi: metersToMi(p.visibility?.value),
       conditionText: p.textDescription ?? null,
-      conditionIcon: p.icon ?? null
+      conditionIcon: p.icon ?? null,
+      ceilingFt: ceilingFrom(p.cloudLayers),
+      // Filled in by WeatherService, which is the only layer that sees more
+      // than one observation. The client is stateless by design.
+      pressureTrend: null
     };
   }
 
@@ -235,6 +239,40 @@ function paToInHg(pa: number | null | undefined): number | null {
 function metersToMi(m: number | null | undefined): number | null {
   return m == null ? null : Math.round((m * 0.000621371) * 10) / 10;
 }
+
+/**
+ * Cloud ceiling, in feet, from the METAR sky-cover layers.
+ *
+ * The aviation definition: the base of the lowest BROKEN or OVERCAST layer.
+ * FEW and SCT are not a ceiling however low they sit, which is why a sky can
+ * read "Unlimited" with cloud plainly in it. VV (vertical visibility) counts
+ * — that is an obscured sky, and its "base" is how far up you can see.
+ *
+ * Returns null for no ceiling, which the view renders as "Unlimited". Null is
+ * also what a missing or malformed layer list gives, and those two cases are
+ * deliberately not distinguished: NWS omits `cloudLayers` at stations that do
+ * not report it, and printing "Unknown" at every such station would be worse
+ * than printing the far more common truth.
+ */
+function ceilingFrom(
+  layers: Array<{ base: { value: number | null } | null; amount: string | null }> | null | undefined
+): number | null {
+  if (!Array.isArray(layers)) return null;
+  let lowest: number | null = null;
+  for (const layer of layers) {
+    const amount = layer?.amount?.toUpperCase();
+    if (amount !== "BKN" && amount !== "OVC" && amount !== "VV") continue;
+    const metres = layer.base?.value;
+    if (metres == null) continue;
+    const feet = Math.round((metres * 3.28084) / 100) * 100; // reported to 100ft
+    if (lowest === null || feet < lowest) lowest = feet;
+  }
+  return lowest;
+}
+
+/** Exposed for tests. The rule is fiddly enough to be worth pinning directly
+ *  rather than through a whole mocked observation response. */
+export { ceilingFrom as __test_ceilingFrom };
 
 /** Extract county name from NWS county zone URL, e.g.
  *  "https://api.weather.gov/zones/county/TNC059" → fetch the zone and grab the name.
@@ -333,6 +371,15 @@ interface NwsObservationResponse {
     relativeHumidity: { value: number | null } | null;
     heatIndex: { value: number | null } | null;
     windChill: { value: number | null } | null;
+    /**
+     * Sky cover layers, lowest first. `amount` is the METAR octa code:
+     * CLR / SKC (clear), FEW, SCT (scattered), BKN (broken), OVC (overcast),
+     * VV (vertical visibility, i.e. obscured). `base` is in metres.
+     */
+    cloudLayers?: Array<{
+      base: { value: number | null } | null;
+      amount: string | null;
+    }> | null;
   };
 }
 

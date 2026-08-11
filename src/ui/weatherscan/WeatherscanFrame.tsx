@@ -24,6 +24,12 @@ interface Props {
    * 224/496 grid; omitting it leaves every other machine exactly as it was.
    */
   lbar?: ReactNode;
+  /**
+   * The WeatherStar 4000 v2 always-on footer bar, when the active machine
+   * declares one. Takes the bottom slot, so it replaces the hotkey status bar
+   * the way the LDL crawl does on the machines that ran one.
+   */
+  footer?: ReactNode;
 }
 
 /**
@@ -38,7 +44,7 @@ interface Props {
  * Decorative elements (clock, bug, alert banner emoji) are aria-hidden —
  * the announcer is the source of truth for assistive tech.
  */
-export function WeatherscanFrame({ sceneTitle, alertCount, children, statusHint, severeInterrupt, tickerText, themeId, faa, ldlIconName, lbar }: Props) {
+export function WeatherscanFrame({ sceneTitle, alertCount, children, statusHint, severeInterrupt, tickerText, themeId, faa, ldlIconName, lbar, footer }: Props) {
   // LDL (Lower Display Line) crawl — shown on every TWC era that historically ran a
   // persistent bottom crawl: Weatherscan (1999+), WeatherStar XL (post-2005),
   // IntelliStar 1 (2003+), and IntelliStar 2 HD / Jr HD (2013+). WS4000-era
@@ -115,6 +121,8 @@ export function WeatherscanFrame({ sceneTitle, alertCount, children, statusHint,
         </div>
       ) : showLdl ? (
         <LdlCrawl faa={faa!} leadItems={[`${sceneTitle.toUpperCase()}`]} leadIconName={ldlIconName} />
+      ) : footer ? (
+        footer
       ) : (
         <div className="ws-status-bar" aria-hidden="true">
           <span>Tab scenes</span>

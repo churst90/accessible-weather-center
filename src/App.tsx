@@ -23,6 +23,7 @@ import { setIconBase, setIconResolution, chooseIcon } from "./ui/weatherscan/Wea
 import { setProductEra } from "./audio/manifests/sceneSegments";
 import { WeatherscanFrame } from "./ui/weatherscan/WeatherscanFrame";
 import { WeatherscanLBar } from "./ui/weatherscan/WeatherscanLBar";
+import { Ws4000Footer } from "./ui/weatherscan/Ws4000Footer";
 import { AnnouncementRegion } from "./ui/semantic/AnnouncementRegion";
 import { ErrorBoundary } from "./ui/semantic/ErrorBoundary";
 import { HelpDialog } from "./ui/semantic/HelpDialog";
@@ -60,12 +61,13 @@ export default function App() {
   const [needsSetup, setNeedsSetup] = useState(() => services.places.isFirstRun());
   const [activeThemeId, setActiveThemeId] = useState<ThemeId>(services.settings.get().theme as ThemeId);
   const [ldlIconName, setLdlIconName] = useState<string | undefined>(undefined);
-  // Weatherscan V2's L-bar carries live observations and a radar loop beside
-  // every scene. Both are fed from data the app already polls — the 60-second
-  // refresh below and the storm scanner — rather than a third timer, so the
-  // sidebar can never disagree with the scene it sits next to.
-  const [lbarObs, setLbarObs] = useState<import("./core/types").Observation | null>(null);
-  const [lbarStorms, setLbarStorms] = useState<import("./core/radar/StormTracker").TrackedStorm[]>([]);
+  // Persistent chrome — the Weatherscan V2 L-bar and the WeatherStar 4000 v2
+  // footer bar — reads live observations beside every scene. Fed from data
+  // the app already polls (the 60-second refresh below and the storm scanner)
+  // rather than a timer of its own, so the chrome can never disagree with the
+  // scene it frames.
+  const [chromeObs, setChromeObs] = useState<import("./core/types").Observation | null>(null);
+  const [chromeStorms, setChromeStorms] = useState<import("./core/radar/StormTracker").TrackedStorm[]>([]);
   const startedRef = useRef(false);
   const audioStartedRef = useRef(false);
   /** The audio-unlock routine, exposed so a known-good user gesture (the
@@ -240,9 +242,9 @@ export default function App() {
         services.weather.getHourly(home)
       ]);
       if (stopped) return;
-      // Same fetch the scenes just re-prepared against, so the L-bar shows
+      // Same fetch the scenes just re-prepared against, so the chrome shows
       // the reading the scene shows rather than one poll behind it.
-      if (obs.status === "fulfilled") setLbarObs(obs.value ?? null);
+      if (obs.status === "fulfilled") setChromeObs(obs.value ?? null);
       await services.scheduler.refreshCurrent();
     };
     void refresh();
@@ -264,9 +266,9 @@ export default function App() {
     return services.stormScanner.subscribe((e: StormEvent) => {
       const home = services.places.home();
       if (!home) return;
-      // Every event carries a fresh snapshot with it; the L-bar radar reads
-      // from the same one the scenes do.
-      setLbarStorms(services.stormScanner.getSnapshot().storms);
+      // Every event carries a fresh snapshot; the L-bar radar reads from the
+      // same one the scenes do.
+      setChromeStorms(services.stormScanner.getSnapshot().storms);
       // Every completed scan repositions the storms. The radar and storm
       // tracker scenes hold a snapshot from when they were entered, so
       // without this the plotted positions, distances and ETAs on screen
@@ -880,10 +882,20 @@ export default function App() {
           getDevice(activeThemeId).capabilities.lbar && viewMode === "scenes" ? (
             <WeatherscanLBar
               place={placesList.find((p) => p.isHome) ?? placesList[0] ?? null}
-              observation={lbarObs}
+              observation={chromeObs}
               rainviewer={services.rainviewer}
-              storms={lbarStorms}
+              storms={chromeStorms}
               alerts={alertsList}
+            />
+          ) : undefined
+        }
+        footer={
+          // WeatherStar 4000 v2 only. Same exclusion as the L-bar: the two
+          // full-screen modes own the whole frame.
+          getDevice(activeThemeId).capabilities.footer && viewMode === "scenes" ? (
+            <Ws4000Footer
+              observation={chromeObs}
+              placeName={(placesList.find((p) => p.isHome) ?? placesList[0])?.name ?? null}
             />
           ) : undefined
         }

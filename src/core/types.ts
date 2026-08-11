@@ -46,7 +46,28 @@ export interface Observation {
   visibilityMi: number | null;
   conditionText: string | null;
   conditionIcon: string | null;
+  /**
+   * Cloud ceiling in feet, or null when there is no ceiling at all.
+   *
+   * Aviation definition, which is what the WeatherStar showed: the base of
+   * the lowest BROKEN or OVERCAST layer. Scattered and few layers do not make
+   * a ceiling, so a sky with SCT030 and nothing above it is "Unlimited" —
+   * null here, not zero. The v2 Current Conditions screen prints exactly that
+   * word (`docs/reference/ws4000/WS4000_Simulator_v2_-_Current_Conditions.jpg`).
+   */
+  ceilingFt: number | null;
+  /**
+   * Which way the barometer is going, or null until two readings exist.
+   *
+   * Not an NWS field — derived by comparing successive observations, so it is
+   * absent on the first fetch after a cold start and appears once a second
+   * reading lands. See `PressureHistory`.
+   */
+  pressureTrend: PressureTrend | null;
 }
+
+/** Barometer direction, as the WeatherStar's arrow glyph showed it. */
+export type PressureTrend = "rising" | "falling" | "steady";
 
 export interface ForecastPeriod {
   startTime: Date;

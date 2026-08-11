@@ -78,7 +78,8 @@ current rendering and a faithful one.
 
 **Outstanding work**
 
-- Always-on footer bar component is not built — this is the defining v2 chrome element.
+- The footer's month-to-date precipitation stop is not rendered. "May Precipitation: 1.20 in" is one of the four confirmed strings, but nothing in the app knows that number — not the observation, not the almanac — and printing a plausible decimal would be inventing a measurement. Needs a precipitation feed.
+- The footer's wind and pressure stops are extrapolated from the v2 Current Conditions field set, not from a capture. Its dwell time (5s here) is a guess: the four captures are a minute apart.
 - Radar needs the pink/purple header, 7-step PRECIP legend with Incomplete Data swatch, and the light basemap with red state borders.
 - Current Conditions is missing the pressure-trend arrow and Ceiling field.
 

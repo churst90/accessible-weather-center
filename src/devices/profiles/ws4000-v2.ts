@@ -66,7 +66,11 @@ export const WS4000_V2: Device = {
     }
   },
   gaps: [
-    "Always-on footer bar component is not built — this is the defining v2 chrome element.",
+    // The footer bar itself is built (src/ui/weatherscan/Ws4000Footer.tsx),
+    // measured off the four captures in docs/reference/ws4000/. What is left
+    // is content the app cannot source and timing no capture pins down.
+    "The footer's month-to-date precipitation stop is not rendered. \"May Precipitation: 1.20 in\" is one of the four confirmed strings, but nothing in the app knows that number — not the observation, not the almanac — and printing a plausible decimal would be inventing a measurement. Needs a precipitation feed.",
+    "The footer's wind and pressure stops are extrapolated from the v2 Current Conditions field set, not from a capture. Its dwell time (5s here) is a guess: the four captures are a minute apart.",
     "Radar needs the pink/purple header, 7-step PRECIP legend with Incomplete Data swatch, and the light basemap with red state borders.",
     "Current Conditions is missing the pressure-trend arrow and Ceiling field."
   ]

@@ -5,6 +5,7 @@ import type {
   LocationInfo,
   Observation,
   Place,
+  PressureTrend,
   WeatherAlert
 } from "../types";
 import { NwsClient } from "./NwsClient";
@@ -79,11 +80,64 @@ export class WeatherService {
     return inflight;
   }
 
+  /**
+   * Barometer readings kept per place so the pressure trend can be derived.
+   *
+   * NWS does not publish a tendency field, and the WeatherStar 4000 v2 drew a
+   * trend arrow beside the pressure, so the only way to have one is to
+   * remember. This is the layer that sees more than one observation —
+   * NwsClient is stateless by design — so it lives here.
+   */
+  private readonly pressureLog = new Map<string, Array<{ at: number; inHg: number }>>();
+
+  /** Ignore anything under this: 0.02 inHg is inside station noise. */
+  private static readonly PRESSURE_STEADY_INHG = 0.02;
+  /** Compare against a reading at least this old. Obs update roughly hourly. */
+  private static readonly PRESSURE_MIN_SPAN_MS = 40 * 60_000;
+  /** ...and no older than this, or the "trend" is yesterday's weather. */
+  private static readonly PRESSURE_MAX_SPAN_MS = 6 * 60 * 60_000;
+
   async getObservation(place: Place): Promise<Observation | null> {
     const ready = await this.ensureGrid(place);
-    return this.cached(this.obsCache, ready.id, WeatherService.OBS_TTL_MS, "obs", () =>
+    const obs = await this.cached(this.obsCache, ready.id, WeatherService.OBS_TTL_MS, "obs", () =>
       this.nws.getLatestObservation(ready.nwsGrid!, ready.id)
     );
+    return obs ? { ...obs, pressureTrend: this.trackPressure(ready.id, obs) } : obs;
+  }
+
+  /**
+   * Record this reading and report the direction, or null if it cannot be
+   * known yet.
+   *
+   * Keyed on the observation's own timestamp rather than arrival time, so the
+   * 60-second poll re-reading the same hourly observation does not stack
+   * duplicates and flatten the trend to "steady".
+   */
+  private trackPressure(placeId: string, obs: Observation): PressureTrend | null {
+    if (obs.pressureInHg === null) return null;
+    const at = obs.observedAt.getTime();
+    const log = this.pressureLog.get(placeId) ?? [];
+
+    if (!log.some((e) => e.at === at)) {
+      log.push({ at, inHg: obs.pressureInHg });
+      log.sort((a, b) => a.at - b.at);
+      // A day of hourly readings is plenty; anything older cannot inform a
+      // trend and would grow without bound over a long session.
+      while (log.length > 24) log.shift();
+      this.pressureLog.set(placeId, log);
+    }
+
+    // Newest reading at or beyond the minimum span, so a run of closely
+    // spaced observations does not report a trend off two minutes' drift.
+    const earlier = [...log]
+      .reverse()
+      .find((e) => at - e.at >= WeatherService.PRESSURE_MIN_SPAN_MS
+                && at - e.at <= WeatherService.PRESSURE_MAX_SPAN_MS);
+    if (!earlier) return null;
+
+    const delta = obs.pressureInHg - earlier.inHg;
+    if (Math.abs(delta) < WeatherService.PRESSURE_STEADY_INHG) return "steady";
+    return delta > 0 ? "rising" : "falling";
   }
 
   async getForecast(place: Place): Promise<ForecastPeriod[]> {

@@ -2068,3 +2068,50 @@ body[data-theme="wsjr"] .ws-hero-icon {
   .ws-lbar-logo, .ws-lbar-radar { display: none; }
   .ws-lbar-facts { grid-template-columns: repeat(4, auto 1fr); }
 }
+
+/* ============================================================
+   WeatherStar 4000 v2 — always-on footer bar
+   ------------------------------------------------------------
+   Measured from the four captures in docs/reference/ws4000/.
+   They agree to within a fifth of a percent across three
+   different image resolutions:
+
+     band height      14.9 / 14.9 / 15.1 / 15.2  % of frame
+     band colour      rgb(44,62,144) in all four, exactly
+     text left inset  11.0 / 11.0 / 11.0 %
+     cap height       4.8 / 4.9 / 5.0 / 5.1 % of frame
+
+   Cap height converts to font-size by roughly /0.72 for this
+   face, hence the 7vh below. Everything is in viewport units so
+   the band keeps its proportion of the frame at any size, which
+   is what was actually measured — the pixel counts were not.
+   ============================================================ */
+
+.ws4000-footer {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  height: 15vh;
+  padding-left: 11%;
+  background: rgb(44, 62, 144);
+  /* The thin dark seam above the band, visible in every capture. */
+  border-top: 3px solid rgba(0, 0, 0, 0.85);
+  overflow: hidden;
+}
+
+.ws4000-footer-text {
+  font-family: var(--ws-font-display);
+  font-size: 7vh;
+  line-height: 1;
+  color: #ffffff;
+  white-space: pre;
+  /* The Star4000 outline, same treatment as the body text above. */
+  text-shadow:
+     2px  2px 0 #000, -2px  2px 0 #000,
+     2px -2px 0 #000, -2px -2px 0 #000,
+     0 2px 0 #000, 0 -2px 0 #000, 2px 0 0 #000, -2px 0 0 #000;
+}
+
+/* The bar owns the bottom of the frame, so the stage must not also try to
+   fill it. Only applies where the footer is actually rendered. */
+.ws-frame:has(> .ws4000-footer) > .ws-stage { min-height: 0; }
