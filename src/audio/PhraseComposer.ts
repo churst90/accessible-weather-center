@@ -12,6 +12,7 @@ import {
 } from "./manifests/narratorSchema";
 import { getMultiHeadlineClips, getAjEventClip, parseEventToVtec } from "./manifests/headlineSchema";
 import { getAccumulationClips } from "./manifests/accumulationSchema";
+import { groupDaySpans, getSpanClip } from "./manifests/extendedSpanSchema";
 import { findLongformMatch } from "./manifests/longformSchema";
 import { getSunTimes } from "../core/weather/SunCalc";
 import { getLibrary, Sem, precipKindNoun, type CompassDir, type WindRange, type PeriodKey, type Weekday, type PrecipKind } from "./manifests/semanticRegistry";
@@ -212,6 +213,20 @@ export function composeExtendedForecast(periods: ForecastPeriod[], placeName: st
     fallbackText: `${title ?? "Extended forecast"} for ${placeName}.`
   });
 
+  // Allen Jackson recorded the three-day extended as PROSE — one phrase per
+  // run of days that share a sky, rather than a sentence per day. Prefer it
+  // when every day in the block resolves, because that is what the hardware
+  // said; fall back to per-period narration the moment any span is missing a
+  // recording, so a partial match never produces half a sentence.
+  //
+  // Daytime periods only: NWS interleaves "Friday" and "Friday Night", and
+  // the recordings name weekdays, not nights.
+  if (narrator === "allan-jackson" && useClips) {
+    const dayPeriods = periods.filter((p) => p.isDaytime !== false);
+    const spanScript = composeExtendedSpans(dayPeriods, script.length);
+    if (spanScript) { script.push(...spanScript); return script; }
+  }
+
   for (let i = 0; i < periods.length; i++) {
     const p = periods[i];
     const isLast = i === periods.length - 1;
@@ -219,6 +234,43 @@ export function composeExtendedForecast(periods: ForecastPeriod[], placeName: st
   }
 
   return script;
+}
+
+/**
+ * The span narration, or null if it cannot be told in full.
+ *
+ * All-or-nothing on purpose. Mixing a recorded span phrase with a
+ * synthesised sentence produces "Expect cloudy skies Friday through Sunday.
+ * On Monday, 68 degrees" — two registers in one breath. If any span has no
+ * recording the caller falls back to per-period narration for the whole
+ * block, which is consistent even if it is less authentic.
+ */
+function composeExtendedSpans(periods: ForecastPeriod[], _at: number): PhraseScript | null {
+  if (periods.length < 2) return null;
+  const days = periods.map((p) => ({
+    weekday: p.startTime instanceof Date ? p.startTime.getDay() : new Date(p.startTime).getDay(),
+    shortForecast: p.shortForecast ?? null,
+  }));
+  const spans = groupDaySpans(days);
+  if (spans.length === 0) return null;
+
+  const out: PhraseScript = [];
+  for (const span of spans) {
+    const clip = getSpanClip(span);
+    if (!clip) return null;
+    out.push({ clip, fallbackText: clip.text || "" });
+  }
+  // The temperatures still belong to individual days, so they follow the
+  // prose rather than being folded into it — same as the hardware, which
+  // read the highs after the sky summary.
+  for (const p of periods) {
+    if (p.temperatureF == null) continue;
+    out.push({
+      clip: null,
+      fallbackText: `${p.name}, ${p.temperatureF} degrees.`,
+    });
+  }
+  return out;
 }
 
 /**
@@ -549,6 +601,16 @@ export function composeAlerts(alerts: WeatherAlert[], placeName: string, narrato
       clip: null,
       fallbackText: `${a.event}. Severity ${a.severity}, urgency ${a.urgency}, expires ${expiresAt}. ${a.headline}.`
     });
+    // The hazard itself, in the forecaster's words.
+    //
+    // Severity and urgency are NWS metadata fields; they say "Severe,
+    // Immediate" but not "supercell", "70 mph wind gusts" or "tennis ball
+    // sized hail". That detail lives in the description under HAZARD /
+    // SOURCE / IMPACT headers, and until now the only thing spoken from it
+    // was the first 300 characters of raw text — which usually meant the
+    // boilerplate preamble and not the part that tells you what is coming.
+    const hazard = extractHazardDetail(a.description);
+    if (hazard) script.push({ clip: null, fallbackText: hazard });
   }
 
   return script;
@@ -1773,4 +1835,40 @@ export function shouldUseClip(seg: PhraseSegment, threshold: "confirmed" | "like
   if (!seg.clip) return false;
   const order = { confirmed: 3, likely: 2, guess: 1 };
   return order[seg.clip.confidence] >= order[threshold];
+}
+
+
+/**
+ * Pull the human-readable hazard out of an NWS alert description.
+ *
+ * NWS writes warnings with labelled sections, all-caps and asterisked:
+ *
+ *     * WHAT...Severe thunderstorms capable of producing quarter size hail
+ *     * WHERE...Portions of east Tennessee.
+ *     * HAZARD...60 mph wind gusts and quarter size hail.
+ *     * SOURCE...Radar indicated rotation. Supercell.
+ *     * IMPACT...Hail damage to vehicles is expected.
+ *
+ * HAZARD, SOURCE and IMPACT are the three that describe the storm rather
+ * than the geography or the paperwork, so those are what gets spoken. WHERE
+ * is dropped: the alert already named the affected area, and repeating a
+ * county list is exactly the noise that makes people stop listening to
+ * warnings.
+ *
+ * Returns null when the description has no labelled sections — plenty of
+ * advisories are a single prose paragraph, and mangling one into fragments
+ * would be worse than leaving the headline to speak for itself.
+ */
+export function extractHazardDetail(description: string | null | undefined): string | null {
+  if (!description) return null;
+  const WANTED = ["HAZARD", "SOURCE", "IMPACT"];
+  const parts: string[] = [];
+  for (const label of WANTED) {
+    // "* HAZARD...text" through to the next bullet or blank line.
+    const m = new RegExp(`\\*?\\s*${label}\\.{2,}\\s*([\\s\\S]*?)(?=\\n\\s*\\*|\\n\\s*\\n|$)`, "i").exec(description);
+    if (!m) continue;
+    const text = m[1].replace(/\s+/g, " ").trim().replace(/\.$/, "");
+    if (text) parts.push(`${label.charAt(0)}${label.slice(1).toLowerCase()}: ${text}.`);
+  }
+  return parts.length ? parts.join(" ") : null;
 }

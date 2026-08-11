@@ -5,7 +5,8 @@ import {
   guessCcshForecastCode,
   guessConditionCode,
   periodTimeHint,
-  composeAlerts
+  composeAlerts,
+  extractHazardDetail
 } from "../src/audio/PhraseComposer";
 import { setClipReferenceTable } from "../src/audio/data/clipReferenceTable";
 import fullTable from "../src/audio/data/clipReferenceTable.json";
@@ -130,4 +131,36 @@ test("a mapped event still gets its full spoken headline", () => {
   const script = composeAlerts([alert], "Testville", "allan-jackson");
   const spoken = script.filter((s) => s.clip).map((s) => s.clip!.text ?? "").join(" ");
   assert.match(spoken, /winter storm warning/i, "the event must be named in the narrator's voice");
+});
+
+test("the hazard detail reaches the screen reader, not just the metadata", () => {
+  // Reported: NWS says things like "supercell" and "70 mph wind gusts", and
+  // none of it was spoken. The alert script gave severity and urgency —
+  // "Severe, Immediate" — which is paperwork, not weather. The words that
+  // tell you what is coming live under the HAZARD / SOURCE / IMPACT headers.
+  const desc = [
+    "At 430 PM EDT, a severe thunderstorm was located near Greeneville.",
+    "",
+    "HAZARD...60 mph wind gusts and quarter size hail.",
+    "",
+    "SOURCE...Radar indicated rotation. Supercell.",
+    "",
+    "IMPACT...Hail damage to vehicles is expected. Expect wind damage to",
+    "roofs, siding, and trees.",
+  ].join("\n");
+  const out = extractHazardDetail(desc);
+  assert.ok(out, "a labelled description should yield hazard detail");
+  assert.match(out!, /60 mph wind gusts/);
+  assert.match(out!, /Supercell/i, "the storm mode is the part a listener most wants");
+  assert.match(out!, /Hail damage/);
+  // WHERE is deliberately dropped — the alert already named the area.
+  assert.doesNotMatch(out!, /Greeneville/);
+});
+
+test("an unlabelled advisory yields no hazard detail rather than fragments", () => {
+  // Plenty of advisories are one prose paragraph. Chopping those up reads
+  // worse than letting the headline speak for itself.
+  assert.equal(extractHazardDetail("Areas of dense fog will reduce visibility to under one quarter mile."), null);
+  assert.equal(extractHazardDetail(""), null);
+  assert.equal(extractHazardDetail(null), null);
 });

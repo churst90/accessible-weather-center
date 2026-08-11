@@ -12,7 +12,8 @@ assets/
   shared/                  pools genuinely used across machines
     fonts/ music/ narration/ icons/ logos/ sfx/ sounds/ backgrounds/
   data/                    station and city tables
-  inbox/                   unsorted intake, encumbered until reviewed
+  inbox/                   staging for new material, empty when nothing is
+                           pending; encumbered until reviewed and promoted
 ```
 
 Device directory names are exactly the ids in `src/devices/profiles/<id>.ts`.
@@ -176,3 +177,32 @@ Python templates with every element's pixel coordinates, font name and point
 size. For any layout gap recorded as "needs a still to lay out faithfully",
 these are better than a still, because they are the source the still was
 rendered from.
+
+
+## Two undecodable TIFFs, and why nothing is broken
+
+`golf_bg.tif` in both the Weatherscan v1 and v2 resource packages is a 40bpp
+TIFF that ffmpeg refuses ("not yet implemented"), so `promote-sources.mjs`
+converts 298 of 300 and skips these two.
+
+Nothing depends on them. Golf is a Weatherscan Plus activity pack, recorded
+in the v1 profile's `gaps` as having no scene or art — the app never asks for
+the file. If that pack is ever built, `MistWeatherMedia/weatherscan-v2` ships
+`images/backgrounds/golf_bg.png`, already decoded, as a stand-in until
+something can read the original.
+
+The originals are untouched in `sources/`. They are not deleted and not
+missing; they are simply not convertible with the tools on this machine.
+
+## Superseded music
+
+`sources/superseded/` holds both sides of the in-house 4-disk revision, so no
+take is ever lost to a preference:
+
+    inhouse-4disk-pre-revision/        originals the revision replaced and
+                                       which were NOT restored
+    inhouse-4disk-revised-not-chosen/  revised takes that WERE replaced, after
+                                       the originals were preferred on listening
+
+Each carries a README saying which tracks and why. Copy either back over the
+same relative path in `assets/shared/music/` to A/B.
