@@ -144,10 +144,10 @@ and audio prerequisite present. 6 fall short.
 
 **Recorded gaps** (from the device profile):
 
-- The footer's month-to-date precipitation stop is not rendered. "May Precipitation: 1.20 in" is one of the four confirmed strings, but nothing in the app knows that number — not the observation, not the almanac — and printing a plausible decimal would be inventing a measurement. Needs a precipitation feed.
+- The footer's month-to-date precipitation stop appears only where the observing station issues an NWS Climatological Report. Around 629 stations do; many do not, and there the stop is simply absent rather than zero.
 - The footer's wind and pressure stops are extrapolated from the v2 Current Conditions field set, not from a capture. Its dwell time (5s here) is a guess: the four captures are a minute apart.
 - The radar basemap is CARTO positron, the closest available light tile set. The real one had pale-blue water, black coastlines and red state borders; positron is grey-on-white with no state emphasis.
-- The v2 radar ran its map full-bleed with no footer bar beneath it; here the footer stays on every scene. Whether the bar was suppressed only on radar or on other full-map products too is not settled by the four captures.
+- The footer is suppressed on radar, matching the capture's full-bleed map. Whether other full-map products dropped it too is not settled by the four captures, so only radar is excluded.
 
 ## WeatherStar XL
 
@@ -277,8 +277,8 @@ and audio prerequisite present. 6 fall short.
 
 - L-bar row heights are a design choice, not a measurement: setupLayers.rs reads every viewport rectangle from headend config (`dsm.configGet('viewports')`) that never shipped inside the package. Only the 224/496 column split and the 19px ticker row are sourced.
 - The city ticker's cities are the nearest NWS reporting stations, not a curated market list. The real unit read its list from headend config (dsm.defaultedConfigGet('CityTicker').playlist), which names products rather than places, so the original list is not recoverable from the package.
-- The clock lives in the shared frame header over the main panel. The real V2 stacked date and clock (with seconds) under the wordmark at the top of the L-bar column. Moving it would mean a per-device header, which no other machine needs yet.
-- Bottom-left of the column carried the cable provider's logo beneath the radar. Not rendered — there is no provider concept in the app.
+- The L-bar date format is ours. The era notes record "date and clock (with seconds)" under the wordmark but not how the date was written; this uses a short weekday, month and day.
+- Bottom-left of the column carried the cable provider's logo beneath the radar. Not rendered, and not plausibly renderable: the app has no provider concept and inventing one would put a fictitious cable company on screen.
 - Same missing activity-pack scenes as V1.
 
 ## IntelliStar 1 (2003-2013)

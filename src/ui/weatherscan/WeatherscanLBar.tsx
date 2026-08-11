@@ -58,6 +58,9 @@ import type { TrackedStorm } from "../../core/radar/StormTracker";
  *      in JavaScript, so no media query reaches it on its own, and unlike the
  *      radar scene it would otherwise animate for the whole session on every
  *      screen. Reduced motion pins it to the newest frame.
+ *   5. The date and clock are `aria-hidden`. They tick once a second under
+ *      every scene; the only reason they are here rather than only in the
+ *      frame header is that this is where the hardware put them.
  */
 
 /** Left column width in the 720-wide NTSC raster (CityTicker.rs / LocalDoppler.prod). */
@@ -124,6 +127,16 @@ function usePrefersReducedMotion(): boolean {
 
 export function WeatherscanLBar({ place, observation, rainviewer, storms, alerts }: Props) {
   const reducedMotion = usePrefersReducedMotion();
+  // With seconds, per the era notes. One interval for both readouts; they are
+  // aria-hidden, so a per-second re-render costs the screen reader nothing.
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  const dateText = now.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" });
+  const clockText = now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" });
+
   const o = observation;
   const where = place ? [place.name, place.state].filter(Boolean).join(", ") : "";
 
@@ -139,8 +152,14 @@ export function WeatherscanLBar({ place, observation, rainviewer, storms, alerts
 
   return (
     <aside className="ws-lbar-col" role="complementary" aria-label="L bar: conditions and radar at a glance">
+      {/* docs/weatherscan-eras.md, Era 3: "TWC logo + weatherscan wordmark
+          stacked, with date and clock (with seconds) underneath". The frame
+          header's clock is suppressed on this machine so the time is not
+          shown twice. */}
       <div className="ws-lbar-logo" aria-hidden="true">
         <span className="ws-lbar-logo-word">WEATHERSCAN</span>
+        <span className="ws-lbar-date">{dateText}</span>
+        <span className="ws-lbar-clock">{clockText}</span>
       </div>
 
       <section className="ws-lbar-obs" aria-label={`Current conditions${where ? ` at ${where}` : ""}`}>

@@ -29,6 +29,7 @@ export class WeatherService {
   private hourlyCache = new Map<string, { at: number; value: HourlyForecastPoint[] }>();
   private alertCache = new Map<string, { at: number; value: WeatherAlert[] }>();
   private nearbyCache = new Map<string, { at: number; value: NearbyObservation[] }>();
+  private climateCache = new Map<string, { at: number; value: number | null }>();
   private geoCache = new Map<string, { at: number; value: LocationInfo }>();
 
   /**
@@ -67,6 +68,15 @@ export class WeatherService {
   private static readonly NEARBY_TTL_MS = 10 * 60_000;
   /** How many markets the ticker carries. Also the per-refresh request cost. */
   private static readonly NEARBY_COUNT = 6;
+  /**
+   * Month-to-date precipitation, held for three hours.
+   *
+   * The CLI product behind it is issued once a day, so anything shorter
+   * spends requests to receive the same text. Three hours means a report
+   * issued overnight is picked up within a morning rather than at the next
+   * restart.
+   */
+  private static readonly CLIMATE_TTL_MS = 3 * 60 * 60_000;
 
   /**
    * In-flight fetches, keyed the same way as the caches. Without this, the
@@ -151,6 +161,22 @@ export class WeatherService {
     const delta = obs.pressureInHg - earlier.inHg;
     if (Math.abs(delta) < WeatherService.PRESSURE_STEADY_INHG) return "steady";
     return delta > 0 ? "rising" : "falling";
+  }
+
+  /**
+   * Month-to-date precipitation in inches at the station behind the current
+   * observation, or null where no climate report is issued for it.
+   *
+   * Takes the station id rather than a Place because that is what identifies
+   * the climate product, and because it makes the "no observation yet, so no
+   * station, so no total" case impossible to get wrong.
+   */
+  async getMonthToDatePrecipIn(stationId: string | null): Promise<number | null> {
+    if (!stationId) return null;
+    return this.cached(
+      this.climateCache, stationId, WeatherService.CLIMATE_TTL_MS, "climate",
+      () => this.nws.getMonthToDatePrecipIn(stationId)
+    );
   }
 
   /** Nearby markets' conditions, for the Weatherscan city ticker. */

@@ -97,7 +97,7 @@ The L-bar is the signature of this era. The screen is divided into a left vertic
 
 | Region | Contents |
 |---|---|
-| Top-left | TWC logo ("The Weather Channel") + "weatherscan" wordmark (blue Interstate Bold lowercase) stacked, with date and clock (with seconds) underneath |
+| Top-left | TWC logo ("The Weather Channel") + "weatherscan" wordmark (blue Interstate Bold lowercase) stacked, with date and clock (with seconds) underneath — built; the frame header's clock is suppressed on this machine so the time is not on screen twice |
 | Middle-left | Persistent current observations — large temp + condition icon, rotating secondary obs (humidity, wind, pressure, visibility) cycling below |
 | Bottom-left | Compact 3-hour radar loop + cable-provider logo |
 | Upper-right (main panel) | The rotating scene content — the 5-day, hourly, almanac, travel, etc. lives here |

@@ -66,8 +66,8 @@ export const WEATHERSCAN_V2: Device = {
     // could not answer, kept separate from the part they could.
     "L-bar row heights are a design choice, not a measurement: setupLayers.rs reads every viewport rectangle from headend config (`dsm.configGet('viewports')`) that never shipped inside the package. Only the 224/496 column split and the 19px ticker row are sourced.",
     "The city ticker's cities are the nearest NWS reporting stations, not a curated market list. The real unit read its list from headend config (dsm.defaultedConfigGet('CityTicker').playlist), which names products rather than places, so the original list is not recoverable from the package.",
-    "The clock lives in the shared frame header over the main panel. The real V2 stacked date and clock (with seconds) under the wordmark at the top of the L-bar column. Moving it would mean a per-device header, which no other machine needs yet.",
-    "Bottom-left of the column carried the cable provider's logo beneath the radar. Not rendered — there is no provider concept in the app.",
+    "The L-bar date format is ours. The era notes record \"date and clock (with seconds)\" under the wordmark but not how the date was written; this uses a short weekday, month and day.",
+    "Bottom-left of the column carried the cable provider's logo beneath the radar. Not rendered, and not plausibly renderable: the app has no provider concept and inventing one would put a fictitious cable company on screen.",
     "Same missing activity-pack scenes as V1."
   ]
 };

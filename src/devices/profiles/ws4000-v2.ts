@@ -70,7 +70,7 @@ export const WS4000_V2: Device = {
     // The footer bar itself is built (src/ui/weatherscan/Ws4000Footer.tsx),
     // measured off the four captures in docs/reference/ws4000/. What is left
     // is content the app cannot source and timing no capture pins down.
-    "The footer's month-to-date precipitation stop is not rendered. \"May Precipitation: 1.20 in\" is one of the four confirmed strings, but nothing in the app knows that number — not the observation, not the almanac — and printing a plausible decimal would be inventing a measurement. Needs a precipitation feed.",
+    "The footer's month-to-date precipitation stop appears only where the observing station issues an NWS Climatological Report. Around 629 stations do; many do not, and there the stop is simply absent rather than zero.",
     "The footer's wind and pressure stops are extrapolated from the v2 Current Conditions field set, not from a capture. Its dwell time (5s here) is a guess: the four captures are a minute apart.",
     // Was "7-step PRECIP legend". Measuring the capture says EIGHT: the
     // fourth block is near-black (#071506) and holds that value averaged
@@ -78,6 +78,6 @@ export const WS4000_V2: Device = {
     // The legend and the light basemap are now built; what is left is the map
     // itself and the header shape.
     "The radar basemap is CARTO positron, the closest available light tile set. The real one had pale-blue water, black coastlines and red state borders; positron is grey-on-white with no state emphasis.",
-    "The v2 radar ran its map full-bleed with no footer bar beneath it; here the footer stays on every scene. Whether the bar was suppressed only on radar or on other full-map products too is not settled by the four captures."
+    "The footer is suppressed on radar, matching the capture's full-bleed map. Whether other full-map products dropped it too is not settled by the four captures, so only radar is excluded."
   ]
 };

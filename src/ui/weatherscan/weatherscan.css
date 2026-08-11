@@ -2466,3 +2466,30 @@ body[data-theme="ws4000-v2"] .ws-header .ws4000-precip {
   .ws-city-ticker-run { animation: none; }
   .ws-city-ticker-stop:nth-child(n + 4) { display: none; }
 }
+
+/* The L-bar's own date and clock, stacked under the wordmark — Era 3 in
+   docs/weatherscan-eras.md: "with date and clock (with seconds) underneath".
+   The frame header's clock is hidden on this machine so the time is not on
+   screen twice. */
+.ws-lbar-date,
+.ws-lbar-clock {
+  display: block;
+  font-family: var(--ws-font-led);
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+}
+
+.ws-lbar-date {
+  margin-top: 4px;
+  font-size: clamp(9px, 0.95vw, 13px);
+  color: var(--ws-text-dim);
+  font-weight: 600;
+}
+
+.ws-lbar-clock {
+  font-size: clamp(12px, 1.35vw, 19px);
+  color: var(--ws-led);
+  font-weight: 700;
+}
+
+body[data-theme="weatherscan-v2"] .ws-header .ws-clock { display: none; }

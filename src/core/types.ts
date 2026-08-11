@@ -57,6 +57,14 @@ export interface Observation {
    */
   ceilingFt: number | null;
   /**
+   * The reporting station's identifier, e.g. "KSEA".
+   *
+   * Carried because month-to-date precipitation lives in a per-station
+   * climate product, and the station that produced this observation is the
+   * one whose climate report applies.
+   */
+  stationId: string | null;
+  /**
    * Which way the barometer is going, or null until two readings exist.
    *
    * Not an NWS field — derived by comparing successive observations, so it is

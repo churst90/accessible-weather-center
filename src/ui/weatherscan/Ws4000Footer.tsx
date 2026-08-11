@@ -39,11 +39,14 @@ import type { Observation } from "../../core/types";
  * the v2 Current Conditions screen in the same capture, so the data existed,
  * but no capture catches the bar showing them.
  *
- * Month-to-date precipitation is deliberately ABSENT even though it is one of
- * the four confirmed strings, because nothing in this application knows that
- * number — not the observation, not the almanac. Rendering "May
- * Precipitation: 1.20 in" would mean printing a decimal nobody measured onto
- * a weather display. Recorded as a gap on the profile instead.
+ * Month-to-date precipitation IS now rendered, and it is real. It was left
+ * out originally because no observation or forecast product carries a
+ * month-to-date total and printing a plausible decimal would have been
+ * inventing a measurement. The NWS Climatological Report does carry it — see
+ * `NwsClient.getMonthToDatePrecipIn` — so the stop appears when the station
+ * behind the current observation issues a CLI, and stays absent when it does
+ * not. Roughly 629 stations have one; plenty do not, and that is a missing
+ * stop rather than a zero.
  *
  * ACCESSIBILITY. Rotating text is the worst thing to put in a live region, so
  * it is not in one. The visible band is `aria-hidden` and the same facts are
@@ -72,7 +75,12 @@ const COMPASS = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
  * a rotation, so a gap simply means one fewer stop, where a dash would be a
  * fact the display is asserting.
  */
-export function footerItems(obs: Observation | null, placeName: string | null): string[] {
+export function footerItems(
+  obs: Observation | null,
+  placeName: string | null,
+  monthToDatePrecipIn: number | null = null,
+  now: Date = new Date()
+): string[] {
   const out: string[] = [];
   if (placeName) out.push(`Conditions at ${placeName}`);      // confirmed
   if (!obs) return out;
@@ -95,16 +103,26 @@ export function footerItems(obs: Observation | null, placeName: string | null): 
   }
   if (obs.pressureInHg !== null) out.push(`Pressure: ${obs.pressureInHg.toFixed(2)}`);
 
+  // confirmed — "May Precipitation: 1.20 in", the month spelled in full.
+  // Only when a real total exists: a station with no climate report is a
+  // missing stop, never a printed zero.
+  if (monthToDatePrecipIn !== null) {
+    const month = now.toLocaleDateString("en-US", { month: "long" });
+    out.push(`${month} Precipitation: ${monthToDatePrecipIn.toFixed(2)} in`);
+  }
+
   return out;
 }
 
 interface Props {
   observation: Observation | null;
   placeName: string | null;
+  /** Month-to-date rainfall in inches, or null where no CLI is issued. */
+  monthToDatePrecipIn?: number | null;
 }
 
-export function Ws4000Footer({ observation, placeName }: Props) {
-  const items = footerItems(observation, placeName);
+export function Ws4000Footer({ observation, placeName, monthToDatePrecipIn = null }: Props) {
+  const items = footerItems(observation, placeName, monthToDatePrecipIn);
   const [index, setIndex] = useState(0);
 
   // Rotate. The modulo is applied at read time rather than here because the

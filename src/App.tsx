@@ -74,6 +74,9 @@ export default function App() {
   /** Nearby markets for the Weatherscan city ticker. Ten-minute cache in
    *  WeatherService, so this poll is cheap despite costing six requests. */
   const [tickerCities, setTickerCities] = useState<import("./core/types").NearbyObservation[]>([]);
+  /** Month-to-date rainfall for the footer bar, from the station's NWS
+   *  climate report. Null where the station does not issue one. */
+  const [monthPrecipIn, setMonthPrecipIn] = useState<number | null>(null);
   const startedRef = useRef(false);
   const audioStartedRef = useRef(false);
   /** The audio-unlock routine, exposed so a known-good user gesture (the
@@ -262,6 +265,16 @@ export default function App() {
         .getNearbyObservations(home)
         .then((cities) => { if (!stopped) setTickerCities(cities); })
         .catch(() => { /* the strip just keeps its last list */ });
+
+      // Month-to-date rainfall for the footer bar. Three-hour cache behind a
+      // once-a-day product, so this is almost always a cache hit; the station
+      // comes from the observation because the climate report is per-station.
+      if (obs.status === "fulfilled" && obs.value?.stationId) {
+        void services.weather
+          .getMonthToDatePrecipIn(obs.value.stationId)
+          .then((inches) => { if (!stopped) setMonthPrecipIn(inches); })
+          .catch(() => { /* the stop simply stays out of the rotation */ });
+      }
     };
     void refresh();
     const id = setInterval(() => void refresh(), REFRESH_MS);
@@ -918,10 +931,16 @@ export default function App() {
         footer={
           // WeatherStar 4000 v2 only. Same exclusion as the L-bar: the two
           // full-screen modes own the whole frame.
-          getDevice(activeThemeId).capabilities.footer && viewMode === "scenes" ? (
+          // Not on radar: the capture shows the v2 radar map running
+          // full-bleed with no bar beneath it. Whether other full-map
+          // products did the same is not settled, so only radar is excluded.
+          getDevice(activeThemeId).capabilities.footer &&
+          viewMode === "scenes" &&
+          event.scene?.id !== "radar" ? (
             <Ws4000Footer
               observation={chromeObs}
               placeName={(placesList.find((p) => p.isHome) ?? placesList[0])?.name ?? null}
+              monthToDatePrecipIn={monthPrecipIn}
             />
           ) : undefined
         }

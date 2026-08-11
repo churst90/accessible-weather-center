@@ -191,6 +191,7 @@ export class NwsClient {
       conditionText: p.textDescription ?? null,
       conditionIcon: p.icon ?? null,
       ceilingFt: ceilingFrom(p.cloudLayers),
+      stationId: first.properties?.stationIdentifier ?? null,
       // Filled in by WeatherService, which is the only layer that sees more
       // than one observation. The client is stateless by design.
       pressureTrend: null
@@ -236,6 +237,60 @@ export class NwsClient {
       .filter((r): r is PromiseFulfilledResult<NearbyObservation> => r.status === "fulfilled")
       .map((r) => r.value)
       .filter((o) => o.name !== null && o.temperatureF !== null);
+  }
+
+  /**
+   * Month-to-date precipitation, in inches, from the NWS Climatological
+   * Report — or null when the station does not issue one.
+   *
+   * This exists for one string on the WeatherStar 4000 v2 footer bar:
+   * "May Precipitation: 1.20 in", one of the four confirmed rotation stops.
+   * It was left unrendered rather than faked, because no observation or
+   * forecast product carries a month-to-date total. The CLI does.
+   *
+   * CLI is a plain-text product, issued daily, and the precipitation block
+   * looks like this (Seattle, and note the column count varies by office):
+   *
+   *     PRECIPITATION (IN)
+   *       TODAY            0.00          0.68 2019     0.00
+   *       MONTH TO DATE    0.02                        0.39
+   *       SINCE OCT 1     33.00                       30.96
+   *
+   *     SNOWFALL (IN)
+   *       TODAY           MM                           0.0
+   *       MONTH TO DATE    0.0                         0.0
+   *
+   * The first number after the label is the observed value; the rest are
+   * records and normals. SNOWFALL has its own MONTH TO DATE line, which is
+   * why the scan is bounded to the precipitation block rather than grepping
+   * the whole product — the naive version returns the snow total, and in
+   * August it returns 0.0 and looks perfectly reasonable.
+   *
+   * `T` means a trace (measurable but under 0.01in) and becomes 0. `MM`
+   * means missing and becomes null, not zero: "no data" and "no rain" are
+   * different claims, and this is a rain gauge.
+   *
+   * Locations are station codes with the leading K dropped — KSEA -> SEA. Of
+   * the 629 CLI locations most are airports; plenty of stations have none,
+   * and that is a null, not an error.
+   */
+  async getMonthToDatePrecipIn(stationIdentifier: string): Promise<number | null> {
+    const loc = cliLocationFor(stationIdentifier);
+    if (!loc) return null;
+
+    let list: NwsProductListResponse;
+    try {
+      list = await this.get<NwsProductListResponse>(
+        `${this.base}/products/types/CLI/locations/${loc}`
+      );
+    } catch {
+      return null; // no CLI for this station — common, not exceptional
+    }
+    const newest = list["@graph"]?.[0];
+    if (!newest?.id) return null;
+
+    const product = await this.get<{ productText: string }>(`${this.base}/products/${newest.id}`);
+    return parseMonthToDatePrecip(product.productText);
   }
 
   async getActiveAlerts(coord: LatLon): Promise<WeatherAlert[]> {
@@ -341,6 +396,45 @@ export function cityName(raw: string | null | undefined): string | null {
 
 export { cityName as __test_cityName };
 
+/**
+ * Station identifier to CLI location code. KSEA -> SEA.
+ *
+ * Only the contiguous four-letter K form is converted; anything else is
+ * passed through uppercased, which covers the Alaska and Hawaii prefixes
+ * (PA-, PH-) that CLI lists verbatim.
+ */
+export function cliLocationFor(stationIdentifier: string | null | undefined): string | null {
+  if (!stationIdentifier) return null;
+  const id = stationIdentifier.trim().toUpperCase();
+  if (!/^[A-Z0-9]{3,4}$/.test(id)) return null;
+  return id.length === 4 && id.startsWith("K") ? id.slice(1) : id;
+}
+
+/**
+ * Pull the observed month-to-date precipitation out of a CLI product.
+ *
+ * Bounded to the PRECIPITATION block: SNOWFALL carries its own MONTH TO DATE
+ * and would otherwise win or lose depending on line order.
+ */
+export function parseMonthToDatePrecip(text: string): number | null {
+  let inPrecip = false;
+  for (const line of text.split("\n")) {
+    const upper = line.toUpperCase();
+    if (/^\s*PRECIPITATION\b/.test(upper)) { inPrecip = true; continue; }
+    if (!inPrecip) continue;
+    // Any other all-caps section header ends the block.
+    if (/^\s*(SNOWFALL|DEGREE\s+DAYS|WIND|TEMPERATURE|HEAT|RELATIVE|SKY)\b/.test(upper)) break;
+    const m = upper.match(/^\s*MONTH\s+TO\s+DATE\s+(\S+)/);
+    if (!m) continue;
+    const raw = m[1];
+    if (raw === "T") return 0;          // trace: real, but under 0.01in
+    if (raw === "MM" || raw === "M") return null;  // missing != zero
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : null;
+  }
+  return null;
+}
+
 /** Extract county name from NWS county zone URL, e.g.
  *  "https://api.weather.gov/zones/county/TNC059" → fetch the zone and grab the name.
  *  To avoid an extra fetch, we just return the zone code — the full overhaul
@@ -417,6 +511,10 @@ interface NwsForecastResponse {
       detailedForecast: string;
     }>;
   };
+}
+
+interface NwsProductListResponse {
+  "@graph"?: Array<{ id?: string; issuanceTime?: string }>;
 }
 
 interface NwsStationListResponse {
