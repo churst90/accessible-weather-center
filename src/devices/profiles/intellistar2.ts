@@ -42,7 +42,7 @@ export const INTELLISTAR2: Device = {
   voice: "jim-cantore",
   musicTags: ["intellistar2"],
   extendedDays: 7,
-  capabilities: { ldl: true, footer: false, icons: true, radar: true, narration: true, sponsorSlot: true },
+  capabilities: { ldl: true, footer: false, icons: true, radar: true, narration: true, sponsorSlot: true, lot8s: true },
   // Travel is deliberately NOT in the base rundown: docs/legacy-eras.md
   // records its post-2013 standalone status as unverified, and regional
   // forecasts ran through the sidebar rundown instead. Offered as optional
@@ -85,7 +85,13 @@ export const INTELLISTAR2: Device = {
     }
   },
   gaps: [
-    "LOT8s windowed frame is not built — radar should render inside it, not full-bleed.",
+    // The LOT8s frame is now built (src/ui/weatherscan/Lot8sFrame.tsx). Its
+    // geometry is transcribed from products/pm/Local/incl/_LOT8Setup.rs in
+    // twc_domestic_dynamic-2.10, not traced off a still — the render
+    // coordinates are bottom-up on a 720x480 raster, which is the part that
+    // has to be right before anything else.
+    "The LOT8s bar height is the one inferred number in the frame: it is `logo.size()[1]` in _LOT8Setup.rs, read from a TIFF that ships on the machine rather than in the package. Bounded at 79px by the raster (bar sits at y=401 of 480); 44 is used. Correct it if the art turns up.",
+    "The LOT8s bar renders the TWC and Local-on-the-8s wordmarks as text. The real bar used TIFF logos (/logos/TWC-Logo{Black,Red}, /logos/LOT8-LOGO-SD) that are not in the repo; the Red variant is the tornado-emergency treatment.",
     "Severe treatment should default to a single-line crawl over the LDL (red box left, yellow watches, orange statements); full-bleed red is the tornado-emergency tier only.",
     "Almanac needs the analog sunrise/sunset clock graphic (white = sunrise, black = sunset).",
     "IS2 Jr should suppress its LDL during national segments; currently both render identically.",

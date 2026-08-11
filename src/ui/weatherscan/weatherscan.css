@@ -2115,3 +2115,144 @@ body[data-theme="wsjr"] .ws-hero-icon {
 /* The bar owns the bottom of the frame, so the stage must not also try to
    fill it. Only applies where the footer is actually rendered. */
 .ws-frame:has(> .ws4000-footer) > .ws-stage { min-height: 0; }
+
+/* ============================================================
+   IntelliStar 2 — LOT8s windowed frame
+   ------------------------------------------------------------
+   Transcribed from products/pm/Local/incl/_LOT8Setup.rs in
+   twc_domestic_dynamic-2.10. The render coordinates are
+   BOTTOM-UP on a 720x480 raster; every percentage below is the
+   converted top-down equivalent:
+
+     window   pos(50,117) size(620,263) -> 6.944% / 20.833%
+                                           86.111% x 54.792%
+     bar      pos(50,401), h inferred 44 -> top 7.292%, h 9.167%
+     LDL      pos(0,22) size(720,16)    -> top 92.083%, h 3.333%
+     headline x=60                      -> 8.333%
+
+   Colours are the script's own rgbaConvert calls:
+     window wash  rgba(20,20,20,.10)   darkLayer2
+     bar backing  rgba(20,20,20,.40)   darkLayer
+     loc chip     rgba(20,20,20,.50)   locBkg
+     clock chip   rgba(20,20,20,.30)   clkBkg
+     LDL band     rgb(25,68,113)
+     text         rgb(235,235,235)
+   ============================================================ */
+
+.lot8s {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.lot8s > * { pointer-events: auto; }
+
+.lot8s-bar {
+  position: absolute;
+  left: 6.944%;
+  top: 7.292%;
+  height: 9.167%;
+  display: flex;
+  align-items: stretch;
+  background: rgba(20, 20, 20, 0.4);
+  color: rgb(235, 235, 235);
+  font-family: "Akko Pro", "Interstate", "Helvetica Neue", Arial, sans-serif;
+  font-weight: 300;
+  white-space: nowrap;
+}
+
+.lot8s-bar-logo,
+.lot8s-bar-lot8 {
+  display: flex;
+  align-items: center;
+  padding: 0 0.9vw;
+  background: rgba(20, 20, 20, 1);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  font-size: 3.2vh;
+}
+
+.lot8s-bar-lot8 { font-weight: 400; letter-spacing: 0.12em; }
+
+/* locBkg: the text padded 15px either side on a 720-wide raster. */
+.lot8s-bar-loc {
+  display: flex;
+  align-items: center;
+  padding: 0 2.083%;
+  background: rgba(20, 20, 20, 0.5);
+  font-size: 4.4vh;   /* AkkoPro-Light 32pt of a 480-tall raster */
+  letter-spacing: 0.02em;
+}
+
+.lot8s-bar-clock {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* clkBkg.setSize(100, ...) on a 720 raster. */
+  width: 13.889%;
+  background: rgba(20, 20, 20, 0.3);
+  font-size: 4.4vh;
+}
+
+.lot8s-window {
+  position: absolute;
+  left: 6.944%;
+  top: 20.833%;
+  width: 86.111%;
+  height: 54.792%;
+  display: flex;
+  flex-direction: column;
+  /* GaussianBlurImageFilter over exactly this rect, then darkLayer2 on top.
+     backdrop-filter is the direct equivalent and blurs the real background
+     rather than faking it with a flat panel. */
+  backdrop-filter: blur(9px);
+  -webkit-backdrop-filter: blur(9px);
+  background: rgba(20, 20, 20, 0.1);
+  overflow: hidden;
+}
+
+/* headline pos(60,356): 10px inside the window's left edge, at its top. */
+.lot8s-rundown {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 1.4vw;
+  align-items: baseline;
+  padding: 0.6vh 0 0.4vh 1.613%;   /* 10px of the 620-wide window */
+  color: rgb(235, 235, 235);
+  font-family: "Akko Pro", "Interstate", "Helvetica Neue", Arial, sans-serif;
+  font-size: 3.4vh;                 /* AkkoPro-Light 25pt of 480 */
+  font-weight: 300;
+}
+
+.lot8s-rundown-item[data-current="false"] { opacity: 0.55; }
+
+.lot8s-window-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 0 1.613%;
+}
+
+/* The frame's own stage becomes the positioning context and stops painting
+   its own chrome — the window owns the content area now. */
+body[data-theme="intellistar2"] .ws-frame.ws-windowed > .ws-stage {
+  position: static;
+  padding: 0;
+  margin: 0;
+}
+
+body[data-theme="intellistar2"] .ws-frame.ws-windowed { position: relative; }
+
+/* LdlMenu/Default.prod: pos(0,22) size(720,16), rgb(25,68,113). */
+body[data-theme="intellistar2"] .ws-frame.ws-windowed > .ws-ldl {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 92.083%;
+  height: 3.333%;
+  min-height: 0;
+  background: rgb(25, 68, 113);
+  font-family: "Helvetica Neue LT Std", "Helvetica Neue", Arial, sans-serif;
+  font-stretch: condensed;
+  font-weight: 700;
+}

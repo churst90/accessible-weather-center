@@ -220,8 +220,9 @@ All ten confirmed silent-failure bugs from `docs/code-audit-2026-08.md` fixed, p
 - [ ] **WSJr scene renderer** — reuse WS3000 stack once built; need one CC still to confirm.
 - [ ] **IS1 2007 facelift theme** (`intellistar1-2007`) — need post-Oct 2007 "Now" stills (dark-blue text on light-blue-sky bg).
 - [ ] **IS1 2013 rebrand theme** (`intellistar1-2013`) — optional, brief ~1 year era.
-- [ ] **IS2 HD LOT8s frame component** — need full-frame still showing main-window + sidebar-dial + rundown + LDL.
+- [x] **IS2 HD LOT8s frame component** — built (`src/ui/weatherscan/Lot8sFrame.tsx`). The still was never needed: `products/pm/Local/incl/_LOT8Setup.rs` in `twc_domestic_dynamic-2.10` states the whole geometry. Window pos(50,117) size(620,263), bar at (50,401), LDL 720x16 at y=22, all on a 720x480 raster with **bottom-up y** — read top-down and the window falls off the bottom of the screen. One number is inferred: the bar height is `logo.size()[1]` from a TIFF that ships on the machine, bounded at 79px by the raster.
 - [ ] **IS2 Jr LDL branching** — need national-programming still to confirm "LDL off during national" delta.
+- [ ] **LOT8s bar logo art** — the bar renders the TWC and Local-on-the-8s wordmarks as text. The real ones are `/logos/TWC-Logo{Black,Red}` and `/logos/LOT8-LOGO-SD`, not in the repo; Red is the tornado-emergency treatment.
 - [ ] **Alert chrome per era** — brown/red (WS3000/WSJr), brown advisory / red warning (IS1), red/yellow/orange left-box (IS2).
 - [x] **Weatherscan V2 L-bar layout** — persistent left column (logo/obs/radar) + bottom horizontal strip. Built in `src/ui/weatherscan/WeatherscanLBar.tsx`, gated on `capabilities.lbar`. The 224/496 split is measured from `CityTicker.rs` and `LocalDoppler.prod` (they sum to the 720px raster); row heights are ours, because `setupLayers.rs` reads them from headend config that never shipped. Remaining: the bottom strip runs the alert crawl / LDL rather than the real city ticker, which needs regional observations the app does not fetch.
 

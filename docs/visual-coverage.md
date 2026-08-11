@@ -344,7 +344,8 @@ and audio prerequisite present. 6 fall short.
 
 **Recorded gaps** (from the device profile):
 
-- LOT8s windowed frame is not built — radar should render inside it, not full-bleed.
+- The LOT8s bar height is the one inferred number in the frame: it is `logo.size()[1]` in _LOT8Setup.rs, read from a TIFF that ships on the machine rather than in the package. Bounded at 79px by the raster (bar sits at y=401 of 480); 44 is used. Correct it if the art turns up.
+- The LOT8s bar renders the TWC and Local-on-the-8s wordmarks as text. The real bar used TIFF logos (/logos/TWC-Logo{Black,Red}, /logos/LOT8-LOGO-SD) that are not in the repo; the Red variant is the tornado-emergency treatment.
 - Severe treatment should default to a single-line crawl over the LDL (red box left, yellow watches, orange statements); full-bleed red is the tornado-emergency tier only.
 - Almanac needs the analog sunrise/sunset clock graphic (white = sunrise, black = sunset).
 - IS2 Jr should suppress its LDL during national segments; currently both render identically.

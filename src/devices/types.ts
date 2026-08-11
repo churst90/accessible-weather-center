@@ -68,6 +68,12 @@ export interface DeviceCapabilities {
    * all have to declare `lbar: false`.
    */
   lbar?: boolean;
+  /**
+   * The IntelliStar 2 LOT8s windowed frame: the product plays inside a
+   * floating window over a blurred background rather than full-bleed, with a
+   * logo/location/clock bar above it. Optional for the same reason as `lbar`.
+   */
+  lot8s?: boolean;
   /** Graphical weather icons. The 3000 and Jr were text-only. */
   icons: boolean;
   /** Can render radar on the unit at all. */

@@ -171,6 +171,36 @@ export class SceneScheduler {
   }
 
   /**
+   * The titles of the current scene and the ones queued behind it.
+   *
+   * The IntelliStar 2 LOT8s bar showed the product on air and the one coming
+   * up next — `headlineList` in `_LOT8Setup.rs`. Deriving that in the UI from
+   * the configured scene order would get it wrong whenever a product is
+   * switched off in Settings, because the rotation skips disabled scenes and
+   * only the scheduler knows which those are.
+   *
+   * Returns fewer than `count` entries when fewer scenes are enabled, and an
+   * empty array when none are. The current scene is always first.
+   */
+  upcoming(count: number): string[] {
+    const out: string[] = [];
+    const n = this.scenes.length;
+    if (n === 0 || count <= 0) return out;
+    let idx = this.index;
+    for (let i = 0; i < count; i++) {
+      const scene = this.scenes[idx];
+      if (!scene) break;
+      // i === 0 is the scene on air, which is showing whether or not the
+      // enabled set has changed under it since it was entered.
+      if (i > 0 || this.isEnabled(scene.id)) out.push(scene.title);
+      const nextIdx = this.findNextEnabled(idx, +1);
+      if (nextIdx < 0 || nextIdx === this.index) break;
+      idx = nextIdx;
+    }
+    return out;
+  }
+
+  /**
    * Walk in the given direction until we find an enabled scene. Returns -1
    * if no scenes are enabled at all (in which case the scheduler should
    * pause and announce the empty state — caller decides).

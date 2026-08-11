@@ -24,6 +24,7 @@ import { setProductEra } from "./audio/manifests/sceneSegments";
 import { WeatherscanFrame } from "./ui/weatherscan/WeatherscanFrame";
 import { WeatherscanLBar } from "./ui/weatherscan/WeatherscanLBar";
 import { Ws4000Footer } from "./ui/weatherscan/Ws4000Footer";
+import { Lot8sFrame } from "./ui/weatherscan/Lot8sFrame";
 import { AnnouncementRegion } from "./ui/semantic/AnnouncementRegion";
 import { ErrorBoundary } from "./ui/semantic/ErrorBoundary";
 import { HelpDialog } from "./ui/semantic/HelpDialog";
@@ -898,6 +899,20 @@ export default function App() {
               placeName={(placesList.find((p) => p.isHome) ?? placesList[0])?.name ?? null}
             />
           ) : undefined
+        }
+        windowed={
+          // IntelliStar 2 only. Recomputed per render so the rundown follows
+          // the rotation; `event` changing is what drives that.
+          getDevice(activeThemeId).capabilities.lot8s && viewMode === "scenes"
+            ? (scene) => (
+                <Lot8sFrame
+                  placeName={(placesList.find((p) => p.isHome) ?? placesList[0])?.name ?? null}
+                  rundown={services.scheduler.upcoming(2)}
+                >
+                  {scene}
+                </Lot8sFrame>
+              )
+            : undefined
         }
       >
         {viewMode === "places" ? (

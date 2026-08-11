@@ -30,6 +30,12 @@ interface Props {
    * the way the LDL crawl does on the machines that ran one.
    */
   footer?: ReactNode;
+  /**
+   * Wrap the scene in the IntelliStar 2 LOT8s window instead of letting it
+   * fill the stage. Given a function so the frame stays ignorant of what the
+   * wrapper is — it hands over the children and gets a tree back.
+   */
+  windowed?: (scene: ReactNode) => ReactNode;
 }
 
 /**
@@ -44,7 +50,7 @@ interface Props {
  * Decorative elements (clock, bug, alert banner emoji) are aria-hidden —
  * the announcer is the source of truth for assistive tech.
  */
-export function WeatherscanFrame({ sceneTitle, alertCount, children, statusHint, severeInterrupt, tickerText, themeId, faa, ldlIconName, lbar, footer }: Props) {
+export function WeatherscanFrame({ sceneTitle, alertCount, children, statusHint, severeInterrupt, tickerText, themeId, faa, ldlIconName, lbar, footer, windowed }: Props) {
   // LDL (Lower Display Line) crawl — shown on every TWC era that historically ran a
   // persistent bottom crawl: Weatherscan (1999+), WeatherStar XL (post-2005),
   // IntelliStar 1 (2003+), and IntelliStar 2 HD / Jr HD (2013+). WS4000-era
@@ -73,7 +79,7 @@ export function WeatherscanFrame({ sceneTitle, alertCount, children, statusHint,
   const intellistarBugShown = !!themeId && ["intellistar1", "intellistar2"].includes(themeId);
 
   return (
-    <div className={`ws-frame${severeInterrupt ? " ws-severe" : ""}${lbar ? " ws-lbar" : ""}`}>
+    <div className={`ws-frame${severeInterrupt ? " ws-severe" : ""}${lbar ? " ws-lbar" : ""}${windowed ? " ws-windowed" : ""}`}>
       <header className="ws-header">
         {twcLogoShown && (
           <img
@@ -97,7 +103,7 @@ export function WeatherscanFrame({ sceneTitle, alertCount, children, statusHint,
         aria-label={`${sceneTitle} screen. Tab or shift-tab to change scenes. Arrow keys navigate within this scene. Press question mark for help.`}
       >
         <h2 className="ws-scene-title">{sceneTitle}</h2>
-        {children}
+        {windowed ? windowed(children) : children}
         {intellistarBugShown ? (
           <img
             className="ws-bug ws-bug-is"
