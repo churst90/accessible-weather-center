@@ -3,6 +3,7 @@ import type {
   HourlyForecastPoint,
   LatLon,
   LocationInfo,
+  NearbyObservation,
   Observation,
   Place,
   PressureTrend,
@@ -27,6 +28,7 @@ export class WeatherService {
   private forecastCache = new Map<string, { at: number; value: ForecastPeriod[] }>();
   private hourlyCache = new Map<string, { at: number; value: HourlyForecastPoint[] }>();
   private alertCache = new Map<string, { at: number; value: WeatherAlert[] }>();
+  private nearbyCache = new Map<string, { at: number; value: NearbyObservation[] }>();
   private geoCache = new Map<string, { at: number; value: LocationInfo }>();
 
   /**
@@ -54,6 +56,17 @@ export class WeatherService {
   private static readonly HOURLY_TTL_MS = 5 * 60_000;
   private static readonly ALERT_TTL_MS = 45_000;
   private static readonly GEO_TTL_MS = 60 * 60_000; // 1 hour — locations don't change
+  /**
+   * The city ticker's stations, held for ten minutes.
+   *
+   * Long, because this is the one call that costs more than one request:
+   * `getNearbyObservations(n)` makes n of them. A crawl that takes two
+   * minutes to cycle does not benefit from fresher data than that, and the
+   * observations behind it are hourly anyway.
+   */
+  private static readonly NEARBY_TTL_MS = 10 * 60_000;
+  /** How many markets the ticker carries. Also the per-refresh request cost. */
+  private static readonly NEARBY_COUNT = 6;
 
   /**
    * In-flight fetches, keyed the same way as the caches. Without this, the
@@ -138,6 +151,15 @@ export class WeatherService {
     const delta = obs.pressureInHg - earlier.inHg;
     if (Math.abs(delta) < WeatherService.PRESSURE_STEADY_INHG) return "steady";
     return delta > 0 ? "rising" : "falling";
+  }
+
+  /** Nearby markets' conditions, for the Weatherscan city ticker. */
+  async getNearbyObservations(place: Place): Promise<NearbyObservation[]> {
+    const ready = await this.ensureGrid(place);
+    return this.cached(
+      this.nearbyCache, ready.id, WeatherService.NEARBY_TTL_MS, "nearby",
+      () => this.nws.getNearbyObservations(ready.nwsGrid!, WeatherService.NEARBY_COUNT)
+    );
   }
 
   async getForecast(place: Place): Promise<ForecastPeriod[]> {

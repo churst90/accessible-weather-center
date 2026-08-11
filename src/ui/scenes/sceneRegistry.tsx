@@ -86,12 +86,14 @@ const THEME_VIEWS: Partial<Record<ThemeId, Partial<Record<string, SceneRenderer>
     /**
      * The 2005 radar redesign, and the first entry in this table.
      *
-     * `WS4000_Simulator_v2_-_Local_Radar.jpg` shows a graded PRECIP ramp in a
-     * pink header over a light off-white basemap with red state borders —
-     * where every other machine's radar sat on dark navy. Same view, same
-     * data, same storm table; different chrome. That is exactly the split
-     * this table exists for, and it beats threading a themeId down into a
-     * view that has no other use for one.
+     * `WS4000_Simulator_v2_-_Local_Radar.jpg` shows a light off-white
+     * basemap with red state borders, where every other machine's radar sat
+     * on dark navy. Same view, same data, same storm table; one different
+     * tile set. That is the split this table exists for, and it beats
+     * threading a themeId into a view with no other use for one.
+     *
+     * The pink header and its PRECIP ramp are NOT here: the capture puts the
+     * ramp inside the header band, which is frame chrome, not scene content.
      */
     radar: (c) => (
       <LocalRadarView
@@ -99,7 +101,6 @@ const THEME_VIEWS: Partial<Record<ThemeId, Partial<Record<string, SceneRenderer>
         rainviewer={c.rainviewer}
         alerts={c.alerts}
         baseMap="light"
-        precipLegend
       />
     ),
   },

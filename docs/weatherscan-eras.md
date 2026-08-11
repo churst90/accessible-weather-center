@@ -137,6 +137,33 @@ x=72 on a 720-wide layout): each product draws at IntelliStar size into its
 own layer, and the layer is scaled down into the window. A coordinate read out
 of a `.prod` file is local to its layer, not global to the screen.
 
+### The city ticker
+
+`products/ext/ticker/CityTicker.rs` gives the strip's behaviour as well as its
+width:
+
+| Value | Source |
+|---|---|
+| `tickerWidth = 496`, `tickerHeight = 19` | hardcoded fallbacks for a missing `ticker` viewport |
+| `step = 2.8` | crawl rate, px per frame — 84 px/s at 30fps |
+| Interstate-BoldCondensed 16pt, uppercase | the tab label font |
+| text `rgb(20,20,20)` on `rgb(53,53,53)` | the tab chip |
+
+The crawl duration is computed from the content length so the speed stays at
+84 px/s however many cities are in the list. A fixed duration — the obvious
+implementation — makes the crawl *faster* the more cities there are.
+
+What the package cannot give is **which** cities. The real unit read its list
+from `dsm.defaultedConfigGet('CityTicker').playlist`, headend configuration
+naming products rather than places. The app uses the nearest NWS reporting
+stations from the gridpoint instead, which is the same idea reached a
+different way, and it is recorded as a gap rather than presented as the
+original list.
+
+That fetch costs one request per city, so `WeatherService` holds it for ten
+minutes. Without that cache the sixty-second refresh loop would make 360
+requests an hour for data that updates hourly.
+
 ### Accessibility of a permanent sidebar
 
 Persistent chrome is a hazard in a screen-reader-first application, so the
@@ -150,6 +177,10 @@ column is bound by three rules, all covered by `tests/lbar.test.tsx`:
 3. **The radar canvas is `aria-hidden`** with a one-line text summary beside
    it. Storms are enumerated in the Local Doppler scene and nowhere else, so
    the two readouts cannot drift apart by a scan.
+4. **The city ticker's crawl is `aria-hidden`** and every city is published
+   once, statically, beside it. A crawl is the worst thing to expose to a
+   screen reader — motion, repetition, and no end — and this one sits under
+   every scene.
 
 The column is written *after* the stage in the DOM and placed left by the
 grid, so browse mode reaches the scene before the sidebar.

@@ -74,6 +74,13 @@ export interface DeviceCapabilities {
    * logo/location/clock bar above it. Optional for the same reason as `lbar`.
    */
   lot8s?: boolean;
+  /**
+   * The WeatherStar 4000 v2's 2005 radar redesign: a light off-white basemap
+   * instead of dark navy, and a taller pink/magenta header parallelogram
+   * carrying the graded PRECIP ramp. The two shipped together on the one
+   * machine, so they are one capability rather than two.
+   */
+  radarRedesign?: boolean;
   /** Graphical weather icons. The 3000 and Jr were text-only. */
   icons: boolean;
   /** Can render radar on the unit at all. */

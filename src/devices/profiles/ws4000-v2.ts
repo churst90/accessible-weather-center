@@ -9,10 +9,11 @@ import type { Device } from "../types";
  * bar carrying contextual data ("Conditions at <city>", "<Month>
  * Precipitation: n.nn in").
  *
- * Radar switched to a pink/purple header with a 7-step PRECIP legend plus an
- * Incomplete Data swatch, and the basemap changed from dark navy to a light
- * off-white map with red state borders. Current Conditions gained a pressure
- * trend arrow and a Ceiling field.
+ * Radar switched to a taller pink/magenta header carrying an EIGHT-step
+ * PRECIP legend plus a separate Incomplete Data swatch, and the basemap
+ * changed from dark navy to a light off-white map with red state borders.
+ * Current Conditions gained a pressure trend arrow and a Ceiling field. All
+ * of that is built; see `gaps` for what the captures could not settle.
  *
  * Post-rename, so "Local Forecast" and "Daypart Forecast".
  */
@@ -28,7 +29,7 @@ export const WS4000_V2: Device = {
   // hardware with new chrome. (Narration still uses the 5-day phrase pool —
   // see the reconciliation note in docs/legacy-eras.md.)
   extendedDays: 3,
-  capabilities: { ldl: false, footer: true, icons: true, radar: true, narration: true, sponsorSlot: false },
+  capabilities: { ldl: false, footer: true, icons: true, radar: true, narration: true, sponsorSlot: false, radarRedesign: true },
   rundown: ["current", "localforecast", "extended", "radar", "almanac", "travel"],
   products: {
     current:       { availability: "core", name: "Current Conditions" },
@@ -77,6 +78,6 @@ export const WS4000_V2: Device = {
     // The legend and the light basemap are now built; what is left is the map
     // itself and the header shape.
     "The radar basemap is CARTO positron, the closest available light tile set. The real one had pale-blue water, black coastlines and red state borders; positron is grey-on-white with no state emphasis.",
-    "The radar header keeps the standard frame chrome. The real v2 radar had a pink/magenta skewed header — the same parallelogram as the orange one, recoloured — and no footer bar, the map running full-bleed beneath it."
+    "The v2 radar ran its map full-bleed with no footer bar beneath it; here the footer stays on every scene. Whether the bar was suppressed only on radar or on other full-map products too is not settled by the four captures."
   ]
 };

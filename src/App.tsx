@@ -25,6 +25,8 @@ import { WeatherscanFrame } from "./ui/weatherscan/WeatherscanFrame";
 import { WeatherscanLBar } from "./ui/weatherscan/WeatherscanLBar";
 import { Ws4000Footer } from "./ui/weatherscan/Ws4000Footer";
 import { Lot8sFrame } from "./ui/weatherscan/Lot8sFrame";
+import { PrecipLegend } from "./ui/scenes/PrecipLegend";
+import { CityTicker } from "./ui/weatherscan/CityTicker";
 import { AnnouncementRegion } from "./ui/semantic/AnnouncementRegion";
 import { ErrorBoundary } from "./ui/semantic/ErrorBoundary";
 import { HelpDialog } from "./ui/semantic/HelpDialog";
@@ -69,6 +71,9 @@ export default function App() {
   // scene it frames.
   const [chromeObs, setChromeObs] = useState<import("./core/types").Observation | null>(null);
   const [chromeStorms, setChromeStorms] = useState<import("./core/radar/StormTracker").TrackedStorm[]>([]);
+  /** Nearby markets for the Weatherscan city ticker. Ten-minute cache in
+   *  WeatherService, so this poll is cheap despite costing six requests. */
+  const [tickerCities, setTickerCities] = useState<import("./core/types").NearbyObservation[]>([]);
   const startedRef = useRef(false);
   const audioStartedRef = useRef(false);
   /** The audio-unlock routine, exposed so a known-good user gesture (the
@@ -247,6 +252,16 @@ export default function App() {
       // the reading the scene shows rather than one poll behind it.
       if (obs.status === "fulfilled") setChromeObs(obs.value ?? null);
       await services.scheduler.refreshCurrent();
+
+      // The city ticker, on the same tick but not the same cadence: this call
+      // costs six HTTP requests, so WeatherService holds it for ten minutes
+      // and the extra calls here are cache hits. Deliberately last and
+      // unawaited by the scene refresh — a slow station must not delay the
+      // numbers on screen.
+      void services.weather
+        .getNearbyObservations(home)
+        .then((cities) => { if (!stopped) setTickerCities(cities); })
+        .catch(() => { /* the strip just keeps its last list */ });
     };
     void refresh();
     const id = setInterval(() => void refresh(), REFRESH_MS);
@@ -890,6 +905,16 @@ export default function App() {
             />
           ) : undefined
         }
+        cityTicker={
+          // Weatherscan V2's bottom strip. Only when there is something to
+          // show — an empty crawl reads as "no conditions anywhere" rather
+          // than "still loading".
+          getDevice(activeThemeId).capabilities.lbar &&
+          viewMode === "scenes" &&
+          tickerCities.length > 0
+            ? <CityTicker cities={tickerCities} />
+            : undefined
+        }
         footer={
           // WeatherStar 4000 v2 only. Same exclusion as the L-bar: the two
           // full-screen modes own the whole frame.
@@ -914,6 +939,14 @@ export default function App() {
               )
             : undefined
         }
+        {...(getDevice(activeThemeId).capabilities.radarRedesign &&
+             viewMode === "scenes" &&
+             event.scene?.id === "radar"
+          // The v2 radar swapped the orange parallelogram for a taller pink
+          // one carrying the PRECIP ramp. Header chrome, not scene content —
+          // the capture puts the ramp inside the band.
+          ? { headerVariant: "radar" as const, headerExtra: <PrecipLegend /> }
+          : {})}
       >
         {viewMode === "places" ? (
           <PlacesMode

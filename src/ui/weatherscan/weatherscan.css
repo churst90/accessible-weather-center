@@ -2311,3 +2311,158 @@ body[data-theme="intellistar2"] .ws-frame.ws-windowed > .ws-ldl {
   height: clamp(14px, 1.8vw, 28px);
   border: 2px solid #000;
 }
+
+/* ============================================================
+   WeatherStar 4000 v2 — the skewed header parallelogram
+   ------------------------------------------------------------
+   A full-width band whose RIGHT END is cut on a diagonal; the
+   left edge runs to x=0 on every row, so this is a clip-path,
+   not a skewX on the element.
+
+   Measured by least-squares fit of the right edge against y,
+   then extrapolated to the band's own top and bottom rows.
+   Three independent orange captures agree to a tenth of a
+   percent:
+
+     Current Conditions   83.86% -> 71.29%
+     Latest Observations  83.89% -> 71.17%
+     Travel Cities        (same fit, same slope)
+     band height          16.09 / 16.02 / 16.0 % of frame
+
+   The radar's pink band is the same diagonal carried further
+   up — its bottom endpoint lands within 1.5% of the orange
+   one, and it is taller because it holds the PRECIP ramp:
+
+     Local Radar          88.9% -> 72.7%,  height 24.06%
+
+   Colour ramps sampled down the left edge, averaged across 10
+   pixels per row to beat JPEG noise. Note they differ in kind:
+   orange darkens monotonically, pink is a symmetric V that
+   returns to full brightness at the bottom.
+   ============================================================ */
+
+body[data-theme="ws4000-v2"] .ws-header {
+  position: relative;
+  background: transparent;
+  border-bottom: none;
+  min-height: 16%;
+  align-items: center;
+  padding: 0 24px;
+}
+
+body[data-theme="ws4000-v2"] .ws-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  clip-path: polygon(0 0, 83.9% 0, 71.2% 100%, 0 100%);
+  background: linear-gradient(
+    180deg,
+    #dc843a 0%,   #f58200 12.5%, #dd6808 25%,   #bf6108 37.5%,
+    #b05818 50%,  #a65623 62.5%, #924929 75%,   #884626 87.5%,
+    #7a391c 100%
+  );
+}
+
+/* Everything in the header sits above the band. */
+body[data-theme="ws4000-v2"] .ws-header > * { position: relative; z-index: 1; }
+
+/* The radar treatment: pink, taller, and carrying the ramp. */
+body[data-theme="ws4000-v2"] .ws-header[data-variant="radar"] {
+  min-height: 24%;
+}
+
+body[data-theme="ws4000-v2"] .ws-header[data-variant="radar"]::before {
+  clip-path: polygon(0 0, 88.9% 0, 72.7% 100%, 0 100%);
+  background: linear-gradient(
+    180deg,
+    #f08ef4 0%,   #fa8aeb 12.5%, #f587e6 25%,   #b959a1 37.5%,
+    #83395c 50%,  #632635 62.5%, #9e4f78 75%,   #d269be 87.5%,
+    #f38fe5 100%
+  );
+}
+
+/* In the header the ramp stacks its two rows the way the capture does:
+   PRECIP over the swatch row, with Incomplete Data beneath. */
+body[data-theme="ws4000-v2"] .ws-header .ws4000-precip {
+  margin: 0 auto 0 0;
+  padding-left: 3vw;
+  max-width: 60%;
+}
+
+/* ============================================================
+   Weatherscan city ticker
+   ------------------------------------------------------------
+   products/ext/ticker/CityTicker.rs, twc_wxscan_dynamic-2.13:
+
+     tickerWidth  = 496   tickerHeight = 19   (config fallbacks)
+     step         = 2.8   px per frame        (crawl rate)
+     tab font     Interstate-BoldCondensed 16pt, uppercase
+     tab colours  text rgb(20,20,20) on rgb(53,53,53)
+
+   The 496 width is already expressed by the L-bar grid: the
+   strip occupies the "strip" area, which is the 496 column.
+   ============================================================ */
+
+.ws-city-ticker {
+  display: flex;
+  align-items: stretch;
+  min-height: 3.9%;          /* 19 of 486 */
+  background: rgb(53, 53, 53);
+  overflow: hidden;
+  font-family: "Interstate", "Interstate Condensed", "Helvetica Neue", Arial, sans-serif;
+  font-stretch: condensed;
+}
+
+.ws-city-ticker-tab {
+  display: flex;
+  align-items: center;
+  padding: 0 0.8vw;
+  background: rgb(20, 20, 20);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: clamp(10px, 1.1vw, 15px);
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+.ws-city-ticker-track {
+  position: relative;
+  flex: 1 1 auto;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+
+.ws-city-ticker-run {
+  display: flex;
+  flex: 0 0 auto;
+  white-space: nowrap;
+  will-change: transform;
+  animation-name: ws-city-ticker-scroll;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.ws-city-ticker-stop {
+  padding: 0 1.6vw;
+  color: #f0f0f0;
+  font-size: clamp(10px, 1.1vw, 15px);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* Two copies of the list sit side by side, so translating by exactly half
+   the track returns to an identical frame and the loop has no seam. */
+@keyframes ws-city-ticker-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+/* Reduced motion: stop the crawl and show what fits. The sr-only list
+   already carried every city, so nothing is lost by freezing it. */
+@media (prefers-reduced-motion: reduce) {
+  .ws-city-ticker-run { animation: none; }
+  .ws-city-ticker-stop:nth-child(n + 4) { display: none; }
+}

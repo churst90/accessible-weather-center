@@ -36,6 +36,20 @@ interface Props {
    * wrapper is — it hands over the children and gets a tree back.
    */
   windowed?: (scene: ReactNode) => ReactNode;
+  /**
+   * Which header treatment to paint. The WeatherStar 4000 v2 ran a
+   * pink/magenta parallelogram on the radar and orange everywhere else, and
+   * the pink one is taller because it carries the PRECIP ramp.
+   */
+  headerVariant?: "radar";
+  /** Extra chrome inside the header band — the PRECIP ramp lives here. */
+  headerExtra?: ReactNode;
+  /**
+   * The Weatherscan city ticker for the bottom strip. Ranks below a severe
+   * crawl and above the LDL: the real V2 ran the ticker as its default
+   * bottom content, and an emergency has to be able to take the slot.
+   */
+  cityTicker?: ReactNode;
 }
 
 /**
@@ -50,7 +64,7 @@ interface Props {
  * Decorative elements (clock, bug, alert banner emoji) are aria-hidden —
  * the announcer is the source of truth for assistive tech.
  */
-export function WeatherscanFrame({ sceneTitle, alertCount, children, statusHint, severeInterrupt, tickerText, themeId, faa, ldlIconName, lbar, footer, windowed }: Props) {
+export function WeatherscanFrame({ sceneTitle, alertCount, children, statusHint, severeInterrupt, tickerText, themeId, faa, ldlIconName, lbar, footer, windowed, headerVariant, headerExtra, cityTicker }: Props) {
   // LDL (Lower Display Line) crawl — shown on every TWC era that historically ran a
   // persistent bottom crawl: Weatherscan (1999+), WeatherStar XL (post-2005),
   // IntelliStar 1 (2003+), and IntelliStar 2 HD / Jr HD (2013+). WS4000-era
@@ -80,7 +94,7 @@ export function WeatherscanFrame({ sceneTitle, alertCount, children, statusHint,
 
   return (
     <div className={`ws-frame${severeInterrupt ? " ws-severe" : ""}${lbar ? " ws-lbar" : ""}${windowed ? " ws-windowed" : ""}`}>
-      <header className="ws-header">
+      <header className="ws-header" data-variant={headerVariant}>
         {twcLogoShown && (
           <img
             className="ws-twc-logo"
@@ -90,6 +104,7 @@ export function WeatherscanFrame({ sceneTitle, alertCount, children, statusHint,
           />
         )}
         <h1 className="ws-title">Accessible Weather Center</h1>
+        {headerExtra}
         <div className="ws-clock" aria-hidden="true">{time}</div>
       </header>
       {alertCount > 0 && (
@@ -125,6 +140,8 @@ export function WeatherscanFrame({ sceneTitle, alertCount, children, statusHint,
             {tickerText.split("  ///  ").map((line, i) => <li key={i}>{line}</li>)}
           </ul>
         </div>
+      ) : cityTicker ? (
+        cityTicker
       ) : showLdl ? (
         <LdlCrawl faa={faa!} leadItems={[`${sceneTitle.toUpperCase()}`]} leadIconName={ldlIconName} />
       ) : footer ? (

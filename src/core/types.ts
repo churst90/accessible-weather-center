@@ -69,6 +69,22 @@ export interface Observation {
 /** Barometer direction, as the WeatherStar's arrow glyph showed it. */
 export type PressureTrend = "rising" | "falling" | "steady";
 
+/**
+ * One stop on the Weatherscan city ticker: a nearby market's conditions.
+ *
+ * Deliberately thinner than `Observation` — the ticker showed a name, a
+ * temperature and a sky, and nothing that is not on screen should be fetched
+ * and held. Callers can rely on `name` and `temperatureF` being present;
+ * entries missing either are dropped at the source.
+ */
+export interface NearbyObservation {
+  name: string | null;
+  temperatureF: number | null;
+  conditionText: string | null;
+  windSpeedMph: number | null;
+  windDirDeg: number | null;
+}
+
 export interface ForecastPeriod {
   startTime: Date;
   endTime: Date;

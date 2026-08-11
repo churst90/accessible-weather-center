@@ -70,7 +70,7 @@ current rendering and a faithful one.
 - **Voice:** allan-jackson
 - **Product era:** post-2004
 - **Extended forecast:** 3-day
-- **Capabilities:** footer, icons, radar, narration
+- **Capabilities:** footer, icons, radar, narration, radarRedesign
 - **Rotation (10):** current → localforecast → extended → radar → almanac → travel → hourly → detailed → feelslike → alerts
 - **Optional packages:** `hourly`, `detailed`, `feelslike`
 - **Never had:**
@@ -81,7 +81,7 @@ current rendering and a faithful one.
 - The footer's month-to-date precipitation stop is not rendered. "May Precipitation: 1.20 in" is one of the four confirmed strings, but nothing in the app knows that number — not the observation, not the almanac — and printing a plausible decimal would be inventing a measurement. Needs a precipitation feed.
 - The footer's wind and pressure stops are extrapolated from the v2 Current Conditions field set, not from a capture. Its dwell time (5s here) is a guess: the four captures are a minute apart.
 - The radar basemap is CARTO positron, the closest available light tile set. The real one had pale-blue water, black coastlines and red state borders; positron is grey-on-white with no state emphasis.
-- The radar header keeps the standard frame chrome. The real v2 radar had a pink/magenta skewed header — the same parallelogram as the orange one, recoloured — and no footer bar, the map running full-bleed beneath it.
+- The v2 radar ran its map full-bleed with no footer bar beneath it; here the footer stays on every scene. Whether the bar was suppressed only on radar or on other full-map products too is not settled by the four captures.
 
 ## WeatherStar XL
 
@@ -142,7 +142,7 @@ current rendering and a faithful one.
 **Outstanding work**
 
 - L-bar row heights are a design choice, not a measurement: setupLayers.rs reads every viewport rectangle from headend config (`dsm.configGet('viewports')`) that never shipped inside the package. Only the 224/496 column split and the 19px ticker row are sourced.
-- The bottom strip runs the alert crawl or the LDL. The real V2 ran a city ticker there — nearby markets' conditions on rotating tabs, Interstate BoldCondensed 16pt, crawl step 2.8px/frame (products/ext/ticker/CityTicker.rs). Needs regional observations the app does not fetch yet.
+- The city ticker's cities are the nearest NWS reporting stations, not a curated market list. The real unit read its list from headend config (dsm.defaultedConfigGet('CityTicker').playlist), which names products rather than places, so the original list is not recoverable from the package.
 - The clock lives in the shared frame header over the main panel. The real V2 stacked date and clock (with seconds) under the wordmark at the top of the L-bar column. Moving it would mean a per-device header, which no other machine needs yet.
 - Bottom-left of the column carried the cable provider's logo beneath the radar. Not rendered — there is no provider concept in the app.
 - Same missing activity-pack scenes as V1.

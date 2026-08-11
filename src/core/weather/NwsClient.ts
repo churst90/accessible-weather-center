@@ -4,6 +4,7 @@ import type {
   LatLon,
   LocationInfo,
   NwsGridpoint,
+  NearbyObservation,
   Observation,
   WeatherAlert,
   AlertSeverity,
@@ -196,6 +197,47 @@ export class NwsClient {
     };
   }
 
+  /**
+   * Conditions at the nearest reporting stations — the Weatherscan city
+   * ticker, and the WeatherStar's Latest Observations page.
+   *
+   * The gridpoint's station list is already ordered by proximity, so "nearby
+   * markets" is just the first few entries. Stations that fail or have no
+   * temperature are dropped rather than shown blank: the ticker is a crawl,
+   * so a missing city is one fewer stop, where an empty one is a claim that
+   * somewhere reported nothing.
+   *
+   * `limit` is a request budget as much as a length — this is `limit` HTTP
+   * calls, so callers should cache hard. WeatherService gives it ten minutes.
+   */
+  async getNearbyObservations(
+    grid: NwsGridpoint,
+    limit: number
+  ): Promise<NearbyObservation[]> {
+    if (limit <= 0) return [];
+    const stations = await this.get<NwsStationListResponse>(grid.observationStationsUrl);
+    const wanted = stations.features.slice(0, limit);
+
+    const settled = await Promise.allSettled(
+      wanted.map(async (station) => {
+        const obs = await this.get<NwsObservationResponse>(`${station.id}/observations/latest`);
+        const p = obs.properties;
+        return {
+          name: cityName(station.properties?.name) ?? station.properties?.stationIdentifier ?? null,
+          temperatureF: cToF(p.temperature?.value),
+          conditionText: p.textDescription ?? null,
+          windSpeedMph: kmhToMph(p.windSpeed?.value),
+          windDirDeg: p.windDirection?.value ?? null
+        };
+      })
+    );
+
+    return settled
+      .filter((r): r is PromiseFulfilledResult<NearbyObservation> => r.status === "fulfilled")
+      .map((r) => r.value)
+      .filter((o) => o.name !== null && o.temperatureF !== null);
+  }
+
   async getActiveAlerts(coord: LatLon): Promise<WeatherAlert[]> {
     const url = `${this.base}/alerts/active?point=${coord.lat.toFixed(4)},${coord.lon.toFixed(4)}`;
     const json = await this.get<NwsAlertsResponse>(url);
@@ -273,6 +315,31 @@ function ceilingFrom(
 /** Exposed for tests. The rule is fiddly enough to be worth pinning directly
  *  rather than through a whole mocked observation response. */
 export { ceilingFrom as __test_ceilingFrom };
+
+/**
+ * Turn an NWS station name into something a ticker can show.
+ *
+ * Station names are facility names — "Bellingham International Airport",
+ * "Olympia, Olympia Regional Airport", "Seattle, Seattle-Tacoma
+ * International Airport". A city ticker wants the city. Strip the common
+ * facility tails and take what is left; if that empties the string, keep the
+ * original rather than showing a blank tab.
+ */
+export function cityName(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  // "Olympia, Olympia Regional Airport" -> the part before the comma is
+  // already the city, and NWS uses it consistently when it is present.
+  const beforeComma = raw.split(",")[0].trim();
+  const candidate = beforeComma || raw;
+  const trimmed = candidate
+    .replace(/\b(international|regional|municipal|county|memorial|field|airport|airpark|air\s+park|air\s+force\s+base|afb|naval\s+air\s+station|nas|heliport)\b/gi, "")
+    .replace(/\s{2,}/g, " ")
+    .replace(/[\s/-]+$/, "")
+    .trim();
+  return trimmed || candidate || null;
+}
+
+export { cityName as __test_cityName };
 
 /** Extract county name from NWS county zone URL, e.g.
  *  "https://api.weather.gov/zones/county/TNC059" → fetch the zone and grab the name.
@@ -353,7 +420,15 @@ interface NwsForecastResponse {
 }
 
 interface NwsStationListResponse {
-  features: Array<{ id: string }>;
+  features: Array<{
+    id: string;
+    properties?: {
+      /** Human name, e.g. "Bellingham International Airport". */
+      name?: string | null;
+      /** ICAO-ish code, e.g. "KBLI". */
+      stationIdentifier?: string | null;
+    } | null;
+  }>;
 }
 
 interface NwsObservationResponse {
