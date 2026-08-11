@@ -15,6 +15,10 @@ Each machine now declares itself in `src/devices/profiles/<id>.ts`: era, voice, 
 - [ ] **Loading / "not available" screens in period fonts.** Settings lists absent products, but a scene-level notice in each unit's own typography is not built.
 - [ ] **Local sponsor slot.** `sponsorSlot` capability is declared for the Weatherscan and IntelliStar profiles; nothing consumes it yet. See the discussion note in the commit for options.
 
+## Test harness
+
+- [x] **The suite could silently shrink.** `npm test` ran all 29 bundles in one `node --test` invocation with `--test-force-exit`. That flag is load-bearing — happy-dom's window, the frame clock's 1s interval and the radar animation timers keep handles open, so without it the run never terminates — but it exits "once all *known* tests have finished", and with files running in parallel that set drains while the slowest file is still going. Measured over eight runs of an unchanged tree: four reported 244 tests, four reported 234, and **every one of them exited 0**. The missing ten were always the last ten declared in `devices.test.ts`. Fixed with `--test-concurrency=1` (2.7s → 7s, 17/17 clean runs), plus a backstop: a junit reporter writes per-testcase `file=` attributes and the runner fails if any file reports fewer tests than it declares. The fix is a workaround for runner behaviour that a Node upgrade could change; the backstop is what notices if it does.
+
 ## Narration period accuracy
 
 Source for the dates below: the IntelliStar timeline in `docs/reference/is1/handwiki/page.html`, September 2004 — *"36 Hour Forecast" is renamed "Local Forecast"… The hour-by-hour forecast, referred to as "Daily Planner" is now renamed the "Daypart Forecast"*.
@@ -215,7 +219,7 @@ All ten confirmed silent-failure bugs from `docs/code-audit-2026-08.md` fixed, p
 - [ ] **IS2 HD LOT8s frame component** — need full-frame still showing main-window + sidebar-dial + rundown + LDL.
 - [ ] **IS2 Jr LDL branching** — need national-programming still to confirm "LDL off during national" delta.
 - [ ] **Alert chrome per era** — brown/red (WS3000/WSJr), brown advisory / red warning (IS1), red/yellow/orange left-box (IS2).
-- [ ] **Weatherscan V2 L-bar layout** — persistent left column (logo/obs/radar) + bottom horizontal strip.
+- [x] **Weatherscan V2 L-bar layout** — persistent left column (logo/obs/radar) + bottom horizontal strip. Built in `src/ui/weatherscan/WeatherscanLBar.tsx`, gated on `capabilities.lbar`. The 224/496 split is measured from `CityTicker.rs` and `LocalDoppler.prod` (they sum to the 720px raster); row heights are ours, because `setupLayers.rs` reads them from headend config that never shipped. Remaining: the bottom strip runs the alert crawl / LDL rather than the real city ticker, which needs regional observations the app does not fetch.
 
 ### Cross-cutting
 - [ ] **Era-tuned CSS for `.ws-hero` / `.ws-feels` / `.ws-trend` / `.ws-almanac` / `.ws-travel` / `.ws-narrative`.**

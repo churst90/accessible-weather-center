@@ -18,6 +18,12 @@ interface Props {
   /** Condition key for the current observation — drives the small weather
    *  icon shown next to the LDL section label. */
   ldlIconName?: string;
+  /**
+   * The Weatherscan V2 left column, when the active machine declares one.
+   * Passing it switches the frame from a vertical flex flow to the measured
+   * 224/496 grid; omitting it leaves every other machine exactly as it was.
+   */
+  lbar?: ReactNode;
 }
 
 /**
@@ -32,7 +38,7 @@ interface Props {
  * Decorative elements (clock, bug, alert banner emoji) are aria-hidden —
  * the announcer is the source of truth for assistive tech.
  */
-export function WeatherscanFrame({ sceneTitle, alertCount, children, statusHint, severeInterrupt, tickerText, themeId, faa, ldlIconName }: Props) {
+export function WeatherscanFrame({ sceneTitle, alertCount, children, statusHint, severeInterrupt, tickerText, themeId, faa, ldlIconName, lbar }: Props) {
   // LDL (Lower Display Line) crawl — shown on every TWC era that historically ran a
   // persistent bottom crawl: Weatherscan (1999+), WeatherStar XL (post-2005),
   // IntelliStar 1 (2003+), and IntelliStar 2 HD / Jr HD (2013+). WS4000-era
@@ -61,7 +67,7 @@ export function WeatherscanFrame({ sceneTitle, alertCount, children, statusHint,
   const intellistarBugShown = !!themeId && ["intellistar1", "intellistar2"].includes(themeId);
 
   return (
-    <div className={`ws-frame${severeInterrupt ? " ws-severe" : ""}`}>
+    <div className={`ws-frame${severeInterrupt ? " ws-severe" : ""}${lbar ? " ws-lbar" : ""}`}>
       <header className="ws-header">
         {twcLogoShown && (
           <img
@@ -97,6 +103,9 @@ export function WeatherscanFrame({ sceneTitle, alertCount, children, statusHint,
           <div className="ws-bug" aria-hidden="true">AWC · LIVE</div>
         )}
       </main>
+      {/* After the stage in the DOM, painted to its left by the grid. Browse
+          mode should reach the scene before the persistent sidebar. */}
+      {lbar}
       {severeInterrupt && tickerText ? (
         <div className="ws-ticker" role="region" aria-label="Severe weather alert crawl">
           <div className="ws-ticker-content" aria-hidden="true">{tickerText}</div>

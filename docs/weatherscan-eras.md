@@ -86,7 +86,7 @@ Severe: NWS alerts/bulletins with orange takeover.
 
 ---
 
-## Era 3 — Weatherscan L-bar (Sept 27 2005 – Dec 12 2022)  — ✓ theme shipped, L-bar layout pending
+## Era 3 — Weatherscan L-bar (Sept 27 2005 – Dec 12 2022)  — ✓ theme shipped, ✓ L-bar layout shipped
 
 **Platform:** IntelliStar, proprietary Weatherscan configuration.
 **Music:** In-house production music, **33 tracks**, fixed to not skip, remastered in stereo.
@@ -102,6 +102,57 @@ The L-bar is the signature of this era. The screen is divided into a left vertic
 | Bottom-left | Compact 3-hour radar loop + cable-provider logo |
 | Upper-right (main panel) | The rotating scene content — the 5-day, hourly, almanac, travel, etc. lives here |
 | Bottom (horizontal strip) | Alternates between: condensed text forecast for current + next daypart, a graphical daypart forecast, and a graphical 5-day forecast. Crawl for airport delays and local observations underneath. |
+
+### Where the geometry came from
+
+Built in `src/ui/weatherscan/WeatherscanLBar.tsx`. The column width is not
+eyeballed from a screen capture — it falls out of two of TWC's own render
+scripts in `twc_wxscan_dynamic-2.13`, which do not reference each other:
+
+| Source | Value |
+|---|---|
+| `products/ext/ticker/CityTicker.rs` | `tickerWidth = 496`, `tickerHeight = 19` — hardcoded fallbacks for when the headend config has no `ticker` viewport |
+| `products/pm/Radar/LocalDoppler.prod` | `renderUtil.gradientBox(224, 19)` — the radar legend, drawn inside the `radar` viewport |
+
+**224 + 496 = 720**, the NTSC raster width exactly. The left column is 224px,
+everything right of it is 496px, and the ticker is 496 wide precisely because
+it spans the main panel and stops where the column starts. The app expresses
+this as `grid-template-columns: 224fr 496fr` so the *ratio* survives any
+window size — the ratio is what was measured, the pixel count is not.
+
+Row heights are **not** sourced and are not presented as though they were.
+`products/misc/setupLayers.rs` reads every viewport rectangle out of
+`dsm.configGet('viewports')`, headend configuration that never shipped inside
+the package:
+
+```python
+layers = dsm.configGet('viewports')
+name, depth, repeat, x, y, w, h, sx, sy, tx, ty = lprops
+RenderControl.queueCommand(SetNamedLayerViewPortCmd(name, x, y, w, h, sx, sy, tx, ty))
+```
+
+The `sx, sy` scale parameters are also why the main-panel products still use
+full-frame coordinates internally (`CurrentConditions.prod` places content at
+x=72 on a 720-wide layout): each product draws at IntelliStar size into its
+own layer, and the layer is scaled down into the window. A coordinate read out
+of a `.prod` file is local to its layer, not global to the screen.
+
+### Accessibility of a permanent sidebar
+
+Persistent chrome is a hazard in a screen-reader-first application, so the
+column is bound by three rules, all covered by `tests/lbar.test.tsx`:
+
+1. **No `aria-live` anywhere in the subtree.** The observations refresh every
+   60 seconds; a live region there would interrupt every scene narration in
+   the app with a temperature.
+2. **No tab stops.** Tab changes scenes. The column is a labelled
+   `complementary` landmark, reached by landmark navigation or browse mode.
+3. **The radar canvas is `aria-hidden`** with a one-line text summary beside
+   it. Storms are enumerated in the Local Doppler scene and nowhere else, so
+   the two readouts cannot drift apart by a scan.
+
+The column is written *after* the stage in the DOM and placed left by the
+grid, so browse mode reaches the scene before the sidebar.
 
 ### Backgrounds
 - Same cityscape skyline set as Era 2, with the wordmark treatment retained

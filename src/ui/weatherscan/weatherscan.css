@@ -1918,3 +1918,153 @@ body[data-theme="wsjr"] .ws-hero-icon {
 @media (prefers-reduced-motion: reduce) {
   .ws-startup-splash-mark { animation: none; }
 }
+
+/* ============================================================
+   Weatherscan V2 L-bar
+   ------------------------------------------------------------
+   The 224 / 496 split is measured from TWC's own render scripts
+   (CityTicker.rs tickerWidth=496, LocalDoppler.prod's 224-wide
+   radar legend box; 224+496 = the 720px NTSC raster). Expressed
+   as fr units so the ratio survives any window size — the ratio
+   is the sourced fact, the pixel count is not.
+
+   Row heights are ours: setupLayers.rs reads them from headend
+   config that never shipped in the package. See the header
+   comment in WeatherscanLBar.tsx.
+   ============================================================ */
+
+.ws-frame.ws-lbar {
+  display: grid;
+  grid-template-columns: 224fr 496fr;
+  grid-template-rows: auto auto 1fr auto;
+  /* The column reaches the top. On the real unit the L ran the full height of
+     the left side and the main window carried its own header inside the
+     panel — there was no full-width bar above the logo. So the header spans
+     the 496 panel column only, and "column" occupies every row. */
+  grid-template-areas:
+    "column header"
+    "column banner"
+    "column stage"
+    "column strip";
+}
+
+.ws-frame.ws-lbar > .ws-header       { grid-area: header; }
+.ws-frame.ws-lbar > .ws-alert-banner { grid-area: banner; }
+.ws-frame.ws-lbar > .ws-stage        { grid-area: stage; min-height: 0; overflow: auto; }
+.ws-frame.ws-lbar > .ws-lbar-col     { grid-area: column; }
+.ws-frame.ws-lbar > .ws-ticker,
+.ws-frame.ws-lbar > .ws-status-bar,
+.ws-frame.ws-lbar > .ws-ldl          { grid-area: strip; }
+
+/* Named areas place every child explicitly, so DOM order is free. The stage
+   is written first in the markup and the column after it: browse mode then
+   reaches the scene before the sidebar, while the grid still paints the
+   sidebar on the left. With no alert banner the "banner" row sizes to zero
+   and the column spans the gap without any special case. */
+
+.ws-lbar-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 10px;
+  min-width: 0;
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.62) 0%, rgba(0, 0, 0, 0.78) 100%);
+  border-right: 2px solid var(--ws-accent);
+}
+
+.ws-lbar-logo {
+  font-family: var(--ws-font-display);
+  font-weight: 800;
+  font-size: clamp(11px, 1.5vw, 17px);
+  letter-spacing: 0.14em;
+  color: var(--ws-accent);
+  text-align: center;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.ws-lbar-place {
+  margin: 0 0 2px;
+  font-size: clamp(11px, 1.15vw, 15px);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--ws-text);
+}
+
+.ws-lbar-temp {
+  margin: 0;
+  font-family: var(--ws-font-led);
+  line-height: 1;
+  color: var(--ws-led);
+}
+
+.ws-lbar-temp-num { font-size: clamp(34px, 5.2vw, 68px); font-weight: 700; }
+.ws-lbar-temp-deg { font-size: clamp(20px, 2.6vw, 34px); vertical-align: super; }
+
+.ws-lbar-cond {
+  margin: 2px 0 6px;
+  font-size: clamp(11px, 1.1vw, 15px);
+  color: var(--ws-text);
+}
+
+.ws-lbar-facts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 8px;
+  margin: 0;
+  font-size: clamp(10px, 0.95vw, 13px);
+}
+
+.ws-lbar-facts dt { color: var(--ws-text-dim); }
+.ws-lbar-facts dd { margin: 0; text-align: right; color: var(--ws-text); font-family: var(--ws-font-led); }
+
+.ws-lbar-radar {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 0;
+}
+
+.ws-lbar-radar-canvas {
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  overflow: hidden;
+}
+
+/* The legend row under the radar is 224x19 in the render scripts — the full
+   column width by a single text line. Kept proportional rather than pinned. */
+.ws-lbar-radar-note {
+  margin: 0;
+  font-size: clamp(9px, 0.85vw, 12px);
+  line-height: 1.3;
+  color: var(--ws-text-dim);
+}
+
+/* Narrow windows cannot carry a 224/496 split and a readable main panel at
+   the same time. Below this the column folds above the stage and the frame
+   goes back to a single flow, which is what the hardware could never do and
+   the browser must. */
+@media (max-width: 900px) {
+  .ws-frame.ws-lbar {
+    display: flex;
+    flex-direction: column;
+  }
+  .ws-lbar-col {
+    /* The column is written after the stage in the markup so browse mode
+       reaches the scene first. The grid painted it left regardless; flex
+       obeys DOM order, so it needs pulling back above the stage explicitly.
+       `order` moves the box, not the accessibility tree, which is the
+       combination wanted here. */
+    order: -1;
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+    border-right: none;
+    border-bottom: 2px solid var(--ws-accent);
+  }
+  .ws-lbar-logo, .ws-lbar-radar { display: none; }
+  .ws-lbar-facts { grid-template-columns: repeat(4, auto 1fr); }
+}

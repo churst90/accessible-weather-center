@@ -264,7 +264,11 @@ They are not equally complete. Some are finished reconstructions; others are cor
 
 **Weatherscan V1 (2003–2005)** — first era on the IntelliStar platform. City-skyline backgrounds with the "weatherscan" wordmark in blue Frutiger, and colour-coded arc-side curves per segment: yellow for local forecast, orange traffic, blue travel and airport, green garden and golf, teal health, purple ski. The 15-track in-house jazz catalogue, with Amy Bargeron as the voice.
 
-**Weatherscan V2 L-bar (2005–2022)** — the final redesign, and the one most people remember from the shutdown. Interstate Bold in the outer chrome, Frutiger retained inside the content panel, the same skylines and segment accents, and the 33-track remastered stereo jazz catalogue. *Status: the defining L-bar layout — persistent left column with logo, observations and radar, plus a bottom horizontal strip — is not yet built. V2 currently renders in the standard frame, distinguished from V1 by typography and palette only.*
+**Weatherscan V2 L-bar (2005–2022)** — the final redesign, and the one most people remember from the shutdown. Interstate Bold in the outer chrome, Frutiger retained inside the content panel, the same skylines and segment accents, and the 33-track remastered stereo jazz catalogue. This is the only machine that renders in a different *shape* rather than just a different palette: a permanent left column carries the logo, the current observations and a long-range radar loop, and the scene content occupies a window to its right.
+
+The column never speaks. It is not in the tab order and it holds no live regions, so it cannot interrupt a scene narration — the observations simply change underneath you every minute. To read it, use your screen reader's landmark navigation (`D` in NVDA and JAWS) and look for the region called "L bar", or browse into it with the arrow keys in browse mode. Everything in it is also available as a full scene: Current Conditions for the observations, Local Doppler Radar for a storm-by-storm walk of the radar.
+
+On narrow windows the column folds to a horizontal band above the scene, since a 224/496 split leaves too little room for both halves to be readable.
 
 **IntelliStar 1 (2003–2013)** — black-to-navy gradient palette with muted gold accents, Interstate typography, and a pool of 254 city-gradient backgrounds that rotate between scenes. Jim Cantore's voice. *Status: icons and typography correct; several pre-2007 page layouts are still generic.*
 

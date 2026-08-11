@@ -43,6 +43,16 @@ interface Props {
   className?: string;
   /** If provided, highlights this location on the map. */
   highlightCoord?: LatLon | null;
+  /**
+   * Loop through the radar frames. Default true.
+   *
+   * Set false to draw only the newest frame and stop. The Weatherscan V2
+   * L-bar mounts this beside every scene rather than on one, so its loop
+   * would run for the whole session — and this component animates in
+   * JavaScript, where a `prefers-reduced-motion` media query does not reach
+   * it. The L-bar passes the user's preference in.
+   */
+  animate?: boolean;
 }
 
 const DEFAULT_ZOOM = 7;
@@ -58,7 +68,8 @@ export function RadarMapCanvas({
   zoom = DEFAULT_ZOOM,
   radarOpacity = 0.75,
   className,
-  highlightCoord
+  highlightCoord,
+  animate: shouldAnimate = true
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const cacheRef = useRef(new MapTileCache());
@@ -237,6 +248,15 @@ export function RadarMapCanvas({
       return;
     }
 
+    // Still, by request: draw the newest frame and stop. No timer is armed,
+    // so nothing reschedules — the map still updates when the manifest
+    // refreshes, it just does not sweep.
+    if (!shouldAnimate) {
+      frameIndexRef.current = frames.length - 1;
+      void drawFrame(frames.length - 1);
+      return;
+    }
+
     const idx = frameIndexRef.current % frames.length;
     void drawFrame(idx).then(() => {
       if (!mountedRef.current) return;
@@ -245,7 +265,7 @@ export function RadarMapCanvas({
       const delay = isLast ? LAST_FRAME_PAUSE_MS : FRAME_DELAY_MS;
       animTimerRef.current = setTimeout(animate, delay);
     });
-  }, [drawFrame, getFrames]);
+  }, [drawFrame, getFrames, shouldAnimate]);
 
   // Fetch manifest and preload tiles on mount / center change.
   useEffect(() => {

@@ -61,6 +61,13 @@ export interface DeviceCapabilities {
   ldl: boolean;
   /** Persistent contextual footer bar (WeatherStar 4000 v2 only). */
   footer: boolean;
+  /**
+   * The Weatherscan V2 L-bar: a persistent 224px left column carrying logo,
+   * observations and radar, with the main panel and ticker occupying the
+   * remaining 496px. Optional so the nine machines that never had one do not
+   * all have to declare `lbar: false`.
+   */
+  lbar?: boolean;
   /** Graphical weather icons. The 3000 and Jr were text-only. */
   icons: boolean;
   /** Can render radar on the unit at all. */

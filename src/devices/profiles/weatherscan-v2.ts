@@ -10,9 +10,12 @@ import type { Device } from "../types";
  * remastered-in-stereo in-house jazz catalogue. Amy Bargeron continued.
  *
  * The L-bar — a persistent left column carrying logo, observations and radar,
- * plus a bottom horizontal strip — is the defining layout of this era and is
- * NOT built. V2 currently renders in the standard frame, distinguished from
- * V1 by typography and palette only.
+ * plus a bottom horizontal strip — is the defining layout of this era, and it
+ * is now built (`src/ui/weatherscan/WeatherscanLBar.tsx`). The 224/496 column
+ * split is measured from TWC's own render scripts rather than eyeballed from
+ * a still: `products/ext/ticker/CityTicker.rs` falls back to a 496px ticker
+ * and `products/pm/Radar/LocalDoppler.prod` draws a 224px legend inside the
+ * 'radar' viewport, and those two add to the 720px NTSC raster exactly.
  */
 export const WEATHERSCAN_V2: Device = {
   id: "weatherscan-v2",
@@ -22,7 +25,7 @@ export const WEATHERSCAN_V2: Device = {
   voice: "amy-bargeron",
   musicTags: ["weatherscan-inhouse"],
   extendedDays: 7,
-  capabilities: { ldl: true, footer: false, icons: true, radar: true, narration: true, sponsorSlot: true },
+  capabilities: { ldl: true, footer: false, icons: true, radar: true, narration: true, sponsorSlot: true, lbar: true },
   rundown: ["current", "localforecast", "radar", "extended", "hourly", "travel", "almanac"],
   products: {
     current:       { availability: "core" },
@@ -59,8 +62,12 @@ export const WEATHERSCAN_V2: Device = {
     }
   },
   gaps: [
-    "THE L-BAR IS NOT BUILT. Persistent left column (logo / observations / radar) plus bottom horizontal strip — the defining layout of the era.",
-    "Needs a full-frame still showing the L-bar to lay out faithfully.",
+    // The L-bar itself is built. What is left is the part the render scripts
+    // could not answer, kept separate from the part they could.
+    "L-bar row heights are a design choice, not a measurement: setupLayers.rs reads every viewport rectangle from headend config (`dsm.configGet('viewports')`) that never shipped inside the package. Only the 224/496 column split and the 19px ticker row are sourced.",
+    "The bottom strip runs the alert crawl or the LDL. The real V2 ran a city ticker there — nearby markets' conditions on rotating tabs, Interstate BoldCondensed 16pt, crawl step 2.8px/frame (products/ext/ticker/CityTicker.rs). Needs regional observations the app does not fetch yet.",
+    "The clock lives in the shared frame header over the main panel. The real V2 stacked date and clock (with seconds) under the wordmark at the top of the L-bar column. Moving it would mean a per-device header, which no other machine needs yet.",
+    "Bottom-left of the column carried the cable provider's logo beneath the radar. Not rendered — there is no provider concept in the app.",
     "Same missing activity-pack scenes as V1."
   ]
 };
