@@ -26,7 +26,7 @@ This project is a deliberate attempt to build a weather experience that:
 
 | Platform | File | Notes |
 |----------|------|-------|
-| Windows | `.exe` installer, or `portable` | Unsigned — SmartScreen will warn about an unknown publisher. Choose "More info" → "Run anyway". |
+| Windows | `-setup.exe` to install, or `-portable.exe` to run in place | Unsigned — SmartScreen will warn about an unknown publisher. Choose "More info" → "Run anyway". |
 | macOS | `.dmg` (`x64` Intel / `arm64` Apple Silicon) | Unsigned and unnotarized. After copying to Applications, run:<br>`xattr -dr com.apple.quarantine "/Applications/Accessible Weather Center.app"` |
 | Linux | `.AppImage`, `.deb`, `.tar.gz` | AppImage: `chmod +x` then run. |
 

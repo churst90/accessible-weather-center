@@ -55,7 +55,13 @@ win:
       arch: [x64]
   artifactName: ${productName}-${version}-windows-${arch}.${ext}
 
+# Both Windows targets emit a .exe, so the shared `win.artifactName` above
+# gave them the same filename and the portable build silently overwrote the
+# installer — v0.13.0's first tag build shipped one Windows .exe that was the
+# portable, while the release notes advertised an installer. Per-target names
+# below; do not remove one without checking the other still disambiguates.
 nsis:
+  artifactName: ${productName}-${version}-windows-${arch}-setup.${ext}
   oneClick: false
   perMachine: false
   allowToChangeInstallationDirectory: true
@@ -63,6 +69,9 @@ nsis:
   createStartMenuShortcut: true
   # Screen-reader users should not have to hunt a silent installer.
   runAfterFinish: true
+
+portable:
+  artifactName: ${productName}-${version}-windows-${arch}-portable.${ext}
 
 mac:
   target:
