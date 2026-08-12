@@ -14,9 +14,44 @@ setClipReferenceTable(fullTable as never);
 
 const ROOT = path.resolve(import.meta.dirname, "..");
 
-/** Assert a resolved src actually exists in the library on disk. */
+/**
+ * Is the media library actually here?
+ *
+ * `assets/` is gitignored and ~1.3 GB, so it does not exist on a CI runner or
+ * in a fresh clone. These tests assert two separate things — that the schema
+ * resolves a clip at all, and that the resolved path exists on disk — and only
+ * the second needs the library. Without this guard the whole file fails on
+ * every machine that has not downloaded it, which is every machine but the
+ * author's.
+ *
+ * Same shape as the rest of the repo's asset-dependent checks:
+ * `clips:sweep:ci` runs `--table-only` and CI guards `check-asset-refs.mjs`
+ * the same way. Degrading, not skipping — the resolution assertions still run
+ * and still fail if the schema breaks. The notice is deliberately loud,
+ * because a quietly weakened test is worse than one that says so.
+ */
+const LIBRARY_PRESENT = fs.existsSync(path.join(ROOT, "assets", "shared", "narration"));
+if (!LIBRARY_PRESENT) {
+  console.warn(
+    "\n⚠ assets/shared/narration is absent — on-disk clip checks in " +
+      "precipAndAccumulation.test are degraded to resolution-only.\n" +
+      "  Run `npm run assets:fetch` to exercise them fully.\n"
+  );
+}
+
+/**
+ * Assert a resolved src actually exists in the library on disk.
+ *
+ * `src` is always checked for being a plausible library path, whether or not
+ * the library is installed — that part costs nothing and catches the class of
+ * bug that broke narration once already (paths silently drifting to the wrong
+ * extension). Only the `existsSync` needs the bytes.
+ */
 function assertOnDisk(src: string, label: string) {
   const rel = src.replace(/^\//, "");
+  assert.ok(rel.startsWith("assets/"), `${label}: not a library path — ${src}`);
+  assert.ok(/\.mp3$/.test(rel), `${label}: not an mp3 — ${src}`);
+  if (!LIBRARY_PRESENT) return;
   assert.ok(fs.existsSync(path.join(ROOT, rel)), `${label}: missing on disk — ${src}`);
 }
 
