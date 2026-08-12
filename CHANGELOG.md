@@ -2,9 +2,37 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased] — Phase 5: web prep
+## [0.13.0] — 2026-08-11
 
-Groundwork for `weather.codyhurst.com`. The app becomes location-agnostic, the asset library shrinks by 74%, and the two things a browser can't do that Electron could now route through a same-origin proxy.
+Phase 5 — web prep, plus the release hardening that makes the binaries worth shipping.
+
+Groundwork for `weather.codyhurst.com`: the app becomes location-agnostic, the asset library shrinks by 74%, and the two things a browser can't do that Electron could now route through a same-origin proxy. On top of that, the first pass over the packaging itself — the installers had no icon, the tray icon had never once rendered, and an uncaught exception in the main process killed the app in silence.
+
+**This is 0.13.0, not 1.0.** The engineering is in good shape — 336 tests, a clean typecheck, no production dependency vulnerabilities, and every Tier-1 finding from the August audit verified fixed in code. What's missing is not correctness but commitment: the Windows and macOS builds are unsigned and unnotarized, there is no auto-updater, two products (Almanac, Precip Outlook) still have no narrator who can announce them, and several declared-optional scenes have no renderer. 1.0 should mean a stranger can depend on this. Not yet.
+
+### Added
+
+#### Identity and packaging
+- **The app has a logo.** `build/icon.svg` — deep navy gradient, radar sweep and range rings, "AWC" set in Interstate Bold (the typeface Weatherscan and the IntelliStar actually used), over the six-step radar intensity ramp from `Palette.ts`. `build/icon-tray.svg` is the small-size variant with the rings, sweep and ramp stripped out, because below about 24 px all three collapse into noise around the letters. `npm run icons` rasterizes both via `scripts/build-icons.mjs`; outputs are committed so a fresh clone builds installers without librsvg.
+- **`icon: build/icon.png` in `electron-builder.yml`.** Named explicitly rather than relying on the `buildResources` convention, so a rename fails the build instead of silently reverting to the stock Electron icon. Until now `directories.buildResources` pointed at a `build/` directory that did not exist, and **every installer ever produced carried the default Electron icon** — on an unsigned download, that reads as malware.
+- **Main-process crash handlers.** `uncaughtException` writes a timestamped stack to `<userData>/logs/main-crash.log`, raises a critical notification naming that file, and exits. `unhandledRejection` logs without exiting, because in practice those are aborted fetches during shutdown. A tray app meant to run for days previously died with no window, no dialog and no sound — for a user relying on it for severe-weather alerts, it simply stopped existing.
+- **`npm run lint` runs, and CI enforces it.** `eslint`, `typescript-eslint` and `eslint-plugin-react-hooks` were never in `devDependencies`, so the script had been failing with `command not found` and `eslint.config.js` had gone unenforced since the day it was written. Now installed, pinned, wired into the `test` job, and green.
+
+### Fixed
+
+#### Packaging and process
+- **The tray icon had never rendered, in any build.** `electron/main.ts` looked for `<assets>/logos/app-icon-180.png`; the file is under `shared/logos/`. Worse, `nativeImage.createFromPath` returns an *empty image* for a missing path rather than throwing, so the `try`/`catch` around it never fired and the failure was completely silent. Worse still, even with the correct path it pointed into `assets/` — the 1.3 GB media library that installers deliberately do not bundle — so it could never have worked in a packaged build. The icon now ships in `public/`, which Vite copies into `dist/` and electron-builder packages, and the emptiness check is the `isEmpty()` the old catch block was reaching for.
+- **The version string was three releases stale.** `electron/main.ts` identified itself to weatherUSA's Icecast host as `AccessibleWeatherCenter/0.9.6`, and `src/bootstrap.ts` hardcoded its own copy for the NWS User-Agent — which NWS's terms ask to carry a real version. Both now derive from `package.json`: `app.getVersion()` in main, and an `__APP_VERSION__` define in `vite.config.ts` mirrored in `scripts/run-tests.mjs`.
+- **`package-lock.json` had been out of sync with `package.json` since happy-dom was added.** The DOM test harness landed in `devDependencies` without its 95 lines of lockfile entries, so `npm ci` refused to install at all — the DOM tests were unrunnable in any clean checkout or CI context — and every `npm install` regenerated the same diff for someone to discard by hand. The lockfile's own `version` field had also drifted to `0.1.0`. Both fixed; `npm install --package-lock-only` is now a no-op.
+- **Malformed percent-encoding in an asset URL rejected the protocol handler's promise** instead of returning a response, because `decodeURIComponent` sat outside the `try`. Returns 400 now.
+- **A symlink inside the media library could escape the containment check.** `path.resolve` collapses `..` lexically but does not follow links, and the library is user-installed content unpacked from a tarball. Both the target and the root are now `realpath`'d — the root too, because a 1.3 GB library is a very plausible thing to symlink onto a second drive, and resolving only the target would have 403'd that entire install.
+
+#### Housekeeping
+- `.asset-migration.json` (2.2 MB) and `.inbox-triage.json` were tracked in git. They are undo manifests for moves inside the gitignored media library — machine-local operational state, not source. Untracked and gitignored; kept on disk so `reorganize-assets.mjs --undo` still works.
+- `SettingsStore`'s header had claimed disk persistence via userData was still to do. It isn't: Chromium backs localStorage with a LevelDB store under userData in packaged builds, so settings already survive restarts on every platform.
+- The `electron-builder.yml` and CI comments explaining that `npm install -D` deadlocks on an ntfs3 mount are no longer true — the repo is on btrfs now, and this release added three devDependencies to prove it. Rewritten with the reason that still holds: electron-builder's ~200 release-only transitive packages don't belong in a contributor's test install.
+- `eslint.config.js` → `eslint.config.mjs`, silencing a `MODULE_TYPELESS_PACKAGE_JSON` warning on every lint run.
+- One real lint finding fixed (`prefer-const` on the NWR station list, where rebinding would have silently orphaned the `Proxy` that closes over it) and three warnings cleared.
 
 ### Added
 
@@ -20,7 +48,7 @@ Groundwork for `weather.codyhurst.com`. The app becomes location-agnostic, the a
 - **`docs/asset-pipeline.md`** — what was encoded, why those bitrates, and how to redo it.
 
 #### Binaries and distribution
-- **`electron-builder.yml` + `.github/workflows/build.yml`** — Windows (NSIS installer + portable), macOS (dmg + zip, x64 and arm64) and Linux (AppImage, deb, tar.gz) built in CI. Push a `v*` tag to build all three and draft a release. Builds are **unsigned** — no Apple Developer or Windows code-signing certificate — so Gatekeeper and SmartScreen will warn; the README documents what users need to do. electron-builder is fetched by `npx` rather than added to `devDependencies`, because installing new packages deadlocks on the ntfs3 mount this repo lives on.
+- **`electron-builder.yml` + `.github/workflows/build.yml`** — Windows (NSIS installer + portable), macOS (dmg + zip, x64 and arm64) and Linux (AppImage, deb, tar.gz) built in CI. Push a `v*` tag to build all three and draft a release. Builds are **unsigned** — no Apple Developer or Windows code-signing certificate — so Gatekeeper and SmartScreen will warn; the README documents what users need to do. electron-builder is fetched by `npx` rather than added to `devDependencies` — originally because installing new packages deadlocked on the ntfs3 mount the repo then lived on, and since then because its ~200 release-only transitive packages don't belong in a contributor's test install.
 - **Packaged Electron finally serves its own assets.** `electron/main.ts` registers an `awc-asset://app` scheme and loads the app from it instead of `file://`. Every media URL the renderer builds is root-relative (`/assets/...`) because that is what the web deployment needs; over `file://` those resolved against the filesystem root and 404'd everything. A scheme with a host gives `/` a meaning we control, so the same URLs work in Electron and the browser with no branching in the renderer. Requests are served through `net.fetch` so Range requests — and therefore audio seeking — work; path traversal is blocked; the media directory resolves from `AWC_ASSETS_DIR`, then userData, then resources, then the repo.
 - **`scripts/package-assets.mjs`** — packs the library into per-category tarballs with SHA-256 checksums and a manifest, sized for GitHub Releases (2 GB per file, unlimited files, no bandwidth charge). Splitting by category means someone who wants fonts and icons doesn't download 500 MB of music.
 - **`scripts/fetch-assets.mjs`** — downloads, verifies and unpacks the library into the app's data directory. Checksummed and resumable, so an interrupted 1.3 GB fetch picks up where it left off. `--list`, `--only`, `--app-data`, `--dest`.

@@ -44,6 +44,13 @@ desktop.ini
 assets/*
 !assets/.gitkeep
 
+# Undo manifests written by scripts/reorganize-assets.mjs. They describe moves
+# inside the gitignored media library, so they are machine-local operational
+# state, not source — and .asset-migration.json is 2.2 MB of it. Both were
+# tracked until v0.13.0. Kept on disk so `--undo` still works locally.
+.asset-migration.json
+.inbox-triage.json
+
 # Transcoder output (scripts/build-web-assets.mjs). Staging dir before it is
 # swapped in as `assets/`; also bulk media, also never committed.
 assets-web/

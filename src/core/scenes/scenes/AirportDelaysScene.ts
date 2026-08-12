@@ -46,7 +46,7 @@ export class AirportDelaysScene implements Scene<AirportDelaysData> {
         reason: "",
         fetchedAt: new Date(),
       };
-    } catch (err) {
+    } catch {
       data = {
         place: ctx.place,
         available: false,

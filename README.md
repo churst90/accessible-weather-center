@@ -2,7 +2,9 @@
 
 A fully accessible, speech- and keyboard-driven weather application with a Weatherscan-style cycling display. Designed accessibility-first: every visual is mirrored by a semantic narration so blind and low-vision users get the same information at the same fidelity as sighted users — including weather radar, which is normally inaccessible.
 
-> Status: **Phase 5 — web preparation (unreleased, on top of v0.12.0).** The app no longer assumes one hard-coded location: a required first-run dialog asks for your ZIP, and nothing is fetched or announced until you answer. The media library was re-encoded from 5.2 GB to 1.3 GB (narration to MP3, backgrounds to WebP) and verified file-by-file against the originals. NOAA Weather Radio now works in a browser via a same-origin reverse proxy, since the Icecast host sends no CORS headers. Packaged Electron builds finally serve their own assets through a custom `awc-asset://` scheme, and there is CI to build Windows/macOS/Linux installers. Deployment tooling for weather.codyhurst.com lives in `deploy/`. 65 unit tests. Prior: v0.12.0 — structural release; App.tsx slimmed to wiring/UI, alert polling became a tested service, scene views resolve through a `(theme, scene)` registry. v0.11.0 — no-built-in-TTS policy, announcement system rebuilt, modality gate, and the visual batch that finally loaded the Star4000 fonts and IntelliStar icons. See [CHANGELOG.md](CHANGELOG.md) and [docs/user-manual.md](docs/user-manual.md).
+> Status: **v0.13.0 — Phase 5 (web preparation) plus release hardening.** The app no longer assumes one hard-coded location: a required first-run dialog asks for your ZIP, and nothing is fetched or announced until you answer. The media library was re-encoded from 5.2 GB to 1.3 GB (narration to MP3, backgrounds to WebP) and verified file-by-file against the originals. NOAA Weather Radio now works in a browser via a same-origin reverse proxy, since the Icecast host sends no CORS headers. Packaged Electron builds serve their own assets through a custom `awc-asset://` scheme, and CI builds Windows/macOS/Linux installers. This release also gave the app a logo, fixed a tray icon that had never once rendered, and added main-process crash handling so a tray app meant to run for days can't die in silence. Deployment tooling for weather.codyhurst.com lives in `deploy/`. 336 unit tests. Prior: v0.12.0 — structural release; App.tsx slimmed to wiring/UI, alert polling became a tested service, scene views resolve through a `(theme, scene)` registry. v0.11.0 — no-built-in-TTS policy, announcement system rebuilt, modality gate, and the visual batch that finally loaded the Star4000 fonts and IntelliStar icons. See [CHANGELOG.md](CHANGELOG.md) and [docs/user-manual.md](docs/user-manual.md).
+>
+> **Not 1.0, deliberately.** The Windows and macOS builds are unsigned and unnotarized, there is no auto-updater, two products (Almanac and Precip Outlook) have no narrator who can announce them, and several scenes declared optional on the hardware have no renderer yet. The code is in good shape; the commitments a 1.0 implies are not all made. See [docs/TODO.md](docs/TODO.md) for what stands between here and there.
 
 ## What this project is
 
@@ -79,13 +81,45 @@ Cross-platform builds are better left to CI: push a `v*` tag and
 Unit tests (uses only what's already installed — esbuild plus Node's built-in test runner):
 
 ```bash
-npm test             # all tests
+npm test             # all tests — 336 of them
 npm test Storm       # only test files whose name matches
 ```
 
+The checks CI gates on, in the order it runs them:
+
+```bash
+npm run typecheck    # tsc -b for the renderer, then the Electron main config
+npm run lint         # eslint over src/ and electron/
+npm test
+npm run clips:sweep:ci   # narration audit against the committed reference table
+```
+
+### Regenerating the app icon
+
+The AWC mark lives in [`build/icon.svg`](build/icon.svg), with a
+detail-stripped small-size variant in `build/icon-tray.svg` for the system
+tray. The rasterized PNGs are committed, so you only need this after changing
+the artwork:
+
+```bash
+npm run icons        # needs librsvg (rsvg-convert)
+```
+
+It writes `build/icon.png` (electron-builder derives the Windows `.ico`, macOS
+`.icns` and Linux icon set from it), plus `public/tray-icon.png` and
+`public/awc-mark.png`. Those two live in `public/` rather than `assets/`
+because Vite copies `public/` into `dist/`, which the installers ship —
+`assets/` is the optional 1.3 GB media library, and the tray icon pointed into
+it until v0.13.0, which is why it was blank in every packaged build.
+
+The mark is set in Interstate Bold, which comes from the media library. Without
+it installed, `npm run icons` falls back to system fonts and the letterforms
+will differ — another reason the PNGs are committed rather than generated at
+build time.
+
 ### Configure your NWS User-Agent
 
-The NWS API requires a real `User-Agent` identifying you. If you fork this project, edit `src/bootstrap.ts` (`buildServices`) and replace the contact email with your own before using anything beyond local dev.
+The NWS API requires a real `User-Agent` identifying you. If you fork this project, edit `src/bootstrap.ts` (`buildServices`) and replace the contact email with your own before using anything beyond local dev. The version half of that string is injected from `package.json` at build time, so only the contact needs changing.
 
 ## Keyboard shortcuts
 
@@ -214,12 +248,28 @@ src/
 ├── App.tsx                    # Service wiring / UI only
 └── main.tsx                   # React entry
 electron/
-├── main.ts                    # Electron main process: window, tray, notifications
+├── main.ts                    # Electron main: window, tray, awc-asset:// scheme,
+│                              #   crash handlers, notifications
 └── preload.ts                 # Context-bridged IPC
+build/                         # Packaging resources, NOT build output
+├── icon.svg                   # The AWC mark (source of truth)
+├── icon-tray.svg              # Simplified small-size variant
+├── icon.png                   # 1024px — electron-builder derives .ico/.icns
+└── icons/                     # 16-1024 px set for Linux
+public/                        # Copied verbatim into dist/ — ships in installers
+├── tray-icon.png              # System tray (must NOT live in assets/)
+└── awc-mark.png               # In-theme station logo slot
+assets/                        # The optional 1.3 GB media library. Gitignored.
 tests/                         # Unit tests (npm test — esbuild + node:test, no extra deps)
+scripts/                       # Build, audit and asset tooling (see npm scripts)
 deploy/                        # nginx vhost + server-setup.sh + publish.sh
 .github/workflows/build.yml    # Windows / macOS / Linux installer CI
 ```
+
+The `public/` vs `assets/` split is load-bearing: anything the app needs in
+order to *start* goes in `public/` and ships in the installer, while `assets/`
+is content the app is designed to run without. The tray icon lived in
+`assets/` until v0.13.0, which is why it was blank in every packaged build.
 
 For architectural rationale (visual/semantic split, radar legend invariant, scene lifecycle, storm tracking, dual-tier alerts, LDL crawl), see **[docs/architecture.md](docs/architecture.md)**. For the August 2026 full-codebase audit that drove the v0.10.0 fixes, see **[docs/code-audit-2026-08.md](docs/code-audit-2026-08.md)**. The backlog lives in **[docs/TODO.md](docs/TODO.md)**.
 

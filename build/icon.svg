@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!--
+    Accessible Weather Center mark.
+
+    Source of truth for the app icon and the in-theme station logo. Rasterize
+    with scripts/build-icons.mjs, which renders this at every size the
+    installers and the renderer need.
+
+    The vocabulary is deliberately Weather-Channel-adjacent without being
+    anyone's actual logo: deep navy (the same #0a1f4a the Electron window
+    paints before first frame), Interstate Bold (the typeface Weatherscan and
+    the IntelliStar actually used), and a radar sweep. The bar underneath is
+    this project's own: it is the six-step radar intensity ramp from
+    src/core/radar/Palette.ts, which is the one piece of iconography the app
+    is genuinely built around.
+  -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0" stop-color="#1e5299"/>
+      <stop offset="0.45" stop-color="#0e2f63"/>
+      <stop offset="1" stop-color="#050f28"/>
+    </linearGradient>
+
+    <!-- Light source at upper left, so the tile reads as a lit surface
+         rather than a flat swatch at small sizes. -->
+    <radialGradient id="glow" cx="0.26" cy="0.18" r="0.75">
+      <stop offset="0" stop-color="#4d8fdc" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#4d8fdc" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- The sweep: a wedge fading counter-clockwise from the leading edge,
+         the way a real PPI radar trail decays. -->
+    <linearGradient id="sweep" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8fc4ff" stop-opacity="0.34"/>
+      <stop offset="1" stop-color="#8fc4ff" stop-opacity="0"/>
+    </linearGradient>
+
+    <clipPath id="tile">
+      <rect x="0" y="0" width="1024" height="1024" rx="205" ry="205"/>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#tile)">
+    <rect x="0" y="0" width="1024" height="1024" fill="url(#sky)"/>
+    <rect x="0" y="0" width="1024" height="1024" fill="url(#glow)"/>
+
+    <!-- Range rings, centred on the sweep origin. -->
+    <g fill="none" stroke="#7fb2f0" stroke-opacity="0.13" stroke-width="3">
+      <circle cx="512" cy="470" r="180"/>
+      <circle cx="512" cy="470" r="300"/>
+      <circle cx="512" cy="470" r="420"/>
+    </g>
+
+    <!-- Sweep wedge, 60 degrees, leading edge up-and-right. No bright
+         leading line: at icon sizes it read as a scratch across the W. -->
+    <path d="M512 470 L512 30 A440 440 0 0 1 893 250 Z" fill="url(#sweep)"/>
+
+    <!-- AWC. Optically centred: the cap-height box plus the ramp bar are
+         balanced about a point slightly above the geometric centre, which is
+         where the eye expects the mass of a square mark to sit. -->
+    <text x="512" y="545"
+          font-family="Interstate-Bold, Interstate, Helvetica Neue, Arial, sans-serif"
+          font-size="300" letter-spacing="8"
+          text-anchor="middle"
+          fill="#ccd4de">AWC</text>
+
+    <!-- Radar intensity ramp: light rain to extreme, the app's own legend. -->
+    <g>
+      <rect x="302" y="606" width="62" height="30" rx="7" fill="#3fa2e8"/>
+      <rect x="372" y="606" width="62" height="30" rx="7" fill="#2fbf6f"/>
+      <rect x="442" y="606" width="62" height="30" rx="7" fill="#e8d54a"/>
+      <rect x="512" y="606" width="62" height="30" rx="7" fill="#e8952f"/>
+      <rect x="582" y="606" width="62" height="30" rx="7" fill="#d8402f"/>
+      <rect x="652" y="606" width="62" height="30" rx="7" fill="#b23ad0"/>
+    </g>
+  </g>
+
+  <!-- Inner bevel. Keeps the tile from dissolving into a dark desktop. -->
+  <rect x="2.5" y="2.5" width="1019" height="1019" rx="203" ry="203"
+        fill="none" stroke="#6f9fd8" stroke-opacity="0.28" stroke-width="5"/>
+</svg>

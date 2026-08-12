@@ -48,7 +48,14 @@ await build({
   // renders whatever it can. Without this the component tests went green
   // against deliberately broken components, which is worse than no tests: it
   // is a false all-clear on the exact bug class they were written to catch.
-  define: { "process.env.NODE_ENV": '"development"' },
+  // __APP_VERSION__ mirrors the `define` in vite.config.ts. Without it any
+  // test that pulls in bootstrap.ts dies on an undefined global.
+  define: {
+    "process.env.NODE_ENV": '"development"',
+    __APP_VERSION__: JSON.stringify(
+      JSON.parse(readFileSync(path.join(root, "package.json"), "utf8")).version
+    )
+  },
   // happy-dom stays external. Bundling it drags in `ws`, which uses dynamic
   // require() — legal in CJS, fatal once esbuild has flattened everything
   // into a single ESM file ("Dynamic require of 'events' is not supported").

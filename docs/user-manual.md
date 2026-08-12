@@ -2,7 +2,7 @@
 
 This manual is written for screen-reader users first. Everything in the application can be done from the keyboard, and everything the application shows on screen is also spoken or exposed to your screen reader. Sighted users are welcome too — the visuals recreate The Weather Channel's classic 24/7 local-forecast systems — but no part of this manual assumes you can see the screen.
 
-Current as of version 0.12.0 plus the Phase 5 web-preparation work.
+Current as of version 0.13.0.
 
 ## Contents
 
@@ -414,3 +414,15 @@ Audio is served as MP3 and images as WebP — chosen because they are the two fo
 **The display looks wrong, or fonts look generic.** The `assets/` library isn't populated. The app degrades gracefully by design.
 
 **Something crashed.** A crashed scene announces a display problem with a recovery hint and repairs itself on the next scene change. If the whole app is wedged, restarting loses nothing — every setting and place is persisted.
+
+**The application vanished with no warning.** As of 0.13.0 it should tell you first: an unrecoverable error raises a notification reading "Accessible Weather Center has stopped" and names a log file. If you want to report it, that file has the details:
+
+| Platform | Log location |
+|---|---|
+| Windows | `%APPDATA%\accessible-weather-center\logs\main-crash.log` |
+| macOS | `~/Library/Application Support/accessible-weather-center/logs/main-crash.log` |
+| Linux | `~/.config/accessible-weather-center/logs/main-crash.log` |
+
+If the app disappeared and that file does *not* exist, it was killed from outside — the operating system's out-of-memory handler, a task manager, or a power event — rather than crashing on its own.
+
+**There's no icon in the system tray.** Fixed in 0.13.0; the icon had never rendered in any packaged build before that. On Linux, some desktop environments also need an AppIndicator extension for tray icons to appear at all — GNOME in particular.

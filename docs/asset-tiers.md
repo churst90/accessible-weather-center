@@ -29,6 +29,13 @@ the migration — dry-run by default, move-only, and every move recorded to
 in git, so a bad move there is not recoverable with `git checkout`; the
 manifest is the safety net.
 
+That manifest is deliberately *not* tracked (gitignored as of v0.13.0, along
+with `.inbox-triage.json`). It describes moves inside a directory the repo
+does not contain, which makes it machine-local operational state rather than
+source — and at 2.2 MB it was the largest file in the tree. It is still
+written to the working directory, so `--undo` works exactly as before; it just
+does not follow the repo to another clone, where it would be meaningless.
+
 After moving, `npm run assets:check` confirmed all 170 statically-resolvable
 references still resolve, and `npm run clips:sweep` confirmed 0 missing files
 across both large narrator libraries.

@@ -1,11 +1,17 @@
 # electron-builder configuration.
 #
-# Deliberately NOT in package.json, and electron-builder is deliberately NOT
-# in devDependencies: `npm install -D <new-pkg>` reliably deadlocks on the
-# ntfs3 mount this repo lives on. CI installs it on demand with npx, so the
-# lockfile stays untouched and local installs keep working.
+# Kept out of package.json so the packaging config is readable on its own.
 #
-# Build locally:   npx electron-builder --linux   (or --win / --mac)
+# electron-builder itself is still fetched with npx rather than being a
+# devDependency. The original reason — `npm install -D` deadlocking on the
+# ntfs3 mount the repo used to live on — no longer applies now that it is on
+# btrfs, and v0.13.0 added eslint and its plugins as normal devDependencies
+# to prove it. The remaining reason is narrower but real: electron-builder
+# pulls ~200 transitive packages that only CI and release builds ever need,
+# and none of them belong in the dependency tree a contributor installs to
+# run the tests.
+#
+# Build locally:   npx --yes electron-builder@25 --linux   (or --win / --mac)
 # Build in CI:     .github/workflows/build.yml does all three.
 
 appId: com.codyhurst.accessibleweathercenter
@@ -14,7 +20,16 @@ copyright: Copyright © 2026 Cody Hurst
 
 directories:
   output: release
+  # Holds icon.svg / icon-tray.svg (the artwork sources) and the icon.png
+  # electron-builder derives the Windows .ico, macOS .icns and Linux icon set
+  # from. Regenerate with `npm run icons`. Before v0.13.0 this directory did
+  # not exist and every installer shipped the default Electron icon.
   buildResources: build
+
+# Explicit rather than relying on the buildResources/icon.png convention, so
+# a rename shows up as a build error instead of silently reverting to the
+# stock Electron icon.
+icon: build/icon.png
 
 # The media library is NOT bundled. It is ~1.3 GB, which would make every
 # installer unusable to download, and the app is explicitly designed to run
@@ -66,6 +81,12 @@ dmg:
   writeUpdateInfo: false
 
 linux:
+  # A directory, not the single icon.png. Handed one PNG, electron-builder
+  # ships exactly that size, so a 1024px image gets scaled into a 16px menu
+  # slot by whatever the desktop environment happens to use. build/icons/
+  # holds 16 through 1024, with the small ones rendered from the simplified
+  # tray artwork. Regenerate with `npm run icons`.
+  icon: build/icons
   target:
     - target: AppImage
       arch: [x64]

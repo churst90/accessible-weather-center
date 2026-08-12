@@ -70,7 +70,8 @@ export function PlacesMode({ places, weather, announcer, store, active, onDrillI
     };
     // `obs` is read through a ref on purpose: including it would re-run this
     // effect (and re-announce) the moment its own fetch stored a result.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Reading through the ref is why no disable directive is needed here —
+    // the rule cannot see a dependency, and there genuinely isn't one.
   }, [focusIdx, active, places, weather, announcer]);
 
   // Arrow key handling — only while this mode is active. Bail out when the

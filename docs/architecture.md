@@ -183,9 +183,30 @@ The mixer is started lazily on first user gesture because browsers/Electron bloc
 
 ## Electron lifecycle
 
-The window hides on close instead of quitting — the app keeps running in the tray so the AlertEngine (TODO) can keep polling and firing notifications. `before-quit` flips an `isQuitting` flag that lets the close handler skip the hide step. The tray menu's "Quit" item flips the same flag.
+The window hides on close instead of quitting — the app keeps running in the tray so `AlertWatcher` (`core/alerts/`) can keep polling and firing notifications. `before-quit` flips an `isQuitting` flag that lets the close handler skip the hide step. The tray menu's "Quit" item flips the same flag.
 
-`window.awc` (context-bridged preload API) currently exposes `notify(title, body)` and `minimizeToTray()`. New IPCs should be added in pairs: handler in `electron/main.ts`, declaration in `electron/preload.ts`, type re-exported via `AwcBridge`.
+`window.awc` (context-bridged preload API) currently exposes `notify(title, body)`, `minimizeToTray()` and `fetchActiveNwrStations()`. New IPCs should be added in pairs: handler in `electron/main.ts`, declaration in `electron/preload.ts`, type re-exported via `AwcBridge`.
+
+### The tray icon comes from the bundle, not the media library
+
+`public/tray-icon.png` → copied into `dist/` by Vite → shipped by electron-builder. This is load-bearing, not incidental: the icon previously lived under `assets/`, the optional 1.3 GB media library, which meant it could never resolve in a packaged install. Anything the app needs in order to *start* belongs in `public/`; `assets/` is for content it can run without.
+
+### Crash handling
+
+`installCrashHandlers()` runs before `app.whenReady()`. `uncaughtException` appends a timestamped stack to `<userData>/logs/main-crash.log`, raises a critical notification naming that path, and exits non-zero. `unhandledRejection` logs without exiting.
+
+The asymmetry is deliberate. After an uncaught exception the process state is unknown, and a weather app that keeps running while quietly reporting stale conditions is more dangerous than one that stopped — the user at least notices absence. Unhandled rejections, in practice, are aborted fetches during shutdown and are not worth killing the app over.
+
+### Serving the app: `awc-asset://`
+
+Packaged builds load from a custom privileged scheme rather than `file://`, because every media URL the renderer builds is root-relative (`/assets/...`) for the web deployment's benefit, and over `file://` those resolve against the filesystem root. Registered `standard` (real origin and URL parsing) and `stream` (so `<audio>` can issue Range requests, which seeking depends on); requests are served through `net.fetch` rather than read by hand so MIME sniffing and streaming behave.
+
+Two containment steps, in order:
+
+1. **Lexical.** `path.join` normalizes `..`, then the resolved target must sit under the resolved root.
+2. **Symbolic.** Both target *and root* are `realpath`'d and re-checked, because `path.resolve` does not follow symlinks and the media library is user-installed content unpacked from a tarball. The root is resolved too — a 1.3 GB library is a plausible thing to symlink onto a second drive, and comparing a resolved target against an unresolved root would reject that entire install.
+
+Malformed percent-encoding returns 400 rather than rejecting the handler's promise.
 
 ## Storm detection and tracking
 
@@ -266,13 +287,13 @@ The app is a personal, non-commercial TWC recreation and relies on community-sou
 - **WeatherStar XL cloud wallpaper** — same source (`assets/backgrounds/weatherstarxl-clouds/`).
 - **IntelliStar 1 / IntelliStar 2 city-gradient backgrounds** — TWC-derived fan archives (the IS2Jr AMHQ blur set is folded into the IS2 rotation).
 
-The TWC name and logo are trademarks. This project is non-distributed and does not claim affiliation. The heavy binary asset folders (narration 2.2 GB, music 606 MB, backgrounds 2.1 GB) are excluded from git via `.gitignore`; see `USER_GUIDE.md` for how to populate them on a fresh clone.
+The TWC name and logo are trademarks. This project is non-distributed and does not claim affiliation. The heavy binary asset folders (narration 2.2 GB, music 606 MB, backgrounds 2.1 GB) are excluded from git via `.gitignore`; see the media library section of the [README](../README.md) for how to populate them on a fresh clone (`npm run assets:fetch`).
 
 ## What this scaffold deliberately does *not* do
 
 - No state management library. The service bag is created once in `App.tsx#buildServices` and held in a `useMemo`. When that gets unwieldy we'll add a context, not Redux/Zustand.
 - No CSS framework. Weatherscan is a hand-tuned aesthetic; Tailwind would fight us.
 - No design system primitives. Radix is on the table for future dialogs when those land.
-- No unit tests yet. `IntensityLegend`, `SceneScheduler`, `KeyboardRouter`, `useArrowGrid` are the obvious first targets and are listed in `TODO.md`.
+- No test framework. There are 336 unit tests as of v0.13.0 — this line used to say "no unit tests yet" and was left behind by them — but they run on esbuild plus Node's built-in `node --test`, with no Vitest or Jest. See `scripts/run-tests.mjs` for why, including the `--test-force-exit` incident where the suite could silently shrink by ten tests and still exit 0.
 
 The point of these "nots" is that the scaffold is small enough that you can read the whole thing in an afternoon and understand exactly how scenes flow through the system. Premature abstraction would buy nothing right now.

@@ -97,8 +97,11 @@ export const BUNDLED_STATIONS: NwrStation[] = [
 ];
 
 /** Active list used at runtime. Starts equal to BUNDLED_STATIONS; can be
- *  replaced by {@link updateLiveStations} after a successful live fetch. */
-let activeStations: NwrStation[] = [...BUNDLED_STATIONS];
+ *  replaced by {@link updateLiveStations} after a successful live fetch.
+ *  `const` because the update is in place (`length = 0` then `push`) — the
+ *  Proxy below closes over this exact array, so rebinding it would silently
+ *  leave NWR_STATIONS pointing at the stale one. */
+const activeStations: NwrStation[] = [...BUNDLED_STATIONS];
 
 export const NWR_STATIONS: NwrStation[] = new Proxy(activeStations, {
   get(_, prop) {

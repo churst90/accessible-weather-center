@@ -72,10 +72,29 @@ Full audit of all four narrators against all seventeen scenes is complete and pi
 - [x] ~~Media library distribution~~ — `scripts/package-assets.mjs` (per-category tarballs + checksums for a GitHub Release), `scripts/fetch-assets.mjs` (verify + unpack, resumable).
 - [ ] **Deploy to the OVH box.** The nginx config has never been syntax-checked — there is no nginx on the dev machine. Run `nginx -t` before the first reload.
 - [ ] **Landing page.** Cody is writing this to match his other sites; `server-setup.sh` drops a placeholder and never overwrites it.
-- [ ] **Cut the first release.** Tag `v0.13.0` to trigger the build workflow, then decide what (if anything) of the media library gets published — see the redistribution note in the README.
+- [ ] **Cut the first release.** Tag `v0.13.0` to trigger the build workflow, then decide what (if anything) of the media library gets published — see the redistribution note in the README. The blockers that made a release not worth cutting are cleared as of v0.13.0: the installers have a real icon, the tray icon renders, the main process no longer dies silently, and `npm run lint` runs in CI. Linux artifacts have been built and smoke-tested locally; Windows and macOS have only ever been built by CI.
 - [ ] **Move persistence to Electron userData.** localStorage is origin-scoped; dev (localhost:5173) and packaged (`awc-asset://app`) builds do not share settings. Note the scheme change means existing packaged-build users start fresh.
-- [ ] **Test the packaged build end to end.** The `awc-asset://` protocol typechecks and is written against Electron 33's `protocol.handle` + `net.fetch`, but has not been run in a packaged app yet.
+- [ ] **Test the packaged build end to end.** Partly done as of v0.13.0: a packaged Linux build launches, registers the scheme, serves its own renderer over `awc-asset://app`, correctly reports no media library and runs degraded, and exits without writing a crash log. What has *not* been exercised is the interesting half — the protocol handler against a real 1.3 GB library, `<audio>` Range requests and seeking through it, and any of it on Windows or macOS.
 - [ ] **Fix or drop the dead Jim Cantore radar clips.** `narration/Jim Cantore/Vocal Local/Default_Phrases_Local_Radar/RADAR_DEFAULT{1,2}` — referenced since the initial commit, directory never existed.
+- [ ] **The Alerts scene is never skipped when there are no alerts.** Its docstring claimed for a long time that skipping was "enforced upstream by checking `data.alerts.length`"; nothing in `SceneScheduler` or anywhere else does that. The comment was corrected in v0.13.0, the behaviour was not — the scene stays in the rotation and renders its benign "no active alerts" state, so the cost is a quiet stop in the cycle rather than anything harmful. Needs a real eligibility predicate on `Scene`, which is the general fix (Airport Delays and Traffic want the same thing when their upstreams have nothing).
+
+## Toward 1.0
+
+v0.13.0 is the first release worth handing to someone. It is deliberately not 1.0, and this is the list of why. A 1.0 should mean a stranger can install this and depend on it for severe weather; each item below is somewhere that promise currently has a hole.
+
+**Distribution trust**
+- [ ] **Windows code-signing certificate.** SmartScreen flags every unsigned installer, and telling a blind user to click through a malware warning to install a safety application is a bad instruction to have to write.
+- [ ] **Apple Developer certificate + notarization.** Same problem, plus Gatekeeper outright refuses first launch; the README's `xattr -dr com.apple.quarantine` workaround is not something to ship at 1.0.
+- [ ] **Auto-update.** Unsigned builds cannot use electron-updater's signature checks, so this is blocked behind the two certificates. Until then a fix reaches users only if they notice a release and re-download.
+
+**Functional completeness**
+- [ ] **Almanac and Precip Outlook have no narrator at all.** Not a wiring gap — no narrator recorded sunrise/sunset/moon phrasing, and the `Wx_Phrases_Precip` pool is probability phrases with no intro. Two of seventeen products are silent for every voice, which is hard to square with "every visual is mirrored by narration".
+- [ ] **Optional-package scenes are declared but not built** — Air Quality (IS1), School Day Weather, Outdoor Activity Forecast, and the Weatherscan Plus activity packs. Settings advertises the capability.
+- [ ] **The era-accuracy questions in "Narration period accuracy"** are open judgement calls, not bugs, but 1.0 is the point to decide them rather than leave them noted.
+
+**Confidence**
+- [ ] **A packaged build has never run against a real media library.** See "Test the packaged build end to end."
+- [ ] **No end-to-end test with an actual screen reader** on any platform. Every accessibility claim in this repo is verified by unit tests asserting DOM structure and live-region behaviour, which is not the same as NVDA reading it correctly.
 
 ## v0.8 — Theme consolidation + authentic layouts + logos — DONE
 
@@ -291,7 +310,7 @@ All ten confirmed silent-failure bugs from `docs/code-audit-2026-08.md` fixed, p
 
 - [ ] **Background fetch.** Slimmed-down poll loop in the main process when the window is hidden.
 - [ ] **Auto-launch on login** via Electron's `app.setLoginItemSettings`.
-- [ ] **macOS support.** Tray icon is empty — macOS needs a real template image.
+- [ ] **macOS support.** The tray icon renders now (v0.13.0), but macOS wants a *template* image — a monochrome mask it recolours for light/dark menu bars. The AWC mark is colour, so it needs a purpose-drawn one-colour variant; passing the colour art to `setTemplateImage(true)` would flatten it to a silhouette.
 - [ ] **Linux support.** AppIndicator vs StatusNotifier.
 
 ## Mobile (post v1)
@@ -315,7 +334,7 @@ All ten confirmed silent-failure bugs from `docs/code-audit-2026-08.md` fixed, p
 - [x] ~~`WebSpeechTts.setVoice` persistence~~ — moot: built-in TTS removed entirely in v0.11.0 (no-TTS policy).
 - [x] ~~`AnnouncementQueue` overwrite/silent-repeat/cancel bugs~~ — rebuilt in v0.11.0 (independent channels, repeat-breaking, working cancel).
 - [x] ~~`KeyboardRouter` shortcut tests~~ — covered in `tests/KeyboardRouter.test.ts` (shifted symbols, digits, letters, editable-field guard, conflicts).
-- [ ] Tray icon still empty on Windows packs — root cause known: `dist/assets/logos/app-icon-180.png` never exists in prod (assets are gitignored and served by dev middleware only), and `nativeImage.createFromPath` returns an empty image instead of throwing. Blocked on "Production asset serving".
+- [x] ~~Tray icon still empty on Windows packs~~ — SHIPPED (v0.13.0). Two causes, both fixed: the path was off by a directory (`logos/` vs `shared/logos/`), and it pointed into the gitignored media library, so it could never have resolved in a packaged build regardless. The icon now ships as `public/tray-icon.png`, which Vite copies into `dist/`; `nativeImage.createFromPath` returning an empty image rather than throwing is handled with an explicit `isEmpty()` check instead of a `catch` that could never fire.
 
 ## Repo setup
 

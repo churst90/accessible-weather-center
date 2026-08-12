@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!--
+    Small-size variant of the AWC mark, for the system tray.
+
+    Same palette as build/icon.svg with the detail stripped out. The full mark
+    carries range rings, a sweep wedge and the six-step intensity ramp; at the
+    16-24 px a tray gives you, all three collapse into noise around the
+    letters. What survives at that size is contrast and letterform, so this
+    variant spends the whole tile on "AWC" and keeps only the gradient.
+  -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0" stop-color="#2a63ad"/>
+      <stop offset="0.5" stop-color="#12356e"/>
+      <stop offset="1" stop-color="#08182f"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="0" y="0" width="512" height="512" rx="96" ry="96" fill="url(#sky)"/>
+
+  <!-- Brighter than the full mark's #ccd4de: at tray size the letters are
+       only a few pixels thick and need the extra separation from the navy. -->
+  <text x="256" y="330"
+        font-family="Interstate-Bold, Interstate, Helvetica Neue, Arial, sans-serif"
+        font-size="196" letter-spacing="2"
+        text-anchor="middle"
+        fill="#e8edf4">AWC</text>
+
+  <rect x="2" y="2" width="508" height="508" rx="94" ry="94"
+        fill="none" stroke="#7fb0e6" stroke-opacity="0.35" stroke-width="4"/>
+</svg>

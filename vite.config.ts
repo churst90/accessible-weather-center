@@ -95,9 +95,23 @@ function warnMissingAssetsPlugin(): Plugin {
   };
 }
 
+/**
+ * Single source of truth for the app version: package.json.
+ *
+ * The renderer needs it for the NWS User-Agent, which their API terms ask to
+ * carry a real version and contact. Hardcoding it in the source meant it went
+ * stale the moment package.json was bumped — the Electron main process spent
+ * three releases identifying itself as 0.9.6. Injected here, and identically
+ * in scripts/run-tests.mjs so the test bundles resolve it too.
+ */
+const appVersion = JSON.parse(
+  fs.readFileSync(fileURLToPath(new URL("./package.json", import.meta.url)), "utf8")
+).version as string;
+
 export default defineConfig({
   plugins: [react(), serveAssetsPlugin(), warnMissingAssetsPlugin()],
   base: "./",
+  define: { __APP_VERSION__: JSON.stringify(appVersion) },
   resolve: {
     alias: {
       "@core": fileURLToPath(new URL("./src/core", import.meta.url)),

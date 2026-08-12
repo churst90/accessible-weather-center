@@ -76,8 +76,14 @@ function registerAppProtocol(): void {
   }
 
   protocol.handle(APP_SCHEME, async (request) => {
-    const url = new URL(request.url);
-    let rel = decodeURIComponent(url.pathname);
+    let rel: string;
+    try {
+      // Malformed percent-encoding ("%ZZ") throws. Left uncaught this
+      // rejected the handler's promise rather than returning a response.
+      rel = decodeURIComponent(new URL(request.url).pathname);
+    } catch {
+      return new Response("Bad request", { status: 400 });
+    }
     if (rel === "/" || rel === "") rel = "/index.html";
 
     let root: string;
@@ -98,10 +104,83 @@ function registerAppProtocol(): void {
     }
 
     try {
-      return await net.fetch(pathToFileURL(target).toString());
+      // path.resolve() collapses ".." lexically but does not follow symlinks,
+      // so a link inside the media library could still point outside it. The
+      // library is user-installed content unpacked from a tarball, which is
+      // exactly the kind of thing that can carry one. A missing file throws
+      // here and falls through to the 404 below, which is what we want anyway.
+      //
+      // The root is realpath'd too, not just the target: a 1.3 GB library is
+      // a very plausible thing to symlink onto a second drive, and comparing
+      // a resolved target against an unresolved root would 403 that entire
+      // install.
+      const realTarget = await fs.promises.realpath(target);
+      const realRoot = await fs.promises.realpath(root);
+      if (!realTarget.startsWith(realRoot + path.sep)) {
+        return new Response("Forbidden", { status: 403 });
+      }
+      return await net.fetch(pathToFileURL(realTarget).toString());
     } catch {
       return new Response("Not found", { status: 404 });
     }
+  });
+}
+
+/**
+ * Last-resort handlers for the main process.
+ *
+ * This app lives in the tray and is meant to run for days. An uncaught
+ * exception in main takes the whole process down, and the default Electron
+ * behaviour is to die without a window, a dialog or a sound — for a user who
+ * is blind and relying on it for severe-weather alerts, the app simply stops
+ * existing with no indication that it ever did. That is the worst failure
+ * mode this codebase has.
+ *
+ * So: write the stack somewhere retrievable, and say something out loud
+ * before going. We deliberately do NOT keep running after an uncaught
+ * exception — the process state is unknown at that point, and a weather app
+ * that silently reports stale conditions is more dangerous than one that
+ * stopped. Unhandled rejections are logged but not fatal, because in practice
+ * they come from aborted fetches during shutdown.
+ */
+function installCrashHandlers(): void {
+  // Resolved lazily. These handlers are installed before `app.ready`, and
+  // deferring keeps us clear of any question about when userData is known.
+  const logDir = (): string => path.join(app.getPath("userData"), "logs");
+  const logPath = (): string => path.join(logDir(), "main-crash.log");
+
+  const record = (kind: string, err: unknown): void => {
+    const stack = err instanceof Error ? (err.stack ?? err.message) : String(err);
+    const entry = `\n[${new Date().toISOString()}] ${kind}\n${stack}\n`;
+    console.error(`[awc] ${kind}:`, stack);
+    try {
+      fs.mkdirSync(logDir(), { recursive: true });
+      fs.appendFileSync(logPath(), entry);
+    } catch {
+      // If we cannot even write the log, the console line above is all we get.
+    }
+  };
+
+  process.on("uncaughtException", (err) => {
+    record("uncaughtException", err);
+    // Notification, not dialog: dialog.showErrorBox blocks, and a blocking
+    // modal on a dying process is how you get an app that can't be closed.
+    try {
+      if (Notification.isSupported()) {
+        new Notification({
+          title: "Accessible Weather Center has stopped",
+          body: `An unexpected error occurred. Details were written to ${logPath()}`,
+          urgency: "critical"
+        }).show();
+      }
+    } catch {
+      // Notification can itself throw if the process is far enough gone.
+    }
+    app.exit(1);
+  });
+
+  process.on("unhandledRejection", (reason) => {
+    record("unhandledRejection", reason);
   });
 }
 
@@ -161,19 +240,38 @@ function createWindow(): void {
   });
 }
 
-function createTray(): void {
-  // Use the app icon for the tray. Electron resizes to ~16x16 on Windows.
-  // Sourced from the media library, which may not be installed — the catch
-  // below falls back to an empty image rather than failing to start.
-  const iconRoot = assetsDir ?? path.join(__dirname, "..", "assets");
-  const iconPath = path.join(iconRoot, "logos", "app-icon-180.png");
-  let icon: Electron.NativeImage;
-  try {
-    icon = nativeImage.createFromPath(iconPath).resize({ width: 16, height: 16 });
-  } catch {
-    icon = nativeImage.createEmpty();
+/**
+ * The tray icon, from the app bundle rather than the media library.
+ *
+ * This used to read `<assets>/logos/app-icon-180.png`. Two things were wrong
+ * with that. The path was off by a directory — the file is under
+ * `shared/logos/` — and `nativeImage.createFromPath` returns an *empty image*
+ * for a missing file instead of throwing, so the try/catch never fired and
+ * the tray silently got a blank icon. It was blank in every packaged build,
+ * because `assets/` is the 1.3 GB media library that installers deliberately
+ * do not bundle.
+ *
+ * `public/tray-icon.png` is copied into `dist/` by Vite and shipped by
+ * electron-builder, so it is present in every install regardless of whether
+ * the user ever fetched the media library.
+ */
+function resolveTrayIcon(): Electron.NativeImage {
+  const candidates = [
+    path.join(__dirname, "..", "dist", "tray-icon.png"),
+    // Dev server, before `npm run build` has populated dist/.
+    path.join(__dirname, "..", "public", "tray-icon.png")
+  ];
+  for (const candidate of candidates) {
+    const image = nativeImage.createFromPath(candidate);
+    // The real emptiness check the old catch block was reaching for.
+    if (!image.isEmpty()) return image.resize({ width: 16, height: 16 });
   }
-  tray = new Tray(icon);
+  console.warn("[awc] Tray icon not found; using an empty image.");
+  return nativeImage.createEmpty();
+}
+
+function createTray(): void {
+  tray = new Tray(resolveTrayIcon());
   tray.setToolTip("Accessible Weather Center");
   tray.setContextMenu(
     Menu.buildFromTemplate([
@@ -215,7 +313,9 @@ ipcMain.handle("nwr:fetchActiveStations", async () => {
   };
   try {
     const res = await fetch("https://radio.weatherusa.net/status-json.xsl", {
-      headers: { "User-Agent": "AccessibleWeatherCenter/0.9.6" }
+      // app.getVersion() reads package.json, so this cannot drift the way the
+      // hardcoded string did — it sat at 0.9.6 for three releases.
+      headers: { "User-Agent": `AccessibleWeatherCenter/${app.getVersion()}` }
     });
     if (!res.ok) return { ok: false, error: `HTTP ${res.status}` };
     let text = await res.text();
@@ -266,6 +366,9 @@ ipcMain.handle("notify", (_evt, payload: { title: string; body: string }) => {
 ipcMain.handle("window:minimize-to-tray", () => {
   mainWindow?.hide();
 });
+
+// Installed before `whenReady` so a failure during startup is still caught.
+installCrashHandlers();
 
 app.whenReady().then(() => {
   // Kill the default native menu entirely — this app is keyboard-driven

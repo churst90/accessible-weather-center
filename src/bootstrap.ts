@@ -79,7 +79,7 @@ export function buildServices() {
   const alertTones = new AlertTones(mixer);
   const nwr = new NwrPlayer(mixer);
 
-  const nws = new NwsClient("AccessibleWeatherCenter/0.12.0 (contact: codythurst@gmail.com)");
+  const nws = new NwsClient(`AccessibleWeatherCenter/${__APP_VERSION__} (contact: codythurst@gmail.com)`);
   const faa = new FaaClient();
   const rainviewer = new RainViewerClient();
   const weather = new WeatherService(nws);

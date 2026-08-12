@@ -307,7 +307,11 @@ export function RadarMapCanvas({
       mountedRef.current = false;
       if (animTimerRef.current) clearTimeout(animTimerRef.current);
     };
-  }, [center, zoom, rainviewer, animate, drawFrame]);
+    // `baseMap` is listed even though `drawFrame` already changes identity
+    // with it, so the effect was re-running correctly anyway. Naming it makes
+    // the base-tile preload at the top of this effect self-evidently correct
+    // rather than correct-by-transitivity through another hook's dep array.
+  }, [center, zoom, rainviewer, animate, drawFrame, baseMap]);
 
   // Re-draw the current frame when storms, alerts, or highlight change.
   useEffect(() => {

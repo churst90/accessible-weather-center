@@ -24,3 +24,12 @@ interface AwcBridge {
 interface Window {
   awc?: AwcBridge;
 }
+
+/**
+ * The version string from package.json, substituted at build time by the
+ * `define` in vite.config.ts (and by the matching one in
+ * scripts/run-tests.mjs, so test bundles resolve it too). Declared as a bare
+ * global rather than read from package.json at runtime because the renderer
+ * ships without one.
+ */
+declare const __APP_VERSION__: string;

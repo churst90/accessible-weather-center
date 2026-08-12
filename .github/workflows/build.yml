@@ -6,9 +6,9 @@ name: Build binaries
 #    artifacts for 14 days, so you can test a build without cutting a release.
 #  - push of a v* tag: build all three AND attach them to a GitHub Release.
 #
-# electron-builder is installed with npx rather than being a devDependency:
-# adding new packages to the lockfile deadlocks on the author's working
-# drive (see electron-builder.yml). CI resolves it fresh each run.
+# electron-builder is installed with npx rather than being a devDependency,
+# to keep ~200 release-only transitive packages out of the tree contributors
+# install to run the tests. See electron-builder.yml.
 #
 # Builds are UNSIGNED. There is no Apple Developer certificate and no
 # Windows code-signing certificate, so macOS gatekeeper and Windows
@@ -36,6 +36,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run typecheck
+      - run: npm run lint
       - run: npm test
       # Narration audit. Runs in --table-only mode because the media library
       # is gitignored and not present in CI; that still catches resolved clip

@@ -7,9 +7,17 @@ export interface AlertsData {
 }
 
 /**
- * The alerts scene is conditional: if there are no active alerts, the
- * scheduler should skip it. Skipping is enforced upstream by checking
- * `data.alerts.length`. We still produce a benign rendering for safety.
+ * The alerts scene is conditional: with no active alerts there is nothing to
+ * show, so it should be skipped in the rotation.
+ *
+ * It isn't. This docstring used to claim "skipping is enforced upstream by
+ * checking `data.alerts.length`", and the 2026-08 audit flagged that as
+ * false — `SceneScheduler` has no such check, and neither does anything else.
+ * The scene stays in the cycle and renders the benign "no active alerts"
+ * state below, so the failure is cosmetic (a quiet stop in the rotation)
+ * rather than harmful. Left as-is deliberately: adding the skip is a
+ * behaviour change to the scene loop and belongs in its own commit, not a
+ * comment correction. Tracked in docs/TODO.md.
  */
 export class AlertsScene implements Scene<AlertsData> {
   readonly id = "alerts";

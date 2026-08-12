@@ -1,6 +1,15 @@
 /**
- * User-facing settings. Persisted to localStorage in v0.2; disk persistence
- * via Electron's userData path is on the TODO list. The store is reactive —
+ * User-facing settings, persisted to localStorage.
+ *
+ * This used to say disk persistence via Electron's userData path was still
+ * to do, as though settings did not survive a restart. They do: in a packaged
+ * build Chromium backs localStorage with a LevelDB store under userData, and
+ * the same code persists in a browser for the web deployment.
+ *
+ * What is genuinely still open is narrower — localStorage is *origin*-scoped,
+ * so the dev server (`localhost:5173`) and a packaged build (`awc-asset://app`)
+ * keep separate settings. Moving to a file under `app.getPath("userData")`
+ * would unify them. See docs/TODO.md. The store is reactive —
  * subscribers are notified on every change so the UI and the scheduler can
  * respond without a global event bus.
  */

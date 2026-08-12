@@ -1,5 +1,24 @@
 # Full codebase audit — August 2026
 
+> **Status: historical record, kept as written.** This is the audit as it stood
+> when it was run; it is not updated as findings are fixed, because its value
+> is as a snapshot of what the codebase looked like at that moment.
+>
+> Where things actually stand as of v0.13.0: all ten Tier-1 findings below are
+> fixed and were re-verified in the code, not just in the changelog. So are the
+> CSP, `setWindowOpenHandler` and `will-navigate` gaps noted under "Bad", and
+> the empty tray icon — which turned out to have a second cause the audit
+> missed: even with the path corrected it pointed into the gitignored media
+> library, so it could never have worked in a packaged build.
+>
+> The "stale docs" list is mostly cleared. Two items in it were still true when
+> re-checked for the v0.13.0 release: `architecture.md` claimed the project had
+> no unit tests (it has 336), and `AlertsScene`'s docstring claimed empty-alert
+> skipping was "enforced upstream" when nothing enforces it anywhere. Both
+> comments are now corrected; the missing skip itself is a behaviour change and
+> is tracked in [TODO.md](TODO.md), which is the live document. This file is the
+> diagnosis, not the tracker.
+
 Four parallel deep-dives (audio/NWR/narration, themes/visuals, radar/map-nav, core app/a11y/data) over the whole of `src/` and `electron/`, cross-checked against `docs/*.md` and the on-disk `assets/` tree. This file is the synthesis; findings carry file:line evidence.
 
 ## Overall verdict
