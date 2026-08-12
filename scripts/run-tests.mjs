@@ -126,25 +126,71 @@ for (const src of entryPoints) {
   declared.set(bundle, (text.match(/^test\(/gm) ?? []).length);
 }
 
-/** How many each actually reported. */
+/**
+ * How many each actually reported.
+ *
+ * Matched on BASENAME, not on the full path the junit reporter prints. That
+ * attribute is not stable across Node versions — Node 26 writes an absolute
+ * path, Node 20 does not write one this matcher recognises — and comparing it
+ * to our absolute bundle paths silently scored every file as zero. Which is
+ * indistinguishable, to the check below, from a run where no test executed.
+ *
+ * That is exactly what happened on the first CI run that got this far: all
+ * 336 tests passed, and the backstop failed the build claiming none of them
+ * had run. It had never surfaced before because `npm ci` was broken by a
+ * lockfile that did not match package.json, so CI had never once reached
+ * `npm test`. Basenames are unique here (one bundle per test file) and are
+ * the one part of that attribute every reporter agrees on.
+ *
+ * If a future Node drops the attribute entirely, `sawFileAttrs` goes false
+ * and we fall back to comparing totals. That is weaker — it cannot say WHICH
+ * file came up short — but it still catches the thing this exists to catch,
+ * which is tests silently not running. Failing open here would defeat the
+ * point.
+ */
 const reported = new Map(bundled.map((f) => [f, 0]));
+const byBasename = new Map(bundled.map((f) => [path.basename(f), f]));
 let readable = true;
+let sawFileAttrs = false;
+let totalReported = 0;
 try {
   const xml = readFileSync(resultsPath, "utf8");
+  totalReported = (xml.match(/<testcase\b/g) ?? []).length;
   for (const m of xml.matchAll(/\bfile="([^"]+)"/g)) {
-    if (reported.has(m[1])) reported.set(m[1], reported.get(m[1]) + 1);
+    const bundle = byBasename.get(path.basename(m[1]));
+    if (bundle) {
+      sawFileAttrs = true;
+      reported.set(bundle, reported.get(bundle) + 1);
+    }
   }
 } catch {
   readable = false; // No results file at all — a total loss, not a pass.
 }
 
+const totalDeclared = [...declared.values()].reduce((a, b) => a + b, 0);
+if (readable && !sawFileAttrs) {
+  console.warn(
+    `\n⚠ junit report carried no recognisable per-file attribution ` +
+      `(node ${process.version}).\n` +
+      `  Falling back to a total-count check: ${totalReported} reported / ${totalDeclared} declared.\n`
+  );
+}
+
 rmSync(outDir, { recursive: true, force: true });
 
-const short = readable
-  ? bundled
-      .map((f) => ({ f, want: declared.get(f) ?? 0, got: reported.get(f) ?? 0 }))
-      .filter((r) => r.got < r.want)
-  : [{ f: "(all)", want: 0, got: 0 }];
+let short;
+if (!readable) {
+  short = [{ f: "(all)", want: 0, got: 0 }];
+} else if (sawFileAttrs) {
+  short = bundled
+    .map((f) => ({ f, want: declared.get(f) ?? 0, got: reported.get(f) ?? 0 }))
+    .filter((r) => r.got < r.want);
+} else {
+  short =
+    totalReported < totalDeclared
+      ? [{ f: "(all files, total)", want: totalDeclared, got: totalReported }]
+      : [];
+}
 
 if (short.length > 0) {
   const lost = short.reduce((a, r) => a + (r.want - r.got), 0);
